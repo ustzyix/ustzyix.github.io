@@ -13,6 +13,8 @@
       --glass-bg: rgba(8, 8, 10, 0.48);
       --aura-primary: #8c1d18;
       --aura-secondary: #3b1814;
+      --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,7 +37,7 @@
       inset: 0;
       z-index: -5;
       background: radial-gradient(circle at 50% 40%, #260d0d 0%, #040406 78%);
-      transition: background 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: background 1.6s var(--ease-liquid);
     }
 
     /* ชั้นหมอกลอยช้าๆ แบบ Silent Hill */
@@ -51,6 +53,7 @@
       filter: blur(62px);
       animation: mistDrift 24s ease-in-out infinite alternate;
       transition: background 1.6s ease;
+      will-change: transform;
     }
 
     @keyframes mistDrift {
@@ -77,6 +80,7 @@
       background: var(--fg-color);
       opacity: 0;
       animation: ashFloat linear infinite;
+      will-change: transform, opacity;
     }
 
     @keyframes ashFloat {
@@ -152,7 +156,7 @@
       justify-content: center;
       gap: 26px;
       width: 100%;
-      animation: fadeSlow 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: fadeSlow 1.6s var(--ease-liquid) forwards;
     }
 
     @keyframes fadeSlow {
@@ -160,27 +164,36 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* เวทีแสดงภาพแบบซ้อน 2 เลเยอร์รองรับ Directional Motion Blur */
     .frame-wrap {
       position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      place-items: center;
+      min-height: 220px;
       touch-action: pan-y;
+      will-change: transform, filter;
     }
 
     /* แสงเรืองจางๆ รอบภาพ */
     .frame-aura {
       position: absolute;
-      inset: -20px;
+      inset: -24px;
       z-index: -1;
-      border-radius: 14px;
+      border-radius: 16px;
       background: radial-gradient(circle, var(--aura-primary) 0%, transparent 72%);
       opacity: 0.34;
       filter: blur(30px);
-      transition: background 1.4s ease, opacity 1.4s ease;
+      transition: background 1.4s ease, opacity 1.2s ease, transform 0.8s var(--ease-drift);
+      pointer-events: none;
     }
 
-    .frame-wrap img {
+    .frame-wrap.is-shifting .frame-aura {
+      opacity: 0.52;
+      transform: scale(1.08);
+    }
+
+    .slide-img {
+      grid-area: 1 / 1;
       max-width: min(86vw, 660px);
       max-height: 52dvh;
       width: auto;
@@ -191,7 +204,20 @@
       box-shadow:
         0 35px 95px -15px rgba(0, 0, 0, 0.9),
         0 0 1px 1px rgba(255, 255, 255, 0.04);
-      transition: opacity 0.55s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(1);
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .slide-img.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 2;
+    }
+
+    .slide-img.is-exiting {
+      z-index: 1;
     }
 
     .meta-bar {
@@ -209,7 +235,18 @@
       letter-spacing: 0.22em;
       color: var(--fg-color);
       opacity: 0.9;
-      transition: color 0.8s ease;
+      transition:
+        opacity 0.38s var(--ease-liquid),
+        transform 0.48s var(--ease-drift),
+        filter 0.38s ease,
+        color 0.8s ease;
+      will-change: transform, opacity, filter;
+    }
+
+    .caption.is-shifting {
+      opacity: 0;
+      filter: blur(5px);
+      transform: translate3d(0, 6px, 0);
     }
 
     /* แถบเล่นเพลงมินิมอล */
@@ -230,7 +267,7 @@
       font-size: 11px;
       letter-spacing: 0.08em;
       cursor: pointer;
-      transition: border-color 0.4s ease, color 0.4s ease, transform 0.25s ease;
+      transition: border-color 0.4s ease, color 0.4s ease, transform 0.25s var(--ease-liquid);
     }
 
     .music-pill:hover,
@@ -309,6 +346,12 @@
       color: var(--fg-whisper);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       margin-top: 2px;
+      transition: opacity 0.4s ease, filter 0.4s ease;
+    }
+
+    .swatches.is-shifting {
+      opacity: 0.25;
+      filter: blur(3px);
     }
 
     .swatch-dot {
@@ -318,7 +361,7 @@
       border: 1px solid var(--border-color);
       cursor: pointer;
       opacity: 0.85;
-      transition: transform 0.25s ease, opacity 0.25s ease;
+      transition: transform 0.25s var(--ease-liquid), opacity 0.25s ease;
     }
 
     .swatch-dot:hover {
@@ -352,24 +395,40 @@
       cursor: pointer;
       padding: 5px 14px;
       opacity: 0.72;
-      transition: opacity 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+      transition:
+        opacity 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        transform 0.22s var(--ease-liquid);
     }
 
-    .nav-whisper button:hover,
-    .nav-whisper button:active {
+    .nav-whisper button:hover {
       opacity: 1;
       color: var(--fg-color);
       border-color: rgba(255, 255, 255, 0.3);
     }
 
+    .nav-whisper button:active {
+      transform: scale(0.94);
+    }
+
     @media (max-width: 600px) {
       header { padding: 22px 22px; }
-      .frame-wrap img { max-width: 88vw; max-height: 48dvh; }
+      .slide-img { max-width: 88vw; max-height: 48dvh; }
       .solitary-stage { gap: 22px; }
     }
   </style>
 </head>
 <body>
+  <!-- SVG Filter สำหรับสร้าง Directional Motion Blur ตามแกนแนวนอน -->
+  <svg width="0" height="0" style="position:fixed;pointer-events:none;" aria-hidden="true">
+    <defs>
+      <filter id="directional-motion-blur" x="-15%" y="-5%" width="130%" height="110%" color-interpolation-filters="sRGB">
+        <feGaussianBlur id="motion-blur-node" in="SourceGraphic" stdDeviation="0 0" />
+      </filter>
+    </defs>
+  </svg>
+
   <div id="ambient-layer"></div>
   <div class="mist-layer"></div>
   <div class="ash-field" id="ash-field"></div>
@@ -385,7 +444,8 @@
     <section class="solitary-stage">
       <div class="frame-wrap" id="touch-area">
         <div class="frame-aura"></div>
-        <img id="hero-img" alt="ustzyix" />
+        <img id="img-slot-0" class="slide-img is-active" alt="ustzyix" />
+        <img id="img-slot-1" class="slide-img" alt="ustzyix" />
       </div>
 
       <div class="meta-bar">
@@ -442,10 +502,18 @@
 
     let entries = [...ENTRIES];
     let currentIndex = 0;
+    let activeSlot = 0;
     let isAudioActive = false;
     let loadedAudioSrc = "";
+    let blurAnimFrame = null;
+    let renderToken = 0;
 
-    const heroImg = document.getElementById("hero-img");
+    const slots = [
+      document.getElementById("img-slot-0"),
+      document.getElementById("img-slot-1")
+    ];
+    const touchArea = document.getElementById("touch-area");
+    const motionBlurNode = document.getElementById("motion-blur-node");
     const captionEl = document.getElementById("photo-caption");
     const swatchBar = document.getElementById("swatch-bar");
     const ambientLayer = document.getElementById("ambient-layer");
@@ -472,6 +540,57 @@
         mote.style.width = `${size}px`;
         mote.style.height = `${size}px`;
         ashField.appendChild(mote);
+      }
+    }
+
+    // ควบคุมระดับ Directional Motion Blur แบบโค้งความเร็วชัตเตอร์ และถอดฟิลเตอร์ออกเมื่อหยุดนิ่งเพื่อความคมชัดสูงสุด
+    function triggerMotionBlur(peakBlur = 17, duration = 640) {
+      if (blurAnimFrame) cancelAnimationFrame(blurAnimFrame);
+      touchArea.style.filter = "url(#directional-motion-blur)";
+      touchArea.classList.add("is-shifting");
+      const startTime = performance.now();
+
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        let intensity;
+        if (progress < 0.22) {
+          intensity = progress / 0.22;
+        } else {
+          const decay = (progress - 0.22) / 0.78;
+          intensity = Math.pow(1 - decay, 2.4);
+        }
+
+        const blurX = (peakBlur * intensity).toFixed(2);
+        const blurY = (peakBlur * 0.07 * intensity).toFixed(2);
+        motionBlurNode.setAttribute("stdDeviation", `${blurX} ${blurY}`);
+
+        if (progress < 1) {
+          blurAnimFrame = requestAnimationFrame(step);
+        } else {
+          motionBlurNode.setAttribute("stdDeviation", "0 0");
+          touchArea.style.filter = "none";
+          touchArea.classList.remove("is-shifting");
+          blurAnimFrame = null;
+        }
+      }
+
+      blurAnimFrame = requestAnimationFrame(step);
+    }
+
+    function setInstantMotionBlur(blurX) {
+      if (blurAnimFrame) {
+        cancelAnimationFrame(blurAnimFrame);
+        blurAnimFrame = null;
+      }
+      const clamped = Math.max(0, Math.min(14, blurX));
+      if (clamped > 0.05) {
+        touchArea.style.filter = "url(#directional-motion-blur)";
+        motionBlurNode.setAttribute("stdDeviation", `${clamped.toFixed(2)} ${(clamped * 0.06).toFixed(2)}`);
+      } else {
+        motionBlurNode.setAttribute("stdDeviation", "0 0");
+        touchArea.style.filter = "none";
       }
     }
 
@@ -685,20 +804,85 @@
       }
     }
 
-    function renderEntry(index) {
+    // เปลี่ยนรูปภาพแบบ Dual-Layer Crossfade + Directional Motion Blur
+    function renderEntry(index, direction = 0) {
       if (!entries.length) return;
+      const token = ++renderToken;
       currentIndex = (index + entries.length) % entries.length;
       const item = entries[currentIndex];
 
-      heroImg.style.opacity = "0.15";
-      heroImg.onload = () => {
-        heroImg.style.opacity = "1";
-        applyAtmosphere(heroImg);
+      const loader = new Image();
+      loader.src = item.src;
+
+      const commitTransition = () => {
+        if (token !== renderToken) return;
+
+        const outgoingImg = slots[activeSlot];
+        const nextSlot = 1 - activeSlot;
+        const incomingImg = slots[nextSlot];
+
+        if (direction === 0) {
+          incomingImg.src = item.src;
+          incomingImg.style.transition = "none";
+          incomingImg.style.opacity = "0";
+          incomingImg.style.transform = "translate3d(0, 12px, 0) scale(0.985)";
+          incomingImg.className = "slide-img is-active";
+
+          void incomingImg.offsetWidth;
+
+          incomingImg.style.transition = "transform 0.9s var(--ease-drift), opacity 0.85s var(--ease-liquid)";
+          incomingImg.style.opacity = "1";
+          incomingImg.style.transform = "translate3d(0, 0, 0) scale(1)";
+
+          activeSlot = nextSlot;
+          captionEl.textContent = item.caption;
+          applyAtmosphere(incomingImg);
+          syncAudio(item);
+          updateNavDisplay();
+          return;
+        }
+
+        const shiftDist = 52;
+        const exitOffset = direction > 0 ? -shiftDist : shiftDist;
+        const enterOffset = direction > 0 ? shiftDist : -shiftDist;
+
+        incomingImg.src = item.src;
+        incomingImg.style.transition = "none";
+        incomingImg.style.opacity = "0";
+        incomingImg.style.transform = `translate3d(${enterOffset}px, 0, 0) scale(1.035)`;
+        incomingImg.className = "slide-img is-active";
+
+        void incomingImg.offsetWidth;
+
+        triggerMotionBlur(17, 640);
+
+        outgoingImg.className = "slide-img is-exiting";
+        outgoingImg.style.transition = "transform 0.62s var(--ease-drift), opacity 0.5s var(--ease-liquid)";
+        outgoingImg.style.opacity = "0";
+        outgoingImg.style.transform = `translate3d(${exitOffset}px, 0, 0) scale(0.96)`;
+
+        incomingImg.style.transition = "transform 0.7s var(--ease-drift), opacity 0.6s var(--ease-liquid)";
+        incomingImg.style.opacity = "1";
+        incomingImg.style.transform = "translate3d(0, 0, 0) scale(1)";
+
+        captionEl.classList.add("is-shifting");
+        swatchBar.classList.add("is-shifting");
+
+        setTimeout(() => {
+          if (token !== renderToken) return;
+          captionEl.textContent = item.caption;
+          captionEl.classList.remove("is-shifting");
+          swatchBar.classList.remove("is-shifting");
+        }, 200);
+
+        activeSlot = nextSlot;
+        applyAtmosphere(incomingImg);
+        syncAudio(item);
+        updateNavDisplay();
       };
-      heroImg.src = item.src;
-      captionEl.textContent = item.caption;
-      syncAudio(item);
-      updateNavDisplay();
+
+      loader.onload = commitTransition;
+      loader.onerror = commitTransition;
     }
 
     musicPill.addEventListener("click", () => {
@@ -745,12 +929,12 @@
       }
     });
 
-    document.getElementById("prev-btn").onclick = () => renderEntry(currentIndex - 1);
-    document.getElementById("next-btn").onclick = () => renderEntry(currentIndex + 1);
+    document.getElementById("prev-btn").onclick = () => renderEntry(currentIndex - 1, -1);
+    document.getElementById("next-btn").onclick = () => renderEntry(currentIndex + 1, 1);
 
     window.addEventListener("keydown", (e) => {
-      if (entries.length > 1 && e.key === "ArrowLeft") renderEntry(currentIndex - 1);
-      if (entries.length > 1 && e.key === "ArrowRight") renderEntry(currentIndex + 1);
+      if (entries.length > 1 && e.key === "ArrowLeft") renderEntry(currentIndex - 1, -1);
+      if (entries.length > 1 && e.key === "ArrowRight") renderEntry(currentIndex + 1, 1);
       if (e.key === " ") {
         e.preventDefault();
         musicPill.click();
@@ -758,16 +942,44 @@
     });
 
     let touchStartX = 0;
-    const touchArea = document.getElementById("touch-area");
-    touchArea.addEventListener("touchstart", e => touchStartX = e.changedTouches[0].screenX, { passive: true });
-    touchArea.addEventListener("touchend", e => {
+    let isDragging = false;
+
+    touchArea.addEventListener("touchstart", (e) => {
       if (entries.length <= 1) return;
+      touchStartX = e.changedTouches[0].screenX;
+      isDragging = true;
+      const currentImg = slots[activeSlot];
+      currentImg.style.transition = "none";
+    }, { passive: true });
+
+    touchArea.addEventListener("touchmove", (e) => {
+      if (!isDragging || entries.length <= 1) return;
+      const deltaX = e.changedTouches[0].screenX - touchStartX;
+      const currentImg = slots[activeSlot];
+      const dampenedX = deltaX * 0.34;
+      const scale = 1 - Math.min(Math.abs(deltaX) / 1400, 0.035);
+
+      currentImg.style.transform = `translate3d(${dampenedX}px, 0, 0) scale(${scale})`;
+      setInstantMotionBlur(Math.abs(deltaX) * 0.075);
+    }, { passive: true });
+
+    touchArea.addEventListener("touchend", (e) => {
+      if (!isDragging || entries.length <= 1) return;
+      isDragging = false;
       const diff = e.changedTouches[0].screenX - touchStartX;
-      if (Math.abs(diff) > 40) renderEntry(diff > 0 ? currentIndex - 1 : currentIndex + 1);
+
+      if (Math.abs(diff) > 38) {
+        renderEntry(diff > 0 ? currentIndex - 1 : currentIndex + 1, diff > 0 ? -1 : 1);
+      } else {
+        const currentImg = slots[activeSlot];
+        currentImg.style.transition = "transform 0.45s var(--ease-liquid)";
+        currentImg.style.transform = "translate3d(0, 0, 0) scale(1)";
+        triggerMotionBlur(5, 280);
+      }
     }, { passive: true });
 
     initAshMotes();
-    renderEntry(0);
+    renderEntry(0, 0);
     syncGitHubAssets();
   </script>
 </body>

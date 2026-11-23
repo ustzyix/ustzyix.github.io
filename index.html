@@ -7,10 +7,8 @@
   <style>
     :root {
       --fg-color: #e4e4e8;
-      --fg-muted: rgba(228, 228, 232, 0.46);
+      --fg-muted: rgba(228, 228, 232, 0.48);
       --fg-whisper: rgba(228, 228, 232, 0.24);
-      --border-color: rgba(228, 228, 232, 0.13);
-      --glass-bg: rgba(10, 10, 13, 0.72);
       --aura-primary: #8c1d18;
       --aura-secondary: #3b1814;
       --px: 0px;
@@ -41,7 +39,7 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       color: var(--fg-color);
-      background-color: #030305;
+      background-color: #020203;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -57,8 +55,8 @@
       inset: 0;
       z-index: -7;
       background:
-        radial-gradient(circle at 50% 35%, rgba(140, 29, 24, 0.40) 0%, transparent 58%),
-        radial-gradient(circle at 50% 80%, rgba(59, 24, 20, 0.32) 0%, #030305 76%);
+        radial-gradient(circle at 50% 38%, rgba(140, 29, 24, 0.44) 0%, transparent 60%),
+        radial-gradient(circle at 50% 82%, rgba(59, 24, 20, 0.34) 0%, #020203 78%);
       transition: background 1.1s ease;
       pointer-events: none;
     }
@@ -69,7 +67,7 @@
       inset: -24%;
       z-index: -6;
       pointer-events: none;
-      opacity: 0.50;
+      opacity: 0.52;
       background:
         radial-gradient(ellipse 62% 46% at 24% 35%, var(--aura-primary) 0%, transparent 72%),
         radial-gradient(ellipse 58% 50% at 76% 68%, var(--aura-secondary) 0%, transparent 74%);
@@ -81,7 +79,7 @@
       inset: -18%;
       z-index: -5;
       pointer-events: none;
-      opacity: 0.28;
+      opacity: 0.30;
       background:
         radial-gradient(ellipse 50% 38% at 72% 32%, var(--aura-primary) 0%, transparent 70%),
         radial-gradient(ellipse 66% 42% at 30% 76%, rgba(205, 210, 225, 0.08) 0%, transparent 75%);
@@ -126,9 +124,9 @@
       pointer-events: none;
       background: radial-gradient(
         circle at 50% 42%,
-        transparent 22%,
-        rgba(3, 3, 5, 0.72) 74%,
-        rgba(1, 1, 2, 0.97) 100%
+        transparent 20%,
+        rgba(2, 2, 3, 0.72) 74%,
+        rgba(0, 0, 1, 0.98) 100%
       );
     }
 
@@ -240,20 +238,25 @@
       touch-action: none;
     }
 
-    /* แสงเรืองรอบกรอบภาพที่เต้นตามจังหวะเพลงเบาๆ */
+    /* แสงออร่ากระจายตัวกว้างหลังรูป ช่วยผสานภาพกับฉากหลังให้เนียน */
     .frame-aura {
       position: absolute;
-      inset: -42px;
+      inset: -72px;
       z-index: -1;
-      background: radial-gradient(circle, var(--aura-primary) 0%, transparent 66%);
-      opacity: calc(0.34 + var(--bass-boost) * 0.22);
+      background: radial-gradient(
+        ellipse 66% 58% at 50% 50%,
+        var(--aura-primary) 0%,
+        var(--aura-secondary) 44%,
+        transparent 74%
+      );
+      opacity: calc(0.46 + var(--bass-boost) * 0.24);
       transform: scale(calc(1 + var(--bass-boost) * 0.06));
       transition: opacity 0.45s ease;
       pointer-events: none;
     }
 
     .frame-wrap.is-shifting .frame-aura {
-      opacity: 0.56;
+      opacity: 0.65;
     }
 
     /* เลเยอร์สลับภาพ (Dual Slot) */
@@ -278,16 +281,18 @@
       z-index: 1;
     }
 
-    /* กรอบรูปสี่เหลี่ยมคมชัดแบบรูปที่ 2 */
+    /* กรอบสี่เหลี่ยมไร้เส้นขอบ เงาฟุ้งละลายกลืนเข้ากับฉากหลังทุกรูป */
     .photo-frame {
       position: relative;
       display: inline-grid;
       place-items: center;
       overflow: hidden;
-      border-radius: 3px;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 28px 75px -15px rgba(0, 0, 0, 0.90);
-      background-color: #060608;
+      border-radius: 2px;
+      border: none;
+      background-color: transparent;
+      box-shadow:
+        0 26px 80px -10px rgba(0, 0, 0, 0.94),
+        0 0 65px -12px var(--aura-primary);
       transform: translate3d(var(--px), var(--py), 0);
       transition: transform 0.25s ease-out;
     }
@@ -343,6 +348,17 @@
       100% { opacity: 0.11; }
     }
 
+    /* เงาละลายขอบสี่เหลี่ยมทั้ง 4 ด้าน ให้ขอบภาพจมกลืนไปกับความมืดโดยไม่เสียทรงสี่เหลี่ยม */
+    .edge-dissolve {
+      grid-area: 1 / 1;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      box-shadow:
+        inset 0 0 22px 6px rgba(2, 2, 3, 0.68),
+        inset 0 0 46px 2px rgba(2, 2, 3, 0.32);
+    }
+
     /* ส่วนควบคุมด้านล่าง */
     .meta-bar {
       width: 100%;
@@ -368,6 +384,7 @@
       letter-spacing: 0.22em;
       color: var(--fg-color);
       opacity: 0.90;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95);
       transition: opacity 0.22s var(--ease-liquid);
     }
 
@@ -375,6 +392,7 @@
       opacity: 0;
     }
 
+    /* ปุ่มเพลงไร้เส้นขอบ กลืนไปกับฉากหลัง */
     .music-pill {
       position: relative;
       overflow: hidden;
@@ -386,27 +404,29 @@
       height: 32px;
       padding: 0 16px;
       border-radius: 999px;
-      background: var(--glass-bg);
-      border: 1px solid var(--border-color);
+      border: none;
+      outline: none;
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
       color: var(--fg-muted);
       font-size: 11px;
       letter-spacing: 0.08em;
       cursor: pointer;
       touch-action: manipulation;
-      transition: border-color 0.22s ease, color 0.22s ease;
+      transition: background-color 0.22s ease, color 0.22s ease;
     }
 
     @media (hover: hover) {
       .music-pill:hover {
         color: var(--fg-color);
-        border-color: rgba(255, 255, 255, 0.26);
+        background: rgba(255, 255, 255, 0.07);
       }
     }
 
     .music-pill.playing,
     .music-pill:active {
       color: var(--fg-color);
-      border-color: rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.065);
     }
 
     .eq-bars {
@@ -465,12 +485,12 @@
       height: 1px;
       width: 100%;
       background: currentColor;
-      opacity: 0.55;
+      opacity: 0.45;
       transform: scaleX(0);
       transform-origin: left;
     }
 
-    /* ปุ่มเปลี่ยนภาพตำแหน่งนิ่งสนิท ไม่ค้างกรอบหลังกดบนมือถือ */
+    /* ปุ่มเปลี่ยนภาพไร้เส้นขอบ กลืนกับพื้นหลังและตำแหน่งนิ่งสนิท */
     .nav-whisper {
       display: flex;
       align-items: center;
@@ -491,21 +511,23 @@
       min-width: 56px;
       text-align: center;
       font-variant-numeric: tabular-nums;
+      opacity: 0.72;
       transition: opacity 0.22s ease;
     }
 
     #counter.is-shifting {
-      opacity: 0.35;
+      opacity: 0.30;
     }
 
     .nav-whisper button {
-      min-width: 86px;
+      min-width: 82px;
       height: 30px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: none;
-      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.025);
+      border: none;
+      outline: none;
       border-radius: 999px;
       color: inherit;
       font: inherit;
@@ -513,23 +535,22 @@
       cursor: pointer;
       padding: 0 14px;
       opacity: 0.78;
-      outline: none;
       touch-action: manipulation;
-      transition: opacity 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+      transition: opacity 0.18s ease, background-color 0.18s ease, color 0.18s ease;
     }
 
     @media (hover: hover) {
       .nav-whisper button:hover {
         opacity: 1;
         color: var(--fg-color);
-        border-color: rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.06);
       }
     }
 
     .nav-whisper button:active {
       opacity: 1;
       color: var(--fg-color);
-      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.06);
     }
 
     @media (max-width: 600px) {
@@ -566,6 +587,7 @@
           <div class="photo-frame">
             <img id="img-0" class="living-photo" decoding="async" alt="ustzyix" />
             <div class="scene-flicker"></div>
+            <div class="edge-dissolve"></div>
           </div>
         </div>
 
@@ -573,6 +595,7 @@
           <div class="photo-frame">
             <img id="img-1" class="living-photo" decoding="async" alt="ustzyix" />
             <div class="scene-flicker"></div>
+            <div class="edge-dissolve"></div>
           </div>
         </div>
       </div>
@@ -956,9 +979,9 @@
         const result = {
           primaryHex: rgbToHex(primary),
           secondaryHex: rgbToHex(secondary),
-          glowPrimary: rgbToHex(primary.map(v => v * 0.56)),
-          glowSecondary: rgbToHex(secondary.map(v => v * 0.46)),
-          abyssBase: rgbToHex(primary.map(v => v * 0.12)),
+          glowPrimary: rgbToHex(primary.map(v => v * 0.62)),
+          glowSecondary: rgbToHex(secondary.map(v => v * 0.50)),
+          abyssBase: rgbToHex(primary.map(v => v * 0.14)),
           tint: {
             r: Math.round(180 + primary[0] * 0.28),
             g: Math.round(180 + primary[1] * 0.28),
@@ -990,8 +1013,8 @@
       document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
 
       ambientLayer.style.background = `
-        radial-gradient(circle at 50% 35%, ${glowPrimary}c8 0%, transparent 58%),
-        radial-gradient(circle at 50% 80%, ${glowSecondary}94 0%, ${abyssBase} 74%, #030305 100%)
+        radial-gradient(circle at 50% 38%, ${glowPrimary}d4 0%, transparent 60%),
+        radial-gradient(circle at 50% 82%, ${glowSecondary}9c 0%, ${abyssBase} 76%, #020203 100%)
       `;
     }
 

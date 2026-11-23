@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ustzyix — archive</title>
+  <title>ustzyix</title>
   <style>
     :root {
-      --fg-color: #f4f4f5;
-      --fg-muted: rgba(244, 244, 245, 0.58);
-      --border-color: rgba(244, 244, 245, 0.16);
-      --glass-bg: rgba(16, 16, 18, 0.35);
+      --fg-color: #e4e4e7;
+      --fg-muted: rgba(228, 228, 231, 0.44);
+      --fg-whisper: rgba(228, 228, 231, 0.22);
+      --border-color: rgba(228, 228, 231, 0.12);
+      --glass-bg: rgba(8, 8, 10, 0.48);
+      --aura-primary: #4a2038;
+      --aura-secondary: #0b2930;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,58 +21,128 @@
       min-height: 100dvh;
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       color: var(--fg-color);
-      background-color: #0b0b0d;
-      transition: color 0.6s ease;
+      background-color: #040406;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      user-select: none;
     }
 
+    /* พื้นหลังหลักที่ปรับเฉดสีตามรูปภาพอัตโนมัติ */
     #ambient-layer {
       position: fixed;
       inset: 0;
+      z-index: -5;
+      background: radial-gradient(circle at 50% 42%, #1a1520 0%, #040406 78%);
+      transition: background 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ชั้นหมอกลอยช้าๆ แบบ Silent Hill */
+    .mist-layer {
+      position: fixed;
+      inset: -25%;
+      z-index: -4;
+      pointer-events: none;
+      opacity: 0.42;
+      background:
+        radial-gradient(ellipse 65% 45% at 28% 42%, var(--aura-primary) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 50% at 74% 62%, var(--aura-secondary) 0%, transparent 72%);
+      filter: blur(60px);
+      animation: mistDrift 24s ease-in-out infinite alternate;
+      transition: background 1.8s ease;
+    }
+
+    @keyframes mistDrift {
+      0% { transform: translate3d(-2.5%, -1.5%, 0) scale(1); }
+      50% { transform: translate3d(2%, 1.2%, 0) scale(1.06); }
+      100% { transform: translate3d(-1.2%, 2.2%, 0) scale(1.02); }
+    }
+
+    /* ละอองเถ้า/ฝุ่นลอยจางๆ แบบ Dark Souls & Silent Hill */
+    .ash-field {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .ash-mote {
+      position: absolute;
+      bottom: -10px;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: var(--fg-color);
+      opacity: 0;
+      animation: ashFloat linear infinite;
+    }
+
+    @keyframes ashFloat {
+      0% {
+        transform: translate3d(0, 0, 0);
+        opacity: 0;
+      }
+      20% {
+        opacity: 0.22;
+      }
+      80% {
+        opacity: 0.14;
+      }
+      100% {
+        transform: translate3d(var(--drift-x, 24px), -105dvh, 0);
+        opacity: 0;
+      }
+    }
+
+    /* ขอบมืดลึกให้รู้สึกโดดเดี่ยวท่ามกลางความว่างเปล่า */
+    .void-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at 50% 44%,
+        transparent 24%,
+        rgba(3, 3, 5, 0.72) 74%,
+        rgba(2, 2, 3, 0.96) 100%
+      );
+    }
+
+    /* ผิวสัมผัสเกรนฟิล์มบางเบา */
+    .film-grain {
+      position: fixed;
+      inset: 0;
       z-index: -1;
-      background: radial-gradient(circle at 50% 38%, #1d1922 0%, #0b0b0d 85%);
-      transition: background 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 26px;
-      font-size: 13px;
-      letter-spacing: 0.05em;
+      padding: 26px 32px;
+      font-size: 12px;
     }
 
     .brand {
-      font-weight: 600;
-      letter-spacing: 0.09em;
+      font-weight: 500;
+      letter-spacing: 0.28em;
       text-transform: lowercase;
+      color: var(--fg-muted);
+      transition: color 0.8s ease;
     }
 
-    .nav-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    button.pill {
-      background: var(--glass-bg);
-      color: var(--fg-color);
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-
-    button.pill:hover, button.pill.active {
-      border-color: var(--fg-color);
+    .memory-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--fg-whisper);
+      transition: color 0.8s ease;
     }
 
     main {
@@ -78,80 +151,101 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 10px 22px 32px;
+      padding: 0 24px 48px;
       width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
     }
 
-    /* Focus View */
-    .focus-stage {
+    .solitary-stage {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      gap: 28px;
       width: 100%;
-      gap: 18px;
+      animation: fadeSlow 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes fadeSlow {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .frame-wrap {
       position: relative;
-      max-width: 100%;
-      max-height: 62dvh;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
+    /* แสงเรืองจางๆ รอบภาพเหมือนแสงไฟในห้องเซฟ */
+    .frame-aura {
+      position: absolute;
+      inset: -20px;
+      z-index: -1;
+      border-radius: 14px;
+      background: radial-gradient(circle, var(--aura-primary) 0%, transparent 72%);
+      opacity: 0.3;
+      filter: blur(30px);
+      transition: background 1.6s ease, opacity 1.6s ease;
+    }
+
     .frame-wrap img {
-      max-width: min(90vw, 760px);
-      max-height: 60dvh;
+      max-width: min(86vw, 660px);
+      max-height: 54dvh;
       width: auto;
       height: auto;
       object-fit: contain;
-      border-radius: 6px;
-      box-shadow: 0 28px 70px -15px rgba(0, 0, 0, 0.6);
-      transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      user-select: none;
+      border-radius: 3px;
+      border: 1px solid var(--border-color);
+      box-shadow:
+        0 35px 95px -15px rgba(0, 0, 0, 0.9),
+        0 0 1px 1px rgba(255, 255, 255, 0.04);
+      transition: opacity 0.75s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .meta-bar {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
       text-align: center;
-      width: 100%;
     }
 
     .caption {
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.22em;
+      color: var(--fg-color);
+      opacity: 0.88;
+      transition: color 0.8s ease;
     }
 
-    /* Minimal IG-style Music Pill */
+    /* แถบเล่นเพลงมินิมอล */
     .music-pill {
       position: relative;
       overflow: hidden;
       display: inline-flex;
       align-items: center;
-      gap: 9px;
-      max-width: min(86vw, 340px);
-      padding: 6px 14px;
+      gap: 10px;
+      max-width: min(84vw, 310px);
+      padding: 7px 16px;
       border-radius: 999px;
       background: var(--glass-bg);
       border: 1px solid var(--border-color);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      color: var(--fg-color);
-      font-size: 11.5px;
-      letter-spacing: 0.02em;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      color: var(--fg-muted);
+      font-size: 11px;
+      letter-spacing: 0.08em;
       cursor: pointer;
-      transition: border-color 0.25s ease, transform 0.2s ease;
+      transition: border-color 0.4s ease, color 0.4s ease, transform 0.25s ease;
     }
 
-    .music-pill:hover {
-      border-color: var(--fg-color);
+    .music-pill:hover,
+    .music-pill.playing {
+      color: var(--fg-color);
+      border-color: rgba(255, 255, 255, 0.28);
     }
 
     .music-pill:active {
@@ -162,44 +256,45 @@
       display: inline-flex;
       align-items: flex-end;
       gap: 2px;
-      height: 11px;
-      width: 11px;
+      height: 10px;
+      width: 10px;
       flex-shrink: 0;
     }
 
     .eq-bars i {
       display: block;
-      width: 2px;
-      height: 4px;
+      width: 1.5px;
+      height: 3px;
       background-color: currentColor;
-      border-radius: 1px;
-      transition: height 0.2s ease;
+      transition: height 0.25s ease;
     }
 
-    .eq-bars i:nth-child(2) { height: 9px; }
-    .eq-bars i:nth-child(3) { height: 6px; }
+    .eq-bars i:nth-child(2) { height: 8px; }
+    .eq-bars i:nth-child(3) { height: 5px; }
 
     .music-pill.playing .eq-bars i {
-      animation: eqBounce 0.85s ease-in-out infinite alternate;
+      animation: eqBounce 1.1s ease-in-out infinite alternate;
     }
-    .music-pill.playing .eq-bars i:nth-child(2) { animation-delay: 0.2s; }
-    .music-pill.playing .eq-bars i:nth-child(3) { animation-delay: 0.4s; }
+    .music-pill.playing .eq-bars i:nth-child(2) { animation-delay: 0.25s; }
+    .music-pill.playing .eq-bars i:nth-child(3) { animation-delay: 0.5s; }
 
     @keyframes eqBounce {
-      0% { height: 3px; }
-      100% { height: 11px; }
+      0% { height: 2px; }
+      100% { height: 10px; }
     }
 
     .music-title {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      opacity: 0.92;
     }
 
     .music-state {
-      font-size: 10px;
-      color: var(--fg-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.65;
       flex-shrink: 0;
     }
 
@@ -207,178 +302,142 @@
       position: absolute;
       left: 0;
       bottom: 0;
-      height: 1.5px;
+      height: 1px;
       width: 0%;
       background: currentColor;
-      opacity: 0.65;
-      transition: width 0.2s linear;
+      opacity: 0.55;
+      transition: width 0.25s linear;
     }
 
     .swatches {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 11px;
-      color: var(--fg-muted);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--fg-whisper);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      margin-top: 2px;
     }
 
     .swatch-dot {
-      width: 12px;
-      height: 12px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       border: 1px solid var(--border-color);
       cursor: pointer;
-      transition: transform 0.2s ease;
+      opacity: 0.8;
+      transition: transform 0.25s ease, opacity 0.25s ease;
     }
 
-    .swatch-dot:hover { transform: scale(1.25); }
+    .swatch-dot:hover {
+      transform: scale(1.3);
+      opacity: 1;
+    }
 
-    .controls {
-      display: flex;
+    /* ปุ่มเปลี่ยนภาพซ่อนอัตโนมัติเมื่อมีแค่ 1 รูป และแสดงแบบจางๆ หากเพิ่มรูปในอนาคต */
+    .nav-whisper {
+      display: none;
       align-items: center;
-      gap: 16px;
-      margin-top: 4px;
-      font-size: 12px;
+      gap: 18px;
+      margin-top: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.16em;
       color: var(--fg-muted);
     }
 
-    /* Archive Grid View */
-    .grid-stage {
-      display: none;
-      width: 100%;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      padding-top: 8px;
+    .nav-whisper.active {
+      display: flex;
     }
 
-    .grid-stage.visible { display: grid; }
-    .focus-stage.hidden { display: none; }
-
-    .grid-item {
-      aspect-ratio: 4 / 5;
-      overflow: hidden;
-      border-radius: 6px;
+    .nav-whisper button {
+      background: none;
+      border: none;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
       cursor: pointer;
-      position: relative;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      opacity: 0.65;
+      transition: opacity 0.25s ease;
     }
 
-    .grid-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    .grid-item:hover img { transform: scale(1.04); }
-
-    .grid-item span {
-      position: absolute;
-      left: 10px;
-      bottom: 10px;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      backdrop-filter: blur(6px);
+    .nav-whisper button:hover {
+      opacity: 1;
     }
 
     @media (max-width: 600px) {
-      header { padding: 16px 18px; }
-      .grid-stage { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      header { padding: 22px 22px; }
+      .frame-wrap img { max-width: 88vw; max-height: 50dvh; }
+      .solitary-stage { gap: 24px; }
     }
   </style>
 </head>
 <body>
   <div id="ambient-layer"></div>
+  <div class="mist-layer"></div>
+  <div class="ash-field" id="ash-field"></div>
+  <div class="void-vignette"></div>
+  <div class="film-grain"></div>
 
   <header>
     <div class="brand">ustzyix</div>
-    <div class="nav-actions">
-      <button class="pill active" id="btn-focus">Focus</button>
-      <button class="pill" id="btn-grid">Archive</button>
-    </div>
+    <div class="memory-tag">stillness</div>
   </header>
 
   <main>
-    <section class="focus-stage" id="focus-stage">
+    <section class="solitary-stage">
       <div class="frame-wrap" id="touch-area">
-        <img id="hero-img" alt="ustzyix photograph" />
+        <div class="frame-aura"></div>
+        <img id="hero-img" alt="ustzyix" />
       </div>
+
       <div class="meta-bar">
-        <div class="caption" id="photo-caption">Magenta — 01</div>
+        <div class="caption" id="photo-caption">Magenta — 02</div>
 
         <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio">
           <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
           <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
-          <span class="music-state" id="music-state">Play</span>
+          <span class="music-state" id="music-state">play</span>
           <span class="music-progress" id="music-progress"></span>
         </button>
 
         <div class="swatches" id="swatch-bar"></div>
-        <div class="controls">
-          <button class="pill" id="prev-btn">← Prev</button>
-          <span id="counter">1 / 3</span>
-          <button class="pill" id="next-btn">Next →</button>
+
+        <div class="nav-whisper" id="nav-whisper">
+          <button id="prev-btn" type="button">prev</button>
+          <span id="counter">1 / 1</span>
+          <button id="next-btn" type="button">next</button>
         </div>
       </div>
     </section>
-
-    <section class="grid-stage" id="grid-stage"></section>
   </main>
 
   <audio id="bg-audio" loop preload="auto"></audio>
 
   <script>
-    const REPO_CONFIG = {
-      owner: "ustzyix",
-      repo: "ustzyix.github.io",
-      folder: "images",
-      audioFolder: "audio"
-    };
-
-    const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
-    const DEFAULT_SONG = "TV Girl · Loving Machine";
-
-    const CURATED_PHOTOS = [
+    // ตั้งค่าภาพเดียวตามต้องการ (สามารถเพิ่มหรือเปลี่ยนรูปใหม่ในอนาคตได้ทุกโทนสี)
+    const ENTRIES = [
       {
-        file: "IMG_5639 (1).jpg",
-        src: "./images/IMG_5639%20(1).jpg",
-        caption: "Magenta — 01",
-        song: DEFAULT_SONG,
-        audio: DEFAULT_AUDIO
-      },
-      {
-        file: "IMG_5738 (1).jpg",
         src: "./images/IMG_5738%20(1).jpg",
         caption: "Magenta — 02",
-        song: DEFAULT_SONG,
-        audio: DEFAULT_AUDIO
-      },
-      {
-        file: "IMG_5836 (1).jpg",
-        src: "./images/IMG_5836%20(1).jpg",
-        caption: "Magenta — 03",
-        song: DEFAULT_SONG,
-        audio: DEFAULT_AUDIO
+        song: "TV Girl · Loving Machine",
+        audio: "./audio/Loving%20Machine.mp3"
       }
     ];
 
-    let photos = [...CURATED_PHOTOS];
     let currentIndex = 0;
     let isAudioActive = false;
     let loadedAudioSrc = "";
 
     const heroImg = document.getElementById("hero-img");
     const captionEl = document.getElementById("photo-caption");
-    const counterEl = document.getElementById("counter");
     const swatchBar = document.getElementById("swatch-bar");
     const ambientLayer = document.getElementById("ambient-layer");
-    const gridStage = document.getElementById("grid-stage");
-    const focusStage = document.getElementById("focus-stage");
+    const navWhisper = document.getElementById("nav-whisper");
+    const counterEl = document.getElementById("counter");
+    const ashField = document.getElementById("ash-field");
 
     const bgAudio = document.getElementById("bg-audio");
     const musicPill = document.getElementById("music-pill");
@@ -386,184 +445,59 @@
     const musicStateEl = document.getElementById("music-state");
     const musicProgressEl = document.getElementById("music-progress");
 
-    function formatNewCaption(filename) {
-      return filename
-        .replace(/\.[^/.]+$/, "")
-        .replace(/\(\d+\)/g, "")
-        .replace(/^IMG[-_]?/i, "")
-        .replace(/[-_]/g, " ")
-        .trim() || "Untitled";
-    }
-
-    // ตรวจจับรูปใหม่ใน images/ และไฟล์เสียงใหม่ใน audio/ อัตโนมัติ
-    async function syncGitHubAssets() {
-      try {
-        const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
-        const audioApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.audioFolder}`;
-
-        const [imgRes, audioRes] = await Promise.all([
-          fetch(imgApi),
-          fetch(audioApi).catch(() => null)
-        ]);
-
-        const audioMap = new Map();
-        if (audioRes && audioRes.ok) {
-          const audioFiles = await audioRes.json();
-          const validAudio = /\.(mp3|m4a|ogg|wav|aac)$/i;
-          audioFiles
-            .filter(f => f.type === "file" && validAudio.test(f.name))
-            .forEach(f => {
-              const baseName = f.name.replace(/\.[^/.]+$/, "").toLowerCase();
-              audioMap.set(baseName, `./${REPO_CONFIG.audioFolder}/${encodeURIComponent(f.name)}`);
-            });
-        }
-
-        if (imgRes && imgRes.ok) {
-          const files = await imgRes.json();
-          const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
-          const existingNames = new Set(photos.map(p => p.file));
-
-          const extraPhotos = files
-            .filter(f => f.type === "file" && validExt.test(f.name) && !existingNames.has(f.name))
-            .map(f => {
-              const baseName = f.name.replace(/\.[^/.]+$/, "").toLowerCase();
-              const title = formatNewCaption(f.name);
-              return {
-                file: f.name,
-                src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
-                caption: title,
-                song: audioMap.has(baseName) ? title : DEFAULT_SONG,
-                audio: audioMap.get(baseName) || DEFAULT_AUDIO
-              };
-            });
-
-          if (extraPhotos.length > 0) {
-            photos = [...photos, ...extraPhotos];
-            renderGrid();
-            counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
-          }
-        }
-      } catch (_) {}
-    }
-
-    function updateAudioForItem(item) {
-      musicTitleEl.textContent = item.song || DEFAULT_SONG;
-
-      if (!item.audio) {
-        bgAudio.pause();
-        loadedAudioSrc = "";
-        musicPill.classList.remove("playing");
-        musicProgressEl.style.width = "0%";
-        musicStateEl.textContent = "—";
-        return;
-      }
-
-      // หากรูปถัดไปใช้เพลงเดียวกัน ให้เล่นต่อเนื่องทันทีโดยไม่หยุดและไม่เริ่มใหม่
-      if (loadedAudioSrc === item.audio) {
-        if (isAudioActive && bgAudio.paused) {
-          bgAudio.play().catch(() => {});
-        }
-        musicStateEl.textContent = !bgAudio.paused ? "Pause" : "Play";
-        return;
-      }
-
-      loadedAudioSrc = item.audio;
-      bgAudio.src = item.audio;
-      musicProgressEl.style.width = "0%";
-
-      if (isAudioActive) {
-        bgAudio.play()
-          .then(() => {
-            musicPill.classList.add("playing");
-            musicStateEl.textContent = "Pause";
-          })
-          .catch(() => {
-            musicPill.classList.remove("playing");
-            musicStateEl.textContent = "Play";
-          });
-      } else {
-        musicPill.classList.remove("playing");
-        musicStateEl.textContent = "Play";
+    // สร้างละอองฝุ่น/เถ้าบางเบาในอากาศ
+    function initAshMotes() {
+      const count = 14;
+      for (let i = 0; i < count; i++) {
+        const mote = document.createElement("span");
+        mote.className = "ash-mote";
+        mote.style.left = `${Math.random() * 100}%`;
+        mote.style.animationDuration = `${16 + Math.random() * 18}s`;
+        mote.style.animationDelay = `${-Math.random() * 20}s`;
+        mote.style.setProperty("--drift-x", `${(Math.random() - 0.5) * 60}px`);
+        const size = Math.random() > 0.65 ? 2 : 1.5;
+        mote.style.width = `${size}px`;
+        mote.style.height = `${size}px`;
+        ashField.appendChild(mote);
       }
     }
 
-    musicPill.addEventListener("click", () => {
-      const item = photos[currentIndex];
-      if (!item || !item.audio) return;
-
-      if (bgAudio.paused) {
-        isAudioActive = true;
-        if (!loadedAudioSrc) {
-          loadedAudioSrc = item.audio;
-          bgAudio.src = item.audio;
-        }
-        bgAudio.play()
-          .then(() => {
-            musicPill.classList.add("playing");
-            musicStateEl.textContent = "Pause";
-          })
-          .catch(() => {
-            isAudioActive = false;
-            musicPill.classList.remove("playing");
-            musicStateEl.textContent = "Retry";
-          });
-      } else {
-        isAudioActive = false;
-        bgAudio.pause();
-        musicPill.classList.remove("playing");
-        musicStateEl.textContent = "Play";
-      }
-    });
-
-    bgAudio.addEventListener("play", () => {
-      musicPill.classList.add("playing");
-      musicStateEl.textContent = "Pause";
-    });
-
-    bgAudio.addEventListener("pause", () => {
-      musicPill.classList.remove("playing");
-      musicStateEl.textContent = "Play";
-    });
-
-    bgAudio.addEventListener("timeupdate", () => {
-      if (bgAudio.duration) {
-        const pct = (bgAudio.currentTime / bgAudio.duration) * 100;
-        musicProgressEl.style.width = `${pct}%`;
-      }
-    });
-
-    function extractDualPalette(imgElement) {
+    // สกัดสีจากภาพต้นฉบับ รองรับทุกธีมสี (ภาพมืด ภาพหมอก ภาพขาวดำ หรือภาพสีสด)
+    function extractUniversalPalette(imgElement) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      const size = 56;
+      const size = 64;
       canvas.width = size;
       canvas.height = size;
       ctx.drawImage(imgElement, 0, 0, size, size);
 
       const data = ctx.getImageData(0, 0, size, size).data;
-      let primary = [180, 90, 140];
-      let secondary = [22, 68, 76];
+      let primary = [120, 70, 100];
+      let secondary = [18, 48, 56];
+      let rSum = 0, gSum = 0, bSum = 0, total = 0;
       let bestPrimaryScore = -1;
       let bestSecondaryScore = -1;
 
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i], g = data[i + 1], b = data[i + 2];
+        rSum += r; gSum += g; bSum += b; total++;
+
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         const sat = max === 0 ? 0 : (max - min) / max;
         const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-        if (lum > 0.25 && lum < 0.88) {
-          const pScore = sat * 1.4 + lum * 0.5;
+        if (lum > 0.16 && lum < 0.92) {
+          const pScore = sat * 1.5 + lum * 0.45;
           if (pScore > bestPrimaryScore) {
             bestPrimaryScore = pScore;
             primary = [r, g, b];
           }
         }
 
-        const colorDist = Math.abs(r - primary[0]) + Math.abs(g - primary[1]) + Math.abs(b - primary[2]);
-        if (lum > 0.12 && lum < 0.65 && colorDist > 95) {
-          const sScore = sat + (colorDist / 765);
+        const dist = Math.abs(r - primary[0]) + Math.abs(g - primary[1]) + Math.abs(b - primary[2]);
+        if (lum > 0.08 && lum < 0.72 && dist > 60) {
+          const sScore = sat * 1.1 + (dist / 765);
           if (sScore > bestSecondaryScore) {
             bestSecondaryScore = sScore;
             secondary = [r, g, b];
@@ -571,31 +505,37 @@
         }
       }
 
-      return { primary, secondary };
+      const avg = [rSum / total, gSum / total, bSum / total];
+      if (bestPrimaryScore < 0.22) primary = avg;
+      if (bestSecondaryScore < 0.18) secondary = avg.map(v => v * 0.55);
+
+      return { primary, secondary, avg };
     }
 
     function rgbToHex([r, g, b]) {
-      return "#" + [r, g, b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+      return "#" + [r, g, b]
+        .map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0"))
+        .join("");
     }
 
-    function applyAdaptiveTheme(imgElement) {
+    function applyAtmosphere(imgElement) {
       try {
-        const { primary, secondary } = extractDualPalette(imgElement);
+        const { primary, secondary } = extractUniversalPalette(imgElement);
         const primaryHex = rgbToHex(primary);
         const secondaryHex = rgbToHex(secondary);
-        const deepBaseHex = rgbToHex(secondary.map(v => v * 0.28));
+
+        // ปรับระดับแสงพื้นหลังให้ยังคงอารมณ์เหงา ลุ่มลึก ไม่ว่าจะใส่ภาพโทนไหน
+        const mutedPrimary = rgbToHex(primary.map(v => v * 0.56));
+        const mutedSecondary = rgbToHex(secondary.map(v => v * 0.5));
+        const abyssBase = rgbToHex(secondary.map(v => v * 0.14));
+
+        document.documentElement.style.setProperty("--aura-primary", primaryHex);
+        document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
 
         ambientLayer.style.background = `
-          radial-gradient(circle at 50% 30%, ${primaryHex}b8 0%, transparent 62%),
-          radial-gradient(circle at 20% 75%, ${secondaryHex}aa 0%, ${deepBaseHex} 78%, #09090b 100%)
+          radial-gradient(circle at 50% 38%, ${mutedPrimary}cc 0%, transparent 58%),
+          radial-gradient(circle at 25% 75%, ${mutedSecondary}b3 0%, ${abyssBase} 74%, #040406 100%)
         `;
-
-        const lum = (0.299 * primary[0] + 0.587 * primary[1] + 0.114 * primary[2]) / 255;
-        const isBright = lum > 0.68;
-        document.documentElement.style.setProperty("--fg-color", isBright ? "#121214" : "#f4f4f5");
-        document.documentElement.style.setProperty("--fg-muted", isBright ? "rgba(18,18,20,0.62)" : "rgba(244,244,245,0.58)");
-        document.documentElement.style.setProperty("--border-color", isBright ? "rgba(18,18,20,0.2)" : "rgba(244,244,245,0.16)");
-        document.documentElement.style.setProperty("--glass-bg", isBright ? "rgba(255,255,255,0.35)" : "rgba(16,16,18,0.35)");
 
         swatchBar.innerHTML = `
           <span class="swatch-dot" style="background:${primaryHex}" title="Copy ${primaryHex}" onclick="navigator.clipboard?.writeText('${primaryHex}')"></span>
@@ -607,67 +547,115 @@
       } catch (_) {}
     }
 
-    function showPhoto(index) {
-      if (!photos.length) return;
-      currentIndex = (index + photos.length) % photos.length;
-      const item = photos[currentIndex];
+    function syncAudio(item) {
+      musicTitleEl.textContent = item.song || "ambient";
 
-      heroImg.style.opacity = "0.2";
+      if (!item.audio) {
+        bgAudio.pause();
+        loadedAudioSrc = "";
+        musicPill.classList.remove("playing");
+        musicProgressEl.style.width = "0%";
+        musicStateEl.textContent = "—";
+        return;
+      }
+
+      if (loadedAudioSrc === item.audio) {
+        if (isAudioActive && bgAudio.paused) bgAudio.play().catch(() => {});
+        musicStateEl.textContent = !bgAudio.paused ? "pause" : "play";
+        return;
+      }
+
+      loadedAudioSrc = item.audio;
+      bgAudio.src = item.audio;
+      musicProgressEl.style.width = "0%";
+
+      if (isAudioActive) {
+        bgAudio.play()
+          .then(() => {
+            musicPill.classList.add("playing");
+            musicStateEl.textContent = "pause";
+          })
+          .catch(() => {
+            musicPill.classList.remove("playing");
+            musicStateEl.textContent = "play";
+          });
+      } else {
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "play";
+      }
+    }
+
+    function renderEntry(index) {
+      currentIndex = (index + ENTRIES.length) % ENTRIES.length;
+      const item = ENTRIES[currentIndex];
+
+      heroImg.style.opacity = "0";
       heroImg.onload = () => {
         heroImg.style.opacity = "1";
-        applyAdaptiveTheme(heroImg);
+        applyAtmosphere(heroImg);
       };
       heroImg.src = item.src;
       captionEl.textContent = item.caption;
-      counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
-      updateAudioForItem(item);
+      syncAudio(item);
+
+      if (ENTRIES.length > 1) {
+        navWhisper.classList.add("active");
+        counterEl.textContent = `${currentIndex + 1} / ${ENTRIES.length}`;
+      } else {
+        navWhisper.classList.remove("active");
+      }
     }
 
-    function renderGrid() {
-      gridStage.innerHTML = "";
-      photos.forEach((item, idx) => {
-        const card = document.createElement("div");
-        card.className = "grid-item";
+    musicPill.addEventListener("click", () => {
+      const item = ENTRIES[currentIndex];
+      if (!item || !item.audio) return;
 
-        const img = document.createElement("img");
-        img.src = item.src;
-        img.alt = item.caption;
-        img.loading = "lazy";
+      if (bgAudio.paused) {
+        isAudioActive = true;
+        if (!loadedAudioSrc) {
+          loadedAudioSrc = item.audio;
+          bgAudio.src = item.audio;
+        }
+        bgAudio.play()
+          .then(() => {
+            musicPill.classList.add("playing");
+            musicStateEl.textContent = "pause";
+          })
+          .catch(() => {
+            isAudioActive = false;
+            musicPill.classList.remove("playing");
+            musicStateEl.textContent = "retry";
+          });
+      } else {
+        isAudioActive = false;
+        bgAudio.pause();
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "play";
+      }
+    });
 
-        const label = document.createElement("span");
-        label.textContent = item.caption;
+    bgAudio.addEventListener("play", () => {
+      musicPill.classList.add("playing");
+      musicStateEl.textContent = "pause";
+    });
 
-        card.appendChild(img);
-        card.appendChild(label);
+    bgAudio.addEventListener("pause", () => {
+      musicPill.classList.remove("playing");
+      musicStateEl.textContent = "play";
+    });
 
-        card.addEventListener("mouseenter", () => {
-          if (img.complete) applyAdaptiveTheme(img);
-        });
-        card.addEventListener("click", () => {
-          setView("focus");
-          showPhoto(idx);
-        });
+    bgAudio.addEventListener("timeupdate", () => {
+      if (bgAudio.duration) {
+        musicProgressEl.style.width = `${(bgAudio.currentTime / bgAudio.duration) * 100}%`;
+      }
+    });
 
-        gridStage.appendChild(card);
-      });
-    }
-
-    function setView(mode) {
-      const isGrid = mode === "grid";
-      focusStage.classList.toggle("hidden", isGrid);
-      gridStage.classList.toggle("visible", isGrid);
-      document.getElementById("btn-focus").classList.toggle("active", !isGrid);
-      document.getElementById("btn-grid").classList.toggle("active", isGrid);
-    }
-
-    document.getElementById("prev-btn").onclick = () => showPhoto(currentIndex - 1);
-    document.getElementById("next-btn").onclick = () => showPhoto(currentIndex + 1);
-    document.getElementById("btn-focus").onclick = () => setView("focus");
-    document.getElementById("btn-grid").onclick = () => setView("grid");
+    document.getElementById("prev-btn").onclick = () => renderEntry(currentIndex - 1);
+    document.getElementById("next-btn").onclick = () => renderEntry(currentIndex + 1);
 
     window.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowLeft") showPhoto(currentIndex - 1);
-      if (e.key === "ArrowRight") showPhoto(currentIndex + 1);
+      if (ENTRIES.length > 1 && e.key === "ArrowLeft") renderEntry(currentIndex - 1);
+      if (ENTRIES.length > 1 && e.key === "ArrowRight") renderEntry(currentIndex + 1);
       if (e.key === " ") {
         e.preventDefault();
         musicPill.click();
@@ -678,13 +666,13 @@
     const touchArea = document.getElementById("touch-area");
     touchArea.addEventListener("touchstart", e => touchStartX = e.changedTouches[0].screenX, { passive: true });
     touchArea.addEventListener("touchend", e => {
+      if (ENTRIES.length <= 1) return;
       const diff = e.changedTouches[0].screenX - touchStartX;
-      if (Math.abs(diff) > 40) showPhoto(diff > 0 ? currentIndex - 1 : currentIndex + 1);
+      if (Math.abs(diff) > 45) renderEntry(diff > 0 ? currentIndex - 1 : currentIndex + 1);
     }, { passive: true });
 
-    renderGrid();
-    showPhoto(0);
-    syncGitHubAssets();
+    initAshMotes();
+    renderEntry(0);
   </script>
 </body>
 </html>

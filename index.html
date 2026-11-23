@@ -11,8 +11,8 @@
       --fg-whisper: rgba(228, 228, 231, 0.22);
       --border-color: rgba(228, 228, 231, 0.12);
       --glass-bg: rgba(8, 8, 10, 0.48);
-      --aura-primary: #4a2038;
-      --aura-secondary: #0b2930;
+      --aura-primary: #6b1d1d;
+      --aura-secondary: #1e293b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,7 +34,7 @@
       position: fixed;
       inset: 0;
       z-index: -5;
-      background: radial-gradient(circle at 50% 42%, #1a1520 0%, #040406 78%);
+      background: radial-gradient(circle at 50% 42%, #241111 0%, #040406 78%);
       transition: background 1.8s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -394,7 +394,7 @@
       </div>
 
       <div class="meta-bar">
-        <div class="caption" id="photo-caption">Magenta — 02</div>
+        <div class="caption" id="photo-caption">Crimson — 01</div>
 
         <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio">
           <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -420,8 +420,8 @@
     // ตั้งค่าภาพเดียวตามต้องการ (สามารถเพิ่มหรือเปลี่ยนรูปใหม่ในอนาคตได้ทุกโทนสี)
     const ENTRIES = [
       {
-        src: "./images/IMG_5738%20(1).jpg",
-        caption: "Magenta — 02",
+        src: "./images/IMG_5755%20(2).jpg",
+        caption: "Crimson — 01",
         song: "TV Girl · Loving Machine",
         audio: "./audio/Loving%20Machine.mp3"
       }
@@ -472,8 +472,8 @@
       ctx.drawImage(imgElement, 0, 0, size, size);
 
       const data = ctx.getImageData(0, 0, size, size).data;
-      let primary = [120, 70, 100];
-      let secondary = [18, 48, 56];
+      let primary = [180, 40, 35];
+      let secondary = [45, 65, 95];
       let rSum = 0, gSum = 0, bSum = 0, total = 0;
       let bestPrimaryScore = -1;
       let bestSecondaryScore = -1;

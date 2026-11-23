@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ustzyix — archive</title>
+  <script src="https://w.soundcloud.com/player/api.js"></script>
   <style>
     :root {
       --fg-color: #f4f4f5;
@@ -90,13 +91,13 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      gap: 20px;
+      gap: 18px;
     }
 
     .frame-wrap {
       position: relative;
       max-width: 100%;
-      max-height: 68dvh;
+      max-height: 64dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -104,7 +105,7 @@
 
     .frame-wrap img {
       max-width: min(90vw, 760px);
-      max-height: 65dvh;
+      max-height: 62dvh;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -120,12 +121,98 @@
       align-items: center;
       gap: 10px;
       text-align: center;
+      width: 100%;
     }
 
     .caption {
       font-size: 14px;
       font-weight: 500;
       letter-spacing: 0.04em;
+    }
+
+    /* Minimal IG-style SoundCloud Pill */
+    .music-pill {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      max-width: min(86vw, 340px);
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--glass-bg);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--fg-color);
+      font-size: 11.5px;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: border-color 0.25s ease, transform 0.2s ease;
+    }
+
+    .music-pill:hover {
+      border-color: var(--fg-color);
+    }
+
+    .music-pill:active {
+      transform: scale(0.98);
+    }
+
+    .eq-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 11px;
+      width: 11px;
+      flex-shrink: 0;
+    }
+
+    .eq-bars i {
+      display: block;
+      width: 2px;
+      height: 4px;
+      background-color: currentColor;
+      border-radius: 1px;
+      transition: height 0.2s ease;
+    }
+
+    .eq-bars i:nth-child(2) { height: 9px; }
+    .eq-bars i:nth-child(3) { height: 6px; }
+
+    .music-pill.playing .eq-bars i {
+      animation: eqBounce 0.85s ease-in-out infinite alternate;
+    }
+    .music-pill.playing .eq-bars i:nth-child(2) { animation-delay: 0.2s; }
+    .music-pill.playing .eq-bars i:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes eqBounce {
+      0% { height: 3px; }
+      100% { height: 11px; }
+    }
+
+    .music-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.92;
+    }
+
+    .music-state {
+      font-size: 10px;
+      color: var(--fg-muted);
+      flex-shrink: 0;
+    }
+
+    .music-progress {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 1.5px;
+      width: 0%;
+      background: currentColor;
+      opacity: 0.65;
+      transition: width 0.2s linear;
     }
 
     .swatches {
@@ -200,6 +287,18 @@
       backdrop-filter: blur(6px);
     }
 
+    /* ซ่อนตัวเล่น SoundCloud มาตรฐานไว้เบื้องหลัง */
+    #sc-widget {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      bottom: 0;
+      right: 0;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     @media (max-width: 600px) {
       header { padding: 16px 18px; }
       .grid-stage { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -224,6 +323,14 @@
       </div>
       <div class="meta-bar">
         <div class="caption" id="photo-caption">Magenta — 01</div>
+
+        <button class="music-pill" id="music-pill" type="button" aria-label="Toggle SoundCloud audio">
+          <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
+          <span class="music-state" id="music-state">Play</span>
+          <span class="music-progress" id="music-progress"></span>
+        </button>
+
         <div class="swatches" id="swatch-bar"></div>
         <div class="controls">
           <button class="pill" id="prev-btn">← Prev</button>
@@ -236,34 +343,52 @@
     <section class="grid-stage" id="grid-stage"></section>
   </main>
 
+  <iframe id="sc-widget" allow="autoplay"></iframe>
+
   <script>
+    const hostOwner = window.location.hostname.endsWith(".github.io")
+      ? window.location.hostname.split(".")[0]
+      : "NeiAkawaii";
+    const pathRepo = window.location.pathname.split("/").filter(Boolean)[0];
+
     const REPO_CONFIG = {
-      owner: "NeiAkawaii",
-      repo: "ustzyix-gallery",
+      owner: hostOwner,
+      repo: pathRepo || `${hostOwner}.github.io`,
       folder: "images"
     };
 
-    // รายการรูปภาพเริ่มต้นทั้ง 3 ไฟล์ตามที่อัปโหลดไว้ในโฟลเดอร์ images/
+    // รายการรูปภาพเริ่มต้นทั้ง 3 ไฟล์พร้อมเพลงประกอบจาก SoundCloud
     const CURATED_PHOTOS = [
       {
         file: "IMG_5639 (1).jpg",
         src: "./images/IMG_5639%20(1).jpg",
-        caption: "Magenta — 01"
+        caption: "Magenta — 01",
+        song: "TV Girl · Loving Machine",
+        soundcloud: "https://on.soundcloud.com/YzZ6HQv5wLYDT1wii1"
       },
       {
         file: "IMG_5738 (1).jpg",
         src: "./images/IMG_5738%20(1).jpg",
-        caption: "Magenta — 02"
+        caption: "Magenta — 02",
+        song: "TV Girl · Loving Machine",
+        soundcloud: "https://on.soundcloud.com/YzZ6HQv5wLYDT1wii1"
       },
       {
         file: "IMG_5836 (1).jpg",
         src: "./images/IMG_5836%20(1).jpg",
-        caption: "Magenta — 03"
+        caption: "Magenta — 03",
+        song: "TV Girl · Loving Machine",
+        soundcloud: "https://on.soundcloud.com/YzZ6HQv5wLYDT1wii1"
       }
     ];
 
     let photos = [...CURATED_PHOTOS];
     let currentIndex = 0;
+    let isAudioActive = false;
+    let isPlaying = false;
+    let loadedScUrl = CURATED_PHOTOS[0].soundcloud;
+    let scWidget = null;
+    let isScReady = false;
 
     const heroImg = document.getElementById("hero-img");
     const captionEl = document.getElementById("photo-caption");
@@ -272,6 +397,133 @@
     const ambientLayer = document.getElementById("ambient-layer");
     const gridStage = document.getElementById("grid-stage");
     const focusStage = document.getElementById("focus-stage");
+
+    const scIframe = document.getElementById("sc-widget");
+    const musicPill = document.getElementById("music-pill");
+    const musicTitleEl = document.getElementById("music-title");
+    const musicStateEl = document.getElementById("music-state");
+    const musicProgressEl = document.getElementById("music-progress");
+
+    function buildScEmbedUrl(trackUrl, autoPlay = false) {
+      const params = new URLSearchParams({
+        url: trackUrl,
+        auto_play: autoPlay ? "true" : "false",
+        show_artwork: "false",
+        buying: "false",
+        sharing: "false",
+        download: "false",
+        show_playcount: "false",
+        show_user: "false"
+      });
+      return `https://w.soundcloud.com/player/?${params.toString()}`;
+    }
+
+    function initSoundCloudWidget() {
+      if (CURATED_PHOTOS[0].soundcloud) {
+        scIframe.src = buildScEmbedUrl(CURATED_PHOTOS[0].soundcloud, false);
+      }
+
+      if (typeof SC === "undefined") {
+        musicStateEl.textContent = "Offline";
+        return;
+      }
+
+      scWidget = SC.Widget(scIframe);
+
+      scWidget.bind(SC.Widget.Events.READY, () => {
+        isScReady = true;
+      });
+
+      scWidget.bind(SC.Widget.Events.PLAY, () => {
+        isPlaying = true;
+        isAudioActive = true;
+        musicPill.classList.add("playing");
+        musicStateEl.textContent = "Pause";
+      });
+
+      scWidget.bind(SC.Widget.Events.PAUSE, () => {
+        isPlaying = false;
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "Play";
+      });
+
+      scWidget.bind(SC.Widget.Events.FINISH, () => {
+        scWidget.seekTo(0);
+        scWidget.play();
+      });
+
+      scWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
+        if (typeof e.relativePosition === "number") {
+          musicProgressEl.style.width = `${(e.relativePosition * 100).toFixed(2)}%`;
+        }
+      });
+
+      scWidget.bind(SC.Widget.Events.ERROR, () => {
+        isPlaying = false;
+        isAudioActive = false;
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "Unavailable";
+      });
+    }
+
+    function updateAudioForItem(item) {
+      musicTitleEl.textContent = item.song || "SoundCloud";
+      musicProgressEl.style.width = "0%";
+
+      if (!item.soundcloud || !scWidget) {
+        if (scWidget && isScReady) scWidget.pause();
+        isPlaying = false;
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = item.soundcloud ? "Play" : "—";
+        return;
+      }
+
+      // หากรูปถัดไปใช้ลิงก์ SoundCloud เดียวกัน ให้เล่นต่อเนื่องโดยไม่โหลดใหม่
+      if (loadedScUrl === item.soundcloud) {
+        musicStateEl.textContent = isPlaying ? "Pause" : "Play";
+        return;
+      }
+
+      loadedScUrl = item.soundcloud;
+      scWidget.load(item.soundcloud, {
+        auto_play: isAudioActive,
+        show_artwork: false,
+        buying: false,
+        sharing: false,
+        download: false,
+        show_playcount: false,
+        show_user: false,
+        callback: () => {
+          if (!item.song) {
+            scWidget.getCurrentSound((sound) => {
+              if (sound && sound.title) musicTitleEl.textContent = sound.title;
+            });
+          }
+          if (isAudioActive) scWidget.play();
+        }
+      });
+
+      musicStateEl.textContent = isAudioActive ? "Loading..." : "Play";
+    }
+
+    musicPill.addEventListener("click", () => {
+      const item = photos[currentIndex];
+      if (!item || !item.soundcloud || !scWidget) return;
+
+      if (!isPlaying) {
+        isAudioActive = true;
+        isPlaying = true;
+        musicPill.classList.add("playing");
+        musicStateEl.textContent = "Loading...";
+        scWidget.play();
+      } else {
+        isAudioActive = false;
+        isPlaying = false;
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "Play";
+        scWidget.pause();
+      }
+    });
 
     function formatNewCaption(filename) {
       return filename
@@ -298,7 +550,9 @@
           .map(f => ({
             file: f.name,
             src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
-            caption: formatNewCaption(f.name)
+            caption: formatNewCaption(f.name),
+            song: CURATED_PHOTOS[0].song,
+            soundcloud: CURATED_PHOTOS[0].soundcloud
           }));
 
         if (extraPhotos.length > 0) {
@@ -306,9 +560,7 @@
           renderGrid();
           counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
         }
-      } catch (_) {
-        // ใช้รายการ CURATED_PHOTOS ต่อเนื่องได้ทันทีแม้ขณะออฟไลน์หรือติด API Limit
-      }
+      } catch (_) {}
     }
 
     // สกัดทั้งสีหลัก (Accent Highlight) และสีรอง (Secondary Shadow/Midtone)
@@ -333,7 +585,6 @@
         const sat = max === 0 ? 0 : (max - min) / max;
         const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-        // 1. สีไฮไลต์หลักที่สดและสว่าง
         if (lum > 0.25 && lum < 0.88) {
           const pScore = sat * 1.4 + lum * 0.5;
           if (pScore > bestPrimaryScore) {
@@ -342,7 +593,6 @@
           }
         }
 
-        // 2. สีโทนกลาง-เข้มที่ต่างเฉดสีกับสีหลัก (เช่น สี Cyan/Teal ตัดกับ Magenta)
         const colorDist = Math.abs(r - primary[0]) + Math.abs(g - primary[1]) + Math.abs(b - primary[2]);
         if (lum > 0.12 && lum < 0.65 && colorDist > 95) {
           const sScore = sat + (colorDist / 765);
@@ -402,6 +652,7 @@
       heroImg.src = item.src;
       captionEl.textContent = item.caption;
       counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+      updateAudioForItem(item);
     }
 
     function renderGrid() {
@@ -449,6 +700,10 @@
     window.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft") showPhoto(currentIndex - 1);
       if (e.key === "ArrowRight") showPhoto(currentIndex + 1);
+      if (e.key === " ") {
+        e.preventDefault();
+        musicPill.click();
+      }
     });
 
     let touchStartX = 0;
@@ -459,6 +714,7 @@
       if (Math.abs(diff) > 40) showPhoto(diff > 0 ? currentIndex - 1 : currentIndex + 1);
     }, { passive: true });
 
+    initSoundCloudWidget();
     renderGrid();
     showPhoto(0);
     syncAdditionalGitHubPhotos();

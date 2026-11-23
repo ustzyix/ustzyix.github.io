@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ustzyix — archive</title>
-  <script src="https://w.soundcloud.com/player/api.js"></script>
   <style>
     :root {
       --fg-color: #f4f4f5;
@@ -130,7 +129,7 @@
       letter-spacing: 0.04em;
     }
 
-    /* Minimal IG-style SoundCloud Pill */
+    /* Minimal IG-style Music Pill */
     .music-pill {
       position: relative;
       overflow: hidden;
@@ -287,26 +286,6 @@
       backdrop-filter: blur(6px);
     }
 
-    /* คงขนาดมาตรฐานของตัวเล่น SoundCloud เพื่อไม่ให้เบราว์เซอร์มือถือบล็อกเสียง */
-    #sc-host {
-      position: fixed;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 300px;
-      height: 80px;
-      opacity: 0.01;
-      pointer-events: none;
-      z-index: -2;
-      overflow: hidden;
-    }
-
-    #sc-widget {
-      width: 300px;
-      height: 80px;
-      border: 0;
-    }
-
     @media (max-width: 600px) {
       header { padding: 16px 18px; }
       .grid-stage { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -332,7 +311,7 @@
       <div class="meta-bar">
         <div class="caption" id="photo-caption">Magenta — 01</div>
 
-        <button class="music-pill" id="music-pill" type="button" aria-label="Toggle SoundCloud audio">
+        <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio">
           <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
           <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
           <span class="music-state" id="music-state">Play</span>
@@ -351,63 +330,47 @@
     <section class="grid-stage" id="grid-stage"></section>
   </main>
 
-  <div id="sc-host" aria-hidden="true">
-    <iframe
-      id="sc-widget"
-      allow="autoplay; encrypted-media"
-      src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/tv-girl/loving-machine&auto_play=false&show_artwork=false&buying=false&sharing=false&download=false&show_playcount=false&show_user=false">
-    </iframe>
-  </div>
+  <audio id="bg-audio" loop preload="auto"></audio>
 
   <script>
-    const hostOwner = window.location.hostname.endsWith(".github.io")
-      ? window.location.hostname.split(".")[0]
-      : "ustzyix";
-    const pathRepo = window.location.pathname.split("/").filter(Boolean)[0];
-
     const REPO_CONFIG = {
-      owner: hostOwner,
-      repo: pathRepo || `${hostOwner}.github.io`,
-      folder: "images"
+      owner: "ustzyix",
+      repo: "ustzyix.github.io",
+      folder: "images",
+      audioFolder: "audio"
     };
 
-    // ลิงก์เต็มของ SoundCloud เพื่อให้ตัวเล่นทำงานบนมือถือได้เสถียร
-    const DEFAULT_TRACK = {
-      song: "TV Girl · Loving Machine",
-      soundcloud: "https://soundcloud.com/tv-girl/loving-machine"
-    };
+    const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
+    const DEFAULT_SONG = "TV Girl · Loving Machine";
 
     const CURATED_PHOTOS = [
       {
         file: "IMG_5639 (1).jpg",
         src: "./images/IMG_5639%20(1).jpg",
         caption: "Magenta — 01",
-        song: DEFAULT_TRACK.song,
-        soundcloud: DEFAULT_TRACK.soundcloud
+        song: DEFAULT_SONG,
+        audio: DEFAULT_AUDIO
       },
       {
         file: "IMG_5738 (1).jpg",
         src: "./images/IMG_5738%20(1).jpg",
         caption: "Magenta — 02",
-        song: DEFAULT_TRACK.song,
-        soundcloud: DEFAULT_TRACK.soundcloud
+        song: DEFAULT_SONG,
+        audio: DEFAULT_AUDIO
       },
       {
         file: "IMG_5836 (1).jpg",
         src: "./images/IMG_5836%20(1).jpg",
         caption: "Magenta — 03",
-        song: DEFAULT_TRACK.song,
-        soundcloud: DEFAULT_TRACK.soundcloud
+        song: DEFAULT_SONG,
+        audio: DEFAULT_AUDIO
       }
     ];
 
     let photos = [...CURATED_PHOTOS];
     let currentIndex = 0;
-    let shouldPlay = false;
-    let isSwitchingTrack = false;
-    let loadedScUrl = DEFAULT_TRACK.soundcloud;
-    let scWidget = null;
-    let isScReady = false;
+    let isAudioActive = false;
+    let loadedAudioSrc = "";
 
     const heroImg = document.getElementById("hero-img");
     const captionEl = document.getElementById("photo-caption");
@@ -417,132 +380,11 @@
     const gridStage = document.getElementById("grid-stage");
     const focusStage = document.getElementById("focus-stage");
 
-    const scIframe = document.getElementById("sc-widget");
+    const bgAudio = document.getElementById("bg-audio");
     const musicPill = document.getElementById("music-pill");
     const musicTitleEl = document.getElementById("music-title");
     const musicStateEl = document.getElementById("music-state");
     const musicProgressEl = document.getElementById("music-progress");
-
-    function initSoundCloudWidget() {
-      if (typeof SC === "undefined") {
-        musicStateEl.textContent = "Offline";
-        return;
-      }
-
-      scWidget = SC.Widget(scIframe);
-
-      scWidget.bind(SC.Widget.Events.READY, () => {
-        isScReady = true;
-        scWidget.setVolume(100);
-        if (shouldPlay) scWidget.play();
-      });
-
-      scWidget.bind(SC.Widget.Events.PLAY, () => {
-        isSwitchingTrack = false;
-        shouldPlay = true;
-        musicPill.classList.add("playing");
-        musicStateEl.textContent = "Pause";
-      });
-
-      scWidget.bind(SC.Widget.Events.PAUSE, () => {
-        if (isSwitchingTrack) return;
-        musicPill.classList.remove("playing");
-        musicStateEl.textContent = "Play";
-      });
-
-      scWidget.bind(SC.Widget.Events.FINISH, () => {
-        scWidget.seekTo(0);
-        scWidget.play();
-      });
-
-      scWidget.bind(SC.Widget.Events.PLAY_PROGRESS, (e) => {
-        if (typeof e.relativePosition === "number") {
-          musicProgressEl.style.width = `${(e.relativePosition * 100).toFixed(2)}%`;
-        }
-      });
-
-      scWidget.bind(SC.Widget.Events.ERROR, () => {
-        isSwitchingTrack = false;
-        shouldPlay = false;
-        musicPill.classList.remove("playing");
-        musicStateEl.textContent = "Unavailable";
-      });
-    }
-
-    function syncAudioWithPhoto(item) {
-      musicTitleEl.textContent = item.song || "SoundCloud";
-
-      if (!item.soundcloud || !scWidget) {
-        shouldPlay = false;
-        if (scWidget && isScReady) scWidget.pause();
-        musicPill.classList.remove("playing");
-        musicProgressEl.style.width = "0%";
-        musicStateEl.textContent = item.soundcloud ? "Play" : "—";
-        return;
-      }
-
-      // หากรูปใหม่ใช้เพลงเดิม ให้เล่นต่อเนื่องโดยไม่หยุดและไม่โหลดซ้ำ
-      if (loadedScUrl === item.soundcloud) {
-        if (shouldPlay && isScReady) {
-          scWidget.play();
-          musicPill.classList.add("playing");
-          musicStateEl.textContent = "Pause";
-        }
-        return;
-      }
-
-      // กรณีรูปใหม่เปลี่ยนเป็นเพลงอื่น
-      loadedScUrl = item.soundcloud;
-      musicProgressEl.style.width = "0%";
-      isSwitchingTrack = shouldPlay;
-
-      scWidget.load(item.soundcloud, {
-        auto_play: shouldPlay,
-        show_artwork: false,
-        buying: false,
-        sharing: false,
-        download: false,
-        show_playcount: false,
-        show_user: false,
-        callback: () => {
-          scWidget.setVolume(100);
-          if (!item.song) {
-            scWidget.getCurrentSound((sound) => {
-              if (sound && sound.title) musicTitleEl.textContent = sound.title;
-            });
-          }
-          if (shouldPlay) {
-            scWidget.play();
-            musicPill.classList.add("playing");
-            musicStateEl.textContent = "Pause";
-          } else {
-            isSwitchingTrack = false;
-            musicStateEl.textContent = "Play";
-          }
-        }
-      });
-    }
-
-    musicPill.addEventListener("click", () => {
-      const item = photos[currentIndex];
-      if (!item || !item.soundcloud || !scWidget) return;
-
-      if (!shouldPlay) {
-        shouldPlay = true;
-        musicPill.classList.add("playing");
-        musicStateEl.textContent = "Loading...";
-        if (isScReady) {
-          scWidget.setVolume(100);
-          scWidget.play();
-        }
-      } else {
-        shouldPlay = false;
-        isSwitchingTrack = false;
-        musicPill.classList.remove("playing");
-        musicStateEl.textContent = "Play";
-        if (isScReady) scWidget.pause();
-      }
-    });
 
     function formatNewCaption(filename) {
       return filename
@@ -553,33 +395,142 @@
         .trim() || "Untitled";
     }
 
-    async function syncAdditionalGitHubPhotos() {
+    // ตรวจจับรูปใหม่ใน images/ และไฟล์เสียงใหม่ใน audio/ อัตโนมัติ
+    async function syncGitHubAssets() {
       try {
-        const apiUrl = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
-        const res = await fetch(apiUrl);
-        if (!res.ok) return;
-        const files = await res.json();
+        const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
+        const audioApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.audioFolder}`;
 
-        const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
-        const existingNames = new Set(photos.map(p => p.file));
+        const [imgRes, audioRes] = await Promise.all([
+          fetch(imgApi),
+          fetch(audioApi).catch(() => null)
+        ]);
 
-        const extraPhotos = files
-          .filter(f => f.type === "file" && validExt.test(f.name) && !existingNames.has(f.name))
-          .map(f => ({
-            file: f.name,
-            src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
-            caption: formatNewCaption(f.name),
-            song: DEFAULT_TRACK.song,
-            soundcloud: DEFAULT_TRACK.soundcloud
-          }));
+        const audioMap = new Map();
+        if (audioRes && audioRes.ok) {
+          const audioFiles = await audioRes.json();
+          const validAudio = /\.(mp3|m4a|ogg|wav|aac)$/i;
+          audioFiles
+            .filter(f => f.type === "file" && validAudio.test(f.name))
+            .forEach(f => {
+              const baseName = f.name.replace(/\.[^/.]+$/, "").toLowerCase();
+              audioMap.set(baseName, `./${REPO_CONFIG.audioFolder}/${encodeURIComponent(f.name)}`);
+            });
+        }
 
-        if (extraPhotos.length > 0) {
-          photos = [...photos, ...extraPhotos];
-          renderGrid();
-          counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+        if (imgRes && imgRes.ok) {
+          const files = await imgRes.json();
+          const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
+          const existingNames = new Set(photos.map(p => p.file));
+
+          const extraPhotos = files
+            .filter(f => f.type === "file" && validExt.test(f.name) && !existingNames.has(f.name))
+            .map(f => {
+              const baseName = f.name.replace(/\.[^/.]+$/, "").toLowerCase();
+              const title = formatNewCaption(f.name);
+              return {
+                file: f.name,
+                src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
+                caption: title,
+                song: audioMap.has(baseName) ? title : DEFAULT_SONG,
+                audio: audioMap.get(baseName) || DEFAULT_AUDIO
+              };
+            });
+
+          if (extraPhotos.length > 0) {
+            photos = [...photos, ...extraPhotos];
+            renderGrid();
+            counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+          }
         }
       } catch (_) {}
     }
+
+    function updateAudioForItem(item) {
+      musicTitleEl.textContent = item.song || DEFAULT_SONG;
+
+      if (!item.audio) {
+        bgAudio.pause();
+        loadedAudioSrc = "";
+        musicPill.classList.remove("playing");
+        musicProgressEl.style.width = "0%";
+        musicStateEl.textContent = "—";
+        return;
+      }
+
+      // หากรูปถัดไปใช้เพลงเดียวกัน ให้เล่นต่อเนื่องทันทีโดยไม่หยุดและไม่เริ่มใหม่
+      if (loadedAudioSrc === item.audio) {
+        if (isAudioActive && bgAudio.paused) {
+          bgAudio.play().catch(() => {});
+        }
+        musicStateEl.textContent = !bgAudio.paused ? "Pause" : "Play";
+        return;
+      }
+
+      loadedAudioSrc = item.audio;
+      bgAudio.src = item.audio;
+      musicProgressEl.style.width = "0%";
+
+      if (isAudioActive) {
+        bgAudio.play()
+          .then(() => {
+            musicPill.classList.add("playing");
+            musicStateEl.textContent = "Pause";
+          })
+          .catch(() => {
+            musicPill.classList.remove("playing");
+            musicStateEl.textContent = "Play";
+          });
+      } else {
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "Play";
+      }
+    }
+
+    musicPill.addEventListener("click", () => {
+      const item = photos[currentIndex];
+      if (!item || !item.audio) return;
+
+      if (bgAudio.paused) {
+        isAudioActive = true;
+        if (!loadedAudioSrc) {
+          loadedAudioSrc = item.audio;
+          bgAudio.src = item.audio;
+        }
+        bgAudio.play()
+          .then(() => {
+            musicPill.classList.add("playing");
+            musicStateEl.textContent = "Pause";
+          })
+          .catch(() => {
+            isAudioActive = false;
+            musicPill.classList.remove("playing");
+            musicStateEl.textContent = "Retry";
+          });
+      } else {
+        isAudioActive = false;
+        bgAudio.pause();
+        musicPill.classList.remove("playing");
+        musicStateEl.textContent = "Play";
+      }
+    });
+
+    bgAudio.addEventListener("play", () => {
+      musicPill.classList.add("playing");
+      musicStateEl.textContent = "Pause";
+    });
+
+    bgAudio.addEventListener("pause", () => {
+      musicPill.classList.remove("playing");
+      musicStateEl.textContent = "Play";
+    });
+
+    bgAudio.addEventListener("timeupdate", () => {
+      if (bgAudio.duration) {
+        const pct = (bgAudio.currentTime / bgAudio.duration) * 100;
+        musicProgressEl.style.width = `${pct}%`;
+      }
+    });
 
     function extractDualPalette(imgElement) {
       const canvas = document.createElement("canvas");
@@ -669,7 +620,7 @@
       heroImg.src = item.src;
       captionEl.textContent = item.caption;
       counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
-      syncAudioWithPhoto(item);
+      updateAudioForItem(item);
     }
 
     function renderGrid() {
@@ -731,10 +682,9 @@
       if (Math.abs(diff) > 40) showPhoto(diff > 0 ? currentIndex - 1 : currentIndex + 1);
     }, { passive: true });
 
-    initSoundCloudWidget();
     renderGrid();
     showPhoto(0);
-    syncAdditionalGitHubPhotos();
+    syncGitHubAssets();
   </script>
 </body>
 </html>

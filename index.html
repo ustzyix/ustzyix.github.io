@@ -6,13 +6,16 @@
   <title>ustzyix</title>
   <style>
     :root {
-      --fg-color: #dcdce0;
-      --fg-muted: rgba(220, 220, 224, 0.42);
-      --fg-whisper: rgba(220, 220, 224, 0.22);
-      --border-color: rgba(220, 220, 224, 0.11);
-      --glass-bg: rgba(8, 8, 10, 0.76);
-      --aura-primary: #8c1d18;
-      --aura-secondary: #3b1814;
+      --fg-color: #e4e4e8;
+      --fg-muted: rgba(228, 228, 232, 0.44);
+      --fg-whisper: rgba(228, 228, 232, 0.22);
+      --border-whisper: rgba(228, 228, 232, 0.10);
+      --aura-primary: #7a1c18;
+      --aura-secondary: #2b1311;
+      --photo-grade: brightness(0.90) contrast(1.10) saturate(0.92);
+      --px: 0px;
+      --py: 0px;
+      --bass-boost: 0;
       --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
       --ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -23,7 +26,7 @@
       padding: 0;
     }
 
-    /* ล็อกหน้าจอทั้ง html และ body แบบตายตัว ป้องกันหน้าเว็บเลื่อน/เด้ง/ซูมในมือถือและ WebView */
+    /* ล็อกหน้าจอตายตัว ป้องกันหน้าเว็บเลื่อน/เด้ง/ซูมในมือถือและ WebView (Instagram / LINE / Safari) */
     html, body {
       position: fixed;
       inset: 0;
@@ -32,13 +35,13 @@
       overflow: hidden;
       overscroll-behavior: none;
       -webkit-text-size-adjust: 100%;
-      touch-action: manipulation;
+      touch-action: none;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
       color: var(--fg-color);
-      background-color: #020203;
+      background-color: #010102;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -48,109 +51,127 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* พื้นหลังความมืดลึกแบบ Pure Gradient */
+    /* ชั้นที่ 1: บรรยากาศสีหลักที่ดูดมาจากภาพปัจจุบัน */
     #ambient-layer {
       position: fixed;
       inset: 0;
-      z-index: -5;
+      z-index: -7;
       background:
-        radial-gradient(circle at 50% 34%, rgba(140, 29, 24, 0.34) 0%, transparent 56%),
-        radial-gradient(circle at 50% 78%, rgba(59, 24, 20, 0.26) 0%, #020203 74%);
+        radial-gradient(circle at 50% 38%, rgba(122, 28, 24, 0.38) 0%, transparent 58%),
+        radial-gradient(circle at 50% 82%, rgba(43, 19, 17, 0.30) 0%, #010102 76%);
+      transition: background 1.2s ease;
       pointer-events: none;
     }
 
-    /* ชั้นหมอกระยะไกลเคลื่อนตัวช้าๆ */
-    .mist-layer {
+    /* ชั้นที่ 2: หมอกลึก 2 ระดับความเร็วเคลื่อนตัวสวนทางกัน */
+    .mist-far {
       position: fixed;
-      inset: -20%;
+      inset: -24%;
+      z-index: -6;
+      pointer-events: none;
+      opacity: 0.48;
+      background:
+        radial-gradient(ellipse 62% 46% at 24% 35%, var(--aura-primary) 0%, transparent 72%),
+        radial-gradient(ellipse 58% 50% at 76% 68%, var(--aura-secondary) 0%, transparent 74%);
+      animation: mistSwayA 28s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+
+    .mist-near {
+      position: fixed;
+      inset: -18%;
+      z-index: -5;
+      pointer-events: none;
+      opacity: 0.28;
+      background:
+        radial-gradient(ellipse 50% 38% at 72% 32%, var(--aura-primary) 0%, transparent 70%),
+        radial-gradient(ellipse 66% 42% at 30% 76%, rgba(205, 210, 225, 0.09) 0%, transparent 75%);
+      animation: mistSwayB 20s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+
+    @keyframes mistSwayA {
+      0% { transform: translate3d(-2.8%, -1.4%, 0) scale(1); }
+      100% { transform: translate3d(2.8%, 1.8%, 0) scale(1.07); }
+    }
+
+    @keyframes mistSwayB {
+      0% { transform: translate3d(2.4%, 1.4%, 0) scale(1.05); }
+      100% { transform: translate3d(-2.8%, -1.6%, 0) scale(0.98); }
+    }
+
+    /* ชั้นที่ 3: ลำแสงเฉียง (Volumetric God Rays) ส่องผ่านความมืด */
+    .god-rays {
+      position: fixed;
+      inset: -28%;
       z-index: -4;
       pointer-events: none;
-      opacity: 0.44;
+      opacity: 0.26;
       background:
-        radial-gradient(ellipse 58% 42% at 28% 38%, var(--aura-primary) 0%, transparent 72%),
-        radial-gradient(ellipse 54% 46% at 72% 66%, var(--aura-secondary) 0%, transparent 74%);
-      animation: mistDriftFar 28s ease-in-out infinite alternate;
-      will-change: transform;
+        conic-gradient(
+          from 140deg at 30% -12%,
+          transparent 0deg,
+          var(--aura-primary) 13deg,
+          transparent 30deg,
+          rgba(255, 248, 236, 0.16) 44deg,
+          transparent 64deg,
+          var(--aura-secondary) 78deg,
+          transparent 96deg
+        );
+      animation: raySweep 17s ease-in-out infinite alternate;
+      will-change: transform, opacity;
     }
 
-    /* ชั้นหมอกระลอกที่สองสวนทางจางๆ เพิ่มมิติความลึก */
-    .mist-layer-near {
-      position: fixed;
-      inset: -15%;
-      z-index: -3;
-      pointer-events: none;
-      opacity: 0.24;
-      background:
-        radial-gradient(ellipse 46% 34% at 68% 36%, var(--aura-primary) 0%, transparent 70%),
-        radial-gradient(ellipse 62% 38% at 35% 74%, rgba(190, 195, 210, 0.08) 0%, transparent 75%);
-      animation: mistDriftNear 21s ease-in-out infinite alternate;
-      will-change: transform;
+    @keyframes raySweep {
+      0% { transform: translate3d(-3.5%, -1%, 0) rotate(-2.5deg); opacity: 0.16; }
+      50% { opacity: 0.30; }
+      100% { transform: translate3d(3.5%, 1.5%, 0) rotate(2.8deg); opacity: 0.20; }
     }
 
-    @keyframes mistDriftFar {
-      0% { transform: translate3d(-2.2%, -1.2%, 0) scale(1); }
-      100% { transform: translate3d(2.2%, 1.6%, 0) scale(1.05); }
-    }
-
-    @keyframes mistDriftNear {
-      0% { transform: translate3d(2%, 1%, 0) scale(1.03); }
-      100% { transform: translate3d(-2.5%, -1.4%, 0) scale(0.99); }
-    }
-
-    /* ละอองฝุ่น/เถ้าลอยในอากาศ (แยก 2 ระดับความลึก: หลังภาพ และ หน้าภาพ) */
-    .ash-field {
+    /* ชั้นที่ 4: ความมืดรอบนอกโอบล้อมความโดดเดี่ยว */
+    .void-vignette {
       position: fixed;
       inset: 0;
       z-index: -2;
       pointer-events: none;
-      overflow: hidden;
-    }
-
-    .foreground-dust {
-      position: fixed;
-      inset: 0;
-      z-index: 4;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .ash-mote {
-      position: absolute;
-      bottom: -10px;
-      width: 2px;
-      height: 2px;
-      border-radius: 50%;
-      background: rgba(235, 235, 240, 0.85);
-      opacity: 0;
-      animation: ashFloat linear infinite;
-      will-change: transform, opacity;
-    }
-
-    .foreground-dust .ash-mote {
-      width: 2.5px;
-      height: 2.5px;
-      background: rgba(245, 245, 250, 0.72);
-    }
-
-    @keyframes ashFloat {
-      0% { transform: translate3d(0, 0, 0); opacity: 0; }
-      22% { opacity: var(--mote-opacity, 0.2); }
-      78% { opacity: calc(var(--mote-opacity, 0.2) * 0.65); }
-      100% { transform: translate3d(var(--drift-x, 22px), -105dvh, 0); opacity: 0; }
-    }
-
-    /* ขอบมืดลึกโอบล้อมความโดดเดี่ยว */
-    .void-vignette {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
       background: radial-gradient(
         circle at 50% 42%,
-        transparent 20%,
-        rgba(2, 2, 3, 0.78) 72%,
-        rgba(1, 1, 2, 0.98) 100%
+        transparent 14%,
+        rgba(1, 1, 2, 0.74) 64%,
+        rgba(0, 0, 0, 0.99) 100%
       );
+    }
+
+    /* ชั้นที่ 5: Canvas 60fps ละอองฝุ่น/เถ้า/หิ่งห้อยแสง 3 ระดับความลึก */
+    #atmosphere-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* ชั้นที่ 6: เกรนฟิล์มอนาล็อกบางเบา (GPU Shift ไม่กิน CPU) */
+    .film-grain {
+      position: fixed;
+      inset: -50%;
+      width: 200%;
+      height: 200%;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 0.048;
+      background-repeat: repeat;
+      animation: grainShift 0.34s steps(2) infinite;
+      will-change: transform;
+    }
+
+    @keyframes grainShift {
+      0% { transform: translate3d(0, 0, 0); }
+      25% { transform: translate3d(-1.5%, 1%, 0); }
+      50% { transform: translate3d(1%, -1.5%, 0); }
+      75% { transform: translate3d(-1%, -1%, 0); }
+      100% { transform: translate3d(1.5%, 1.5%, 0); }
     }
 
     header {
@@ -159,24 +180,40 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: max(20px, env(safe-area-inset-top)) 28px 10px;
-      font-size: 12px;
-      z-index: 5;
+      padding: max(20px, env(safe-area-inset-top)) 26px 8px;
+      font-size: 11px;
+      z-index: 6;
     }
 
     .brand {
       font-weight: 500;
-      letter-spacing: 0.28em;
+      letter-spacing: 0.32em;
       text-transform: lowercase;
       color: var(--fg-muted);
     }
 
-    .memory-tag {
+    .presence-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      letter-spacing: 0.22em;
+      font-size: 9.5px;
+      letter-spacing: 0.24em;
       text-transform: uppercase;
       color: var(--fg-whisper);
+    }
+
+    .pulse-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--fg-muted);
+      animation: solitaryPulse 4.2s ease-in-out infinite;
+    }
+
+    @keyframes solitaryPulse {
+      0%, 100% { opacity: 0.18; transform: scale(0.85); }
+      50% { opacity: 0.85; transform: scale(1.3); }
     }
 
     main {
@@ -187,7 +224,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 0 20px max(28px, env(safe-area-inset-bottom));
+      padding: 0 10px max(26px, env(safe-area-inset-bottom));
       overflow: hidden;
     }
 
@@ -196,153 +233,220 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 22px;
+      gap: 20px;
       width: 100%;
       max-width: 100%;
-      animation: fadeSlow 1.4s var(--ease-liquid) forwards;
+      animation: enterWorld 1.6s var(--ease-liquid) forwards;
     }
 
-    @keyframes fadeSlow {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @keyframes enterWorld {
+      from { opacity: 0; transform: scale(0.985); }
+      to { opacity: 1; transform: scale(1); }
     }
 
-    /* ฟิกซ์ความสูงกรอบภาพคงที่ ป้องกันปุ่มด้านล่างขยับเวลาเปลี่ยนรูปแนวนอน/แนวตั้ง */
-    .frame-wrap {
+    /* พื้นที่หน้าต่างโลก: รองรับทุกรูปทุกสัดส่วน (แนวตั้ง/แนวนอน/จัตุรัส) โดยไม่ขยับ layout */
+    .viewport-portal {
       position: relative;
       display: grid;
       place-items: center;
       width: 100%;
-      height: min(48dvh, 420px);
+      height: min(56dvh, 490px);
       touch-action: none;
     }
 
-    /* แสงเรืองรอบหน้าต่างภาพ */
-    .frame-aura {
+    /* แสงออร่าหลังภาพที่หายใจและเต้นตามเสียงเพลงเบาๆ */
+    .portal-aura {
       position: absolute;
-      inset: -44px;
+      inset: -48px;
       z-index: -1;
-      background: radial-gradient(circle, var(--aura-primary) 0%, transparent 66%);
-      opacity: 0.34;
-      animation: auraBreathe 7.5s ease-in-out infinite alternate;
-      transition: opacity 0.55s ease, transform 0.55s var(--ease-drift);
+      background: radial-gradient(circle, var(--aura-primary) 0%, transparent 64%);
+      opacity: calc(0.36 + var(--bass-boost) * 0.24);
+      transform: scale(calc(1 + var(--bass-boost) * 0.08));
+      animation: auraPulse 7.5s ease-in-out infinite alternate;
+      transition: opacity 0.45s ease;
       pointer-events: none;
       will-change: transform, opacity;
     }
 
-    @keyframes auraBreathe {
-      0% { opacity: 0.26; transform: scale(0.98); }
-      50% { opacity: 0.38; transform: scale(1.03); }
-      100% { opacity: 0.29; transform: scale(1); }
+    @keyframes auraPulse {
+      0% { opacity: 0.28; }
+      100% { opacity: 0.46; }
     }
 
-    .frame-wrap.is-shifting .frame-aura {
+    .viewport-portal.is-shifting .portal-aura {
       animation: none;
-      opacity: 0.52;
-      transform: scale(1.06);
+      opacity: 0.62;
     }
 
-    /* เลเยอร์หน้าต่างของแต่ละภาพ (ตัดขอบภาพที่กำลังหายใจอยู่ด้านในไม่ให้ล้นกรอบ) */
-    .slide-layer {
+    /* เลเยอร์สลับภาพ (Dual Slot) */
+    .world-slot {
       grid-area: 1 / 1;
       position: relative;
-      display: inline-grid;
+      display: grid;
       place-items: center;
-      overflow: hidden;
-      border-radius: 3px;
-      border: 1px solid var(--border-color);
-      box-shadow:
-        0 32px 85px -12px rgba(0, 0, 0, 0.94),
-        0 0 0 1px rgba(0, 0, 0, 0.65);
+      width: 100%;
+      height: 100%;
       opacity: 0;
-      transform: translate3d(0, 0, 0) scale(1, 1);
+      transform: translate3d(0, 0, 0) scale(1);
       pointer-events: none;
       will-change: transform, opacity;
       backface-visibility: hidden;
     }
 
-    .slide-layer.is-active {
+    .world-slot.is-active {
       opacity: 1;
       pointer-events: auto;
       z-index: 2;
     }
 
-    .slide-layer.is-exiting {
+    .world-slot.is-exiting {
       z-index: 1;
     }
 
-    /* ตัวรูปภาพที่ "มีชีวิตและกำลังหายใจ" ช้าๆ เหมือนกล้องสายตาคนยืนมองอยู่คนเดียว */
-    .slide-photo {
+    /* เงาสะท้อนหางตา (Peripheral Echo) ขยายออกรอบๆ ภาพหลัก สร้างมิติโอบล้อม */
+    .peripheral-echo {
       grid-area: 1 / 1;
-      display: block;
-      max-width: min(86vw, 660px);
-      max-height: min(48dvh, 420px);
+      max-width: min(98vw, 800px);
+      max-height: min(62dvh, 540px);
       width: auto;
       height: auto;
       object-fit: contain;
-      transform: scale(1.02) translate3d(0, 0, 0);
+      opacity: 0.26;
+      filter: brightness(0.62) contrast(1.18);
+      -webkit-mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 16%, transparent 72%);
+      mask-image: radial-gradient(ellipse 68% 66% at 50% 50%, #000 16%, transparent 72%);
+      transform: translate3d(calc(var(--px) * -0.7), calc(var(--py) * -0.7), 0) scale(1.16);
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .world-slot.is-active .peripheral-echo {
+      animation: echoDrift 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes echoDrift {
+      0% { transform: translate3d(calc(var(--px) * -0.7 - 1.5%), calc(var(--py) * -0.7 - 1%), 0) scale(1.14); }
+      100% { transform: translate3d(calc(var(--px) * -0.7 + 1.5%), calc(var(--py) * -0.7 + 1%), 0) scale(1.20); }
+    }
+
+    /* กรอบละลายขอบอัตโนมัติตามสัดส่วนภาพจริง (ไม่มีเส้นกรอบสี่เหลี่ยมแข็งๆ) */
+    .feathered-window {
+      grid-area: 1 / 1;
+      position: relative;
+      display: inline-grid;
+      place-items: center;
+      overflow: hidden;
+      -webkit-mask-image: radial-gradient(
+        ellipse 77% 75% at 50% 50%,
+        #000 52%,
+        rgba(0, 0, 0, 0.74) 75%,
+        rgba(0, 0, 0, 0.22) 91%,
+        transparent 100%
+      );
+      mask-image: radial-gradient(
+        ellipse 77% 75% at 50% 50%,
+        #000 52%,
+        rgba(0, 0, 0, 0.74) 75%,
+        rgba(0, 0, 0, 0.22) 91%,
+        transparent 100%
+      );
+      transform: translate3d(var(--px), var(--py), 0);
+      transition: transform 0.22s ease-out;
+      will-change: transform;
+    }
+
+    /* ตัวรูปภาพหลักที่หายใจและเคลื่อนไหวเหมือนสายตาคนยืนมองอยู่คนเดียว */
+    .living-photo {
+      grid-area: 1 / 1;
+      display: block;
+      max-width: min(93vw, 730px);
+      max-height: min(55dvh, 480px);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      filter: var(--photo-grade);
+      transform: scale(1.04) translate3d(0, 0, 0);
       will-change: transform;
       backface-visibility: hidden;
     }
 
-    .slide-layer.is-active .slide-photo {
-      animation: livingWorldBreath 18s ease-in-out infinite alternate;
+    .world-slot.is-active .living-photo {
+      animation: povStandstillBreath 15s ease-in-out infinite alternate;
     }
 
-    @keyframes livingWorldBreath {
+    @keyframes povStandstillBreath {
       0% {
-        transform: scale(1.015) translate3d(-0.7%, -0.4%, 0);
+        transform: scale(1.035) translate3d(-1.2%, -0.6%, 0) rotate(-0.4deg);
       }
       50% {
-        transform: scale(1.045) translate3d(0.4%, -0.7%, 0);
+        transform: scale(1.09) translate3d(0.5%, -1.1%, 0) rotate(0.22deg);
       }
       100% {
-        transform: scale(1.065) translate3d(0.7%, 0.5%, 0);
+        transform: scale(1.13) translate3d(1.2%, 0.8%, 0) rotate(0.4deg);
       }
     }
 
-    /* แสงไฟ/เงาเมฆไหววูบจางๆ ภายในภาพ (จำลองบรรยากาศมีชีวิตแบบไร้ผู้คน) */
-    .light-flicker {
+    /* ชั้นแสงตะเกียง/แสงจันทร์ไหววูบภายในฉาก */
+    .scene-flicker {
       grid-area: 1 / 1;
       width: 100%;
       height: 100%;
       pointer-events: none;
       mix-blend-mode: screen;
       background:
-        radial-gradient(circle at 32% 28%, var(--aura-primary) 0%, transparent 62%),
-        radial-gradient(circle at 72% 65%, rgba(255, 248, 235, 0.14) 0%, transparent 58%);
-      opacity: 0.16;
-      animation: atmosphericFlicker 6.4s ease-in-out infinite alternate;
+        radial-gradient(circle at 28% 24%, var(--aura-primary) 0%, transparent 58%),
+        radial-gradient(circle at 72% 64%, rgba(255, 246, 230, 0.18) 0%, transparent 55%);
+      opacity: 0.22;
+      animation: candleLightFlicker 5.2s ease-in-out infinite alternate;
       will-change: opacity;
     }
 
-    @keyframes atmosphericFlicker {
-      0%   { opacity: 0.10; }
-      24%  { opacity: 0.22; }
-      38%  { opacity: 0.13; }
-      62%  { opacity: 0.25; }
-      81%  { opacity: 0.14; }
-      100% { opacity: 0.20; }
+    @keyframes candleLightFlicker {
+      0%   { opacity: 0.12; }
+      18%  { opacity: 0.30; }
+      35%  { opacity: 0.15; }
+      57%  { opacity: 0.34; }
+      76%  { opacity: 0.16; }
+      100% { opacity: 0.26; }
     }
 
-    /* ขอบมืดเลนส์กล้องภายในภาพ ให้มิติความลึกสมจริง */
-    .lens-vignette {
+    /* เงาเมฆ/กิ่งไม้เคลื่อนผ่านฉากช้าๆ ให้ความรู้สึกว่าโลกภายนอกยังมีชีวิต */
+    .cloud-shadow {
+      grid-area: 1 / 1;
+      width: 170%;
+      height: 170%;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 42% 36% at 35% 45%, rgba(0, 0, 0, 0.48) 0%, transparent 70%),
+        radial-gradient(ellipse 38% 44% at 70% 60%, rgba(0, 0, 0, 0.38) 0%, transparent 68%);
+      animation: shadowPass 13s ease-in-out infinite alternate;
+      will-change: transform, opacity;
+    }
+
+    @keyframes shadowPass {
+      0% { transform: translate3d(-26%, -12%, 0) rotate(-3deg); opacity: 0.35; }
+      50% { opacity: 0.72; }
+      100% { transform: translate3d(26%, 14%, 0) rotate(3deg); opacity: 0.32; }
+    }
+
+    /* ขอบมืดเลนส์กล้องด้านใน */
+    .optical-vignette {
       grid-area: 1 / 1;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      box-shadow: inset 0 0 38px rgba(0, 0, 0, 0.68);
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.88);
     }
 
-    .meta-bar {
+    /* ส่วนควบคุมมินิมอลไร้สิ่งรบกวนสายตา */
+    .whisper-hud {
       width: 100%;
-      max-width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 13px;
       text-align: center;
-      z-index: 5;
+      z-index: 6;
     }
 
     .caption {
@@ -355,9 +459,10 @@
       font-family: Georgia, "Times New Roman", serif;
       font-size: 15px;
       font-weight: 400;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.26em;
       color: var(--fg-color);
       opacity: 0.88;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.95);
       transition: opacity 0.28s var(--ease-liquid);
       will-change: opacity;
     }
@@ -366,7 +471,6 @@
       opacity: 0;
     }
 
-    /* แถบเล่นเพลงมินิมอล ล็อกขนาดคงที่ไม่มีขยับตอนกด */
     .music-pill {
       position: relative;
       overflow: hidden;
@@ -374,15 +478,15 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      max-width: min(86vw, 320px);
-      height: 32px;
-      padding: 0 16px;
+      max-width: min(86vw, 310px);
+      height: 30px;
+      padding: 0 15px;
       border-radius: 999px;
-      background: var(--glass-bg);
-      border: 1px solid var(--border-color);
+      background: rgba(6, 6, 8, 0.55);
+      border: 1px solid var(--border-whisper);
       color: var(--fg-muted);
-      font-size: 11px;
-      letter-spacing: 0.08em;
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
       cursor: pointer;
       touch-action: manipulation;
       transition: border-color 0.25s ease, color 0.25s ease;
@@ -391,22 +495,22 @@
     .music-pill:hover,
     .music-pill.playing {
       color: var(--fg-color);
-      border-color: rgba(255, 255, 255, 0.26);
+      border-color: rgba(255, 255, 255, 0.22);
     }
 
     .eq-bars {
       display: inline-flex;
       align-items: flex-end;
       gap: 2px;
-      height: 10px;
-      width: 10px;
+      height: 9px;
+      width: 9px;
       flex-shrink: 0;
     }
 
     .eq-bars i {
       display: block;
       width: 1.5px;
-      height: 9px;
+      height: 8px;
       background-color: currentColor;
       transform-origin: bottom;
       transform: scaleY(0.35);
@@ -433,13 +537,13 @@
     }
 
     .music-state {
-      min-width: 44px;
+      min-width: 40px;
       text-align: right;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
-      letter-spacing: 0.12em;
+      font-size: 9px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      opacity: 0.65;
+      opacity: 0.6;
       flex-shrink: 0;
     }
 
@@ -450,52 +554,23 @@
       height: 1px;
       width: 100%;
       background: currentColor;
-      opacity: 0.55;
+      opacity: 0.48;
       transform: scaleX(0);
       transform-origin: left;
       will-change: transform;
     }
 
-    .swatches {
-      height: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--fg-whisper);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-variant-numeric: tabular-nums;
-      margin-top: 2px;
-      transition: opacity 0.26s ease;
-    }
-
-    .swatches.is-shifting {
-      opacity: 0.35;
-    }
-
-    .swatch-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      border: 1px solid var(--border-color);
-      cursor: pointer;
-      opacity: 0.85;
-      flex-shrink: 0;
-    }
-
-    /* ปุ่มเปลี่ยนภาพตำแหน่งนิ่งสนิท 100% ไม่มีขยับหรือยุบตัว */
+    /* ปุ่มเปลี่ยนภาพแบบแผ่วเบา ไร้กรอบแข็ง ฟิกซ์ตำแหน่งนิ่งสนิท */
     .nav-whisper {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
-      margin-top: 4px;
+      gap: 16px;
+      margin-top: 2px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10.5px;
-      letter-spacing: 0.16em;
-      color: var(--fg-muted);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--fg-whisper);
     }
 
     .nav-whisper.hidden {
@@ -503,77 +578,90 @@
     }
 
     #counter {
-      min-width: 56px;
+      min-width: 54px;
       text-align: center;
       font-variant-numeric: tabular-nums;
     }
 
     .nav-whisper button {
-      min-width: 86px;
-      height: 30px;
+      min-width: 78px;
+      height: 28px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: none;
-      border: 1px solid var(--border-color);
+      background: transparent;
+      border: 1px solid transparent;
       border-radius: 999px;
-      color: inherit;
+      color: var(--fg-muted);
       font: inherit;
       letter-spacing: inherit;
       cursor: pointer;
-      padding: 0 14px;
-      opacity: 0.78;
+      padding: 0 12px;
+      opacity: 0.75;
       touch-action: manipulation;
-      transition: opacity 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
     .nav-whisper button:hover,
     .nav-whisper button:active {
       opacity: 1;
       color: var(--fg-color);
-      border-color: rgba(255, 255, 255, 0.28);
+      border-color: var(--border-whisper);
     }
 
     @media (max-width: 600px) {
-      header { padding: max(16px, env(safe-area-inset-top)) 20px 8px; }
-      .frame-wrap { height: 42dvh; }
-      .slide-photo { max-width: 88vw; max-height: 42dvh; }
-      .solitary-stage { gap: 18px; }
+      header { padding: max(16px, env(safe-area-inset-top)) 20px 6px; }
+      .viewport-portal { height: 50dvh; }
+      .living-photo { max-width: 94vw; max-height: 49dvh; }
+      .peripheral-echo { max-width: 98vw; max-height: 55dvh; }
+      .solitary-stage { gap: 16px; }
     }
   </style>
 </head>
 <body>
   <div id="ambient-layer"></div>
-  <div class="mist-layer"></div>
-  <div class="mist-layer-near"></div>
-  <div class="ash-field" id="ash-field"></div>
+  <div class="mist-far"></div>
+  <div class="mist-near"></div>
+  <div class="god-rays"></div>
   <div class="void-vignette"></div>
-  <div class="foreground-dust" id="foreground-dust"></div>
+  <canvas id="atmosphere-canvas"></canvas>
+  <div class="film-grain" id="film-grain"></div>
 
   <header>
     <div class="brand">ustzyix</div>
-    <div class="memory-tag">stillness</div>
+    <div class="presence-status">
+      <span class="pulse-dot"></span>
+      <span>alone</span>
+    </div>
   </header>
 
   <main>
     <section class="solitary-stage">
-      <div class="frame-wrap" id="touch-area">
-        <div class="frame-aura"></div>
+      <div class="viewport-portal" id="touch-area">
+        <div class="portal-aura"></div>
 
-        <div id="slot-layer-0" class="slide-layer is-active">
-          <img id="img-slot-0" class="slide-photo" decoding="async" alt="ustzyix" />
-          <div class="light-flicker"></div>
-          <div class="lens-vignette"></div>
+        <div id="slot-0" class="world-slot is-active">
+          <img id="echo-0" class="peripheral-echo" decoding="async" alt="" aria-hidden="true" />
+          <div class="feathered-window">
+            <img id="img-0" class="living-photo" decoding="async" alt="ustzyix" />
+            <div class="scene-flicker"></div>
+            <div class="cloud-shadow"></div>
+            <div class="optical-vignette"></div>
+          </div>
         </div>
 
-        <div id="slot-layer-1" class="slide-layer">
-          <img id="img-slot-1" class="slide-photo" decoding="async" alt="ustzyix" />
-          <div class="light-flicker"></div>
-          <div class="lens-vignette"></div>
+        <div id="slot-1" class="world-slot">
+          <img id="echo-1" class="peripheral-echo" decoding="async" alt="" aria-hidden="true" />
+          <div class="feathered-window">
+            <img id="img-1" class="living-photo" decoding="async" alt="ustzyix" />
+            <div class="scene-flicker"></div>
+            <div class="cloud-shadow"></div>
+            <div class="optical-vignette"></div>
+          </div>
         </div>
       </div>
 
-      <div class="meta-bar">
+      <div class="whisper-hud">
         <div class="caption" id="photo-caption">Crimson — 01</div>
 
         <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio">
@@ -582,8 +670,6 @@
           <span class="music-state" id="music-state">play</span>
           <span class="music-progress" id="music-progress"></span>
         </button>
-
-        <div class="swatches" id="swatch-bar"></div>
 
         <div class="nav-whisper" id="nav-whisper">
           <button id="prev-btn" type="button">← prev</button>
@@ -607,7 +693,7 @@
     const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
     const DEFAULT_SONG = "TV Girl · Loving Machine";
 
-    // รายการรูปภาพปัจจุบันในโฟลเดอร์ images/ ของ GitHub
+    // รายการรูปภาพเริ่มต้นในโฟลเดอร์ images/ (และจะดึงรูปใหม่จาก GitHub ให้อัตโนมัติ)
     const ENTRIES = [
       {
         file: "IMG_5755 (2).jpg",
@@ -633,33 +719,40 @@
     let captionTimer = null;
     let auraTimer = null;
     let renderToken = 0;
+    let particleTint = { r: 225, g: 215, b: 215 };
 
-    // แคชรูปภาพและค่าสีไว้ในหน่วยความจำ กดรัวได้ทันทีโดยไม่คำนวณซ้ำ
+    // Web Audio API (ปลอดภัย 100% หากเบราว์เซอร์ไม่รองรับจะข้ามไปโดยไม่กระทบการเล่นเพลง)
+    let audioCtx = null;
+    let analyser = null;
+    let freqData = null;
+
     const imageCache = new Map();
     const paletteCache = new Map();
 
-    // Shared Offscreen Canvas ขนาดเล็ก (36x36) ประหยัด CPU/RAM
     const sampleCanvas = document.createElement("canvas");
     sampleCanvas.width = 36;
     sampleCanvas.height = 36;
     const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
 
-    const layerSlots = [
-      document.getElementById("slot-layer-0"),
-      document.getElementById("slot-layer-1")
+    const worldSlots = [
+      document.getElementById("slot-0"),
+      document.getElementById("slot-1")
     ];
-    const imgSlots = [
-      document.getElementById("img-slot-0"),
-      document.getElementById("img-slot-1")
+    const mainImgs = [
+      document.getElementById("img-0"),
+      document.getElementById("img-1")
     ];
+    const echoImgs = [
+      document.getElementById("echo-0"),
+      document.getElementById("echo-1")
+    ];
+
     const touchArea = document.getElementById("touch-area");
     const captionEl = document.getElementById("photo-caption");
-    const swatchBar = document.getElementById("swatch-bar");
     const ambientLayer = document.getElementById("ambient-layer");
     const navWhisper = document.getElementById("nav-whisper");
     const counterEl = document.getElementById("counter");
-    const ashField = document.getElementById("ash-field");
-    const foregroundDust = document.getElementById("foreground-dust");
+    const filmGrainEl = document.getElementById("film-grain");
 
     const bgAudio = document.getElementById("bg-audio");
     const musicPill = document.getElementById("music-pill");
@@ -667,37 +760,156 @@
     const musicStateEl = document.getElementById("music-state");
     const musicProgressEl = document.getElementById("music-progress");
 
-    // ป้องกันการซูมเมื่อกดรัวหรือบีบนิ้วบนมือถือ
     document.addEventListener("gesturestart", (e) => e.preventDefault());
     document.addEventListener("dblclick", (e) => e.preventDefault());
 
-    function initAtmosphericParticles() {
-      const bgFrag = document.createDocumentFragment();
-      for (let i = 0; i < 6; i++) {
-        const mote = document.createElement("span");
-        mote.className = "ash-mote";
-        mote.style.left = `${(i + 0.5) * (100 / 6)}%`;
-        mote.style.animationDuration = `${20 + (i % 3) * 6}s`;
-        mote.style.animationDelay = `${-i * 3.8}s`;
-        mote.style.setProperty("--drift-x", `${(i % 2 === 0 ? 1 : -1) * 16}px`);
-        mote.style.setProperty("--mote-opacity", "0.22");
-        bgFrag.appendChild(mote);
+    // สร้างเกรนฟิล์มขนาดเล็ก 96x96 ครั้งเดียว
+    function initFilmGrain() {
+      const c = document.createElement("canvas");
+      c.width = 96;
+      c.height = 96;
+      const ctx = c.getContext("2d");
+      const imgData = ctx.createImageData(96, 96);
+      const buf = imgData.data;
+      for (let i = 0; i < buf.length; i += 4) {
+        const v = (Math.random() * 255) | 0;
+        buf[i] = v;
+        buf[i + 1] = v;
+        buf[i + 2] = v;
+        buf[i + 3] = 255;
       }
-      ashField.appendChild(bgFrag);
+      ctx.putImageData(imgData, 0, 0);
+      filmGrainEl.style.backgroundImage = `url(${c.toDataURL("image/png")})`;
+    }
 
-      // ละอองฝุ่นระยะใกล้ลอยผ่านหน้าต่างภาพช้าๆ สร้างความรู้สึกเหมือนยืนอยู่ในห้องว่างจริง
-      const fgFrag = document.createDocumentFragment();
-      for (let i = 0; i < 4; i++) {
-        const mote = document.createElement("span");
-        mote.className = "ash-mote";
-        mote.style.left = `${18 + i * 21}%`;
-        mote.style.animationDuration = `${15 + (i % 2) * 5}s`;
-        mote.style.animationDelay = `${-i * 4.1}s`;
-        mote.style.setProperty("--drift-x", `${(i % 2 === 0 ? -1 : 1) * 26}px`);
-        mote.style.setProperty("--mote-opacity", "0.14");
-        fgFrag.appendChild(mote);
+    // ระบบ Canvas 60fps ละอองฝุ่น/เถ้า/หิ่งห้อยแสง 3 ระดับความลึก
+    function initAtmosphereCanvas() {
+      const canvas = document.getElementById("atmosphere-canvas");
+      const ctx = canvas.getContext("2d");
+      let width = 0;
+      let height = 0;
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
-      foregroundDust.appendChild(fgFrag);
+      resize();
+      window.addEventListener("resize", resize, { passive: true });
+
+      const count = width < 600 ? 46 : 68;
+      const motes = Array.from({ length: count }, () => {
+        const depth = Math.random(); // 0 = ไกล, 1 = ใกล้หน้าจอ
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: 0.65 + depth * 2.1,
+          vx: (Math.random() - 0.5) * (0.16 + depth * 0.28),
+          vy: -(0.14 + depth * 0.36),
+          phase: Math.random() * Math.PI * 2,
+          freq: 0.009 + Math.random() * 0.016,
+          alpha: 0.09 + depth * 0.26,
+          depth
+        };
+      });
+
+      function tick() {
+        ctx.clearRect(0, 0, width, height);
+        const { r, g, b } = particleTint;
+
+        // อ่านย่านเบสของเพลง (ถ้ากำลังเล่นอยู่) เพื่อให้ออร่าและละอองอากาศตอบสนองเบาๆ
+        let bass = 0;
+        if (analyser && !bgAudio.paused) {
+          analyser.getByteFrequencyData(freqData);
+          let sum = 0;
+          for (let k = 0; k < 6; k++) sum += freqData[k];
+          bass = (sum / (6 * 255));
+          document.documentElement.style.setProperty("--bass-boost", bass.toFixed(3));
+        }
+
+        const cx = width * 0.5;
+        const cy = height * 0.44;
+        const maxDist = Math.hypot(cx, cy) || 1;
+
+        for (let i = 0; i < motes.length; i++) {
+          const m = motes[i];
+          m.phase += m.freq;
+          m.x += m.vx + Math.sin(m.phase) * 0.22;
+          m.y += m.vy - bass * 0.25 * m.depth;
+
+          if (m.y < -14) {
+            m.y = height + 14;
+            m.x = Math.random() * width;
+          }
+          if (m.x < -14) m.x = width + 14;
+          if (m.x > width + 14) m.x = -14;
+
+          // ละอองที่ลอยผ่านลำแสงตรงกลางจะสว่างขึ้นเหมือนต้องแสงจริง
+          const distRatio = 1 - Math.min(Math.hypot(m.x - cx, m.y - cy) / (maxDist * 0.72), 1);
+          const lightCatch = 0.6 + distRatio * 0.85;
+          const twinkle = 0.65 + 0.35 * Math.sin(m.phase * 1.8);
+          const finalAlpha = Math.min(m.alpha * lightCatch * twinkle + bass * 0.08, 0.65);
+
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalAlpha.toFixed(3)})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ระบบหันมองตามนิ้ว / เมาส์ / การเอียงมือถือ (3D Look-Around Parallax)
+    function initLookAround() {
+      let targetX = 0;
+      let targetY = 0;
+      let curX = 0;
+      let curY = 0;
+
+      window.addEventListener("pointermove", (e) => {
+        const nx = (e.clientX / window.innerWidth) * 2 - 1;
+        const ny = (e.clientY / window.innerHeight) * 2 - 1;
+        targetX = nx * 12;
+        targetY = ny * 9;
+      }, { passive: true });
+
+      window.addEventListener("deviceorientation", (e) => {
+        if (e.gamma === null || e.beta === null) return;
+        const gx = Math.max(-25, Math.min(25, e.gamma)) / 25;
+        const gy = Math.max(-25, Math.min(25, e.beta - 45)) / 25;
+        targetX = gx * 11;
+        targetY = gy * 8;
+      }, { passive: true });
+
+      function updateParallax() {
+        curX += (targetX - curX) * 0.065;
+        curY += (targetY - curY) * 0.065;
+        document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
+        document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
+        requestAnimationFrame(updateParallax);
+      }
+      requestAnimationFrame(updateParallax);
+    }
+
+    function initAudioAnalyser() {
+      if (audioCtx) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        audioCtx = new AudioContextClass();
+        const source = audioCtx.createMediaElementSource(bgAudio);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        freqData = new Uint8Array(analyser.frequencyBinCount);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+      } catch (_) {
+        analyser = null;
+      }
     }
 
     function preloadImage(src) {
@@ -725,7 +937,7 @@
         .trim() || "Stillness";
     }
 
-    // ตรวจจับรูปใหม่และไฟล์เสียงใหม่ใน GitHub อัตโนมัติเมื่อมีการอัปโหลดเพิ่มในอนาคต
+    // ดึงรูปและเสียงใหม่จาก GitHub Repo อัตโนมัติเมื่ออัปโหลดเพิ่ม
     async function syncGitHubAssets() {
       try {
         const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
@@ -776,7 +988,7 @@
       } catch (_) {}
     }
 
-    // จัดกลุ่มสีตามพื้นที่ส่วนใหญ่ของภาพจริง (คำนวณครั้งเดียวแล้วเก็บลง Cache)
+    // วิเคราะห์โทนสีและความสว่างของทุกรูป เพื่อปรับเกรดภาพและบรรยากาศให้อารมณ์โดดเดี่ยวสม่ำเสมอ
     function getDominantPalette(src, imgElement) {
       if (paletteCache.has(src)) return paletteCache.get(src);
 
@@ -788,7 +1000,7 @@
         const data = sampleCtx.getImageData(0, 0, size, size).data;
         const buckets = new Map();
         const step = 28;
-        let rSum = 0, gSum = 0, bSum = 0, total = 0;
+        let rSum = 0, gSum = 0, bSum = 0, lumSum = 0, total = 0;
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
@@ -798,6 +1010,7 @@
           const min = Math.min(r, g, b);
           const sat = max === 0 ? 0 : (max - min) / max;
           const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          lumSum += lum;
 
           if (lum < 0.08 || lum > 0.90) continue;
 
@@ -825,6 +1038,7 @@
         clusters.sort((a, b) => b.score - a.score);
 
         const avg = [rSum / total, gSum / total, bSum / total];
+        const avgLum = lumSum / total;
         const primary = clusters.length > 0 ? clusters[0].rgb : avg;
 
         let secondary = null;
@@ -838,12 +1052,25 @@
         }
         if (!secondary) secondary = primary.map(v => v * 0.45);
 
+        // ปรับเกรดแสงอัตโนมัติ: ถ้ารูปสว่างมากจะกดแสงให้หม่นลง ถ้ารูปมืดจะคงมิติเงาไว้
+        const photoGrade = avgLum > 0.52
+          ? "brightness(0.78) contrast(1.16) saturate(0.86)"
+          : avgLum < 0.24
+            ? "brightness(1.05) contrast(1.06) saturate(0.96)"
+            : "brightness(0.88) contrast(1.12) saturate(0.90)";
+
         const result = {
           primaryHex: rgbToHex(primary),
           secondaryHex: rgbToHex(secondary),
-          glowPrimary: rgbToHex(primary.map(v => v * 0.56)),
-          glowSecondary: rgbToHex(secondary.map(v => v * 0.46)),
-          abyssBase: rgbToHex(primary.map(v => v * 0.11))
+          glowPrimary: rgbToHex(primary.map(v => v * 0.54)),
+          glowSecondary: rgbToHex(secondary.map(v => v * 0.44)),
+          abyssBase: rgbToHex(primary.map(v => v * 0.10)),
+          photoGrade,
+          tint: {
+            r: Math.round(180 + primary[0] * 0.28),
+            g: Math.round(180 + primary[1] * 0.28),
+            b: Math.round(185 + primary[2] * 0.28)
+          }
         };
 
         paletteCache.set(src, result);
@@ -863,21 +1090,16 @@
       const palette = getDominantPalette(src, imgElement);
       if (!palette) return;
 
-      const { primaryHex, secondaryHex, glowPrimary, glowSecondary, abyssBase } = palette;
+      const { primaryHex, secondaryHex, glowPrimary, glowSecondary, abyssBase, photoGrade, tint } = palette;
+      particleTint = tint;
+
       document.documentElement.style.setProperty("--aura-primary", primaryHex);
       document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
+      document.documentElement.style.setProperty("--photo-grade", photoGrade);
 
       ambientLayer.style.background = `
-        radial-gradient(circle at 50% 34%, ${glowPrimary}c4 0%, transparent 56%),
-        radial-gradient(circle at 50% 78%, ${glowSecondary}94 0%, ${abyssBase} 72%, #020203 100%)
-      `;
-
-      swatchBar.innerHTML = `
-        <span class="swatch-dot" style="background:${primaryHex}" title="Copy ${primaryHex}" onclick="navigator.clipboard?.writeText('${primaryHex}')"></span>
-        <span>${primaryHex.toUpperCase()}</span>
-        <span>·</span>
-        <span class="swatch-dot" style="background:${secondaryHex}" title="Copy ${secondaryHex}" onclick="navigator.clipboard?.writeText('${secondaryHex}')"></span>
-        <span>${secondaryHex.toUpperCase()}</span>
+        radial-gradient(circle at 50% 38%, ${glowPrimary}c8 0%, transparent 58%),
+        radial-gradient(circle at 50% 82%, ${glowSecondary}94 0%, ${abyssBase} 74%, #010102 100%)
       `;
     }
 
@@ -931,7 +1153,6 @@
       }
     }
 
-    // เปลี่ยนรูปภาพแบบ Dual-Layer Crossfade + Living World Frame
     function renderEntry(index, direction = 0) {
       if (!entries.length) return;
       const token = ++renderToken;
@@ -944,23 +1165,26 @@
       const performSwap = (loadedImgEl) => {
         if (token !== renderToken) return;
 
-        const outgoingLayer = layerSlots[activeSlot];
+        const outgoingSlot = worldSlots[activeSlot];
         const nextSlot = 1 - activeSlot;
-        const incomingLayer = layerSlots[nextSlot];
-        const incomingImg = imgSlots[nextSlot];
+        const incomingSlot = worldSlots[nextSlot];
+        const incomingImg = mainImgs[nextSlot];
+        const incomingEcho = echoImgs[nextSlot];
+
+        incomingImg.src = item.src;
+        incomingEcho.src = item.src;
 
         if (direction === 0) {
-          incomingImg.src = item.src;
-          incomingLayer.style.transition = "none";
-          incomingLayer.style.opacity = "0";
-          incomingLayer.style.transform = "translate3d(0, 0, 0) scale(0.985, 0.985)";
-          incomingLayer.className = "slide-layer is-active";
+          incomingSlot.style.transition = "none";
+          incomingSlot.style.opacity = "0";
+          incomingSlot.style.transform = "translate3d(0, 0, 0) scale(0.98)";
+          incomingSlot.className = "world-slot is-active";
 
-          void incomingLayer.offsetWidth;
+          void incomingSlot.offsetWidth;
 
-          incomingLayer.style.transition = "transform 0.75s var(--ease-drift), opacity 0.7s var(--ease-liquid)";
-          incomingLayer.style.opacity = "1";
-          incomingLayer.style.transform = "translate3d(0, 0, 0) scale(1, 1)";
+          incomingSlot.style.transition = "transform 0.9s var(--ease-drift), opacity 0.85s var(--ease-liquid)";
+          incomingSlot.style.opacity = "1";
+          incomingSlot.style.transform = "translate3d(0, 0, 0) scale(1)";
 
           activeSlot = nextSlot;
           captionEl.textContent = item.caption;
@@ -968,41 +1192,38 @@
           return;
         }
 
-        const shiftDist = 34;
+        const shiftDist = 36;
         const exitOffset = direction > 0 ? -shiftDist : shiftDist;
         const enterOffset = direction > 0 ? shiftDist : -shiftDist;
 
-        incomingImg.src = item.src;
-        incomingLayer.style.transition = "none";
-        incomingLayer.style.opacity = "0";
-        incomingLayer.style.transform = `translate3d(${enterOffset}px, 0, 0) scale(1.035, 0.975)`;
-        incomingLayer.className = "slide-layer is-active";
+        incomingSlot.style.transition = "none";
+        incomingSlot.style.opacity = "0";
+        incomingSlot.style.transform = `translate3d(${enterOffset}px, 0, 0) scale(1.03, 0.98)`;
+        incomingSlot.className = "world-slot is-active";
 
-        void incomingLayer.offsetWidth;
+        void incomingSlot.offsetWidth;
 
         clearTimeout(auraTimer);
         touchArea.classList.add("is-shifting");
-        auraTimer = setTimeout(() => touchArea.classList.remove("is-shifting"), 400);
+        auraTimer = setTimeout(() => touchArea.classList.remove("is-shifting"), 450);
 
-        outgoingLayer.className = "slide-layer is-exiting";
-        outgoingLayer.style.transition = "transform 0.44s var(--ease-drift), opacity 0.36s var(--ease-liquid)";
-        outgoingLayer.style.opacity = "0";
-        outgoingLayer.style.transform = `translate3d(${exitOffset}px, 0, 0) scale(1.03, 0.975)`;
+        outgoingSlot.className = "world-slot is-exiting";
+        outgoingSlot.style.transition = "transform 0.5s var(--ease-drift), opacity 0.42s var(--ease-liquid)";
+        outgoingSlot.style.opacity = "0";
+        outgoingSlot.style.transform = `translate3d(${exitOffset}px, 0, 0) scale(1.025, 0.98)`;
 
-        incomingLayer.style.transition = "transform 0.5s var(--ease-drift), opacity 0.42s var(--ease-liquid)";
-        incomingLayer.style.opacity = "1";
-        incomingLayer.style.transform = "translate3d(0, 0, 0) scale(1, 1)";
+        incomingSlot.style.transition = "transform 0.58s var(--ease-drift), opacity 0.48s var(--ease-liquid)";
+        incomingSlot.style.opacity = "1";
+        incomingSlot.style.transform = "translate3d(0, 0, 0) scale(1, 1)";
 
         clearTimeout(captionTimer);
         captionEl.classList.add("is-shifting");
-        swatchBar.classList.add("is-shifting");
 
         captionTimer = setTimeout(() => {
           if (token !== renderToken) return;
           captionEl.textContent = item.caption;
           captionEl.classList.remove("is-shifting");
-          swatchBar.classList.remove("is-shifting");
-        }, 140);
+        }, 150);
 
         activeSlot = nextSlot;
         if (loadedImgEl) applyAtmosphere(item.src, loadedImgEl);
@@ -1019,6 +1240,11 @@
     musicPill.addEventListener("click", () => {
       const item = entries[currentIndex];
       if (!item || !item.audio) return;
+
+      initAudioAnalyser();
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
 
       if (bgAudio.paused) {
         isAudioActive = true;
@@ -1041,6 +1267,7 @@
         bgAudio.pause();
         musicPill.classList.remove("playing");
         musicStateEl.textContent = "play";
+        document.documentElement.style.setProperty("--bass-boost", "0");
       }
     });
 
@@ -1052,6 +1279,7 @@
     bgAudio.addEventListener("pause", () => {
       musicPill.classList.remove("playing");
       musicStateEl.textContent = "play";
+      document.documentElement.style.setProperty("--bass-boost", "0");
     });
 
     bgAudio.addEventListener("timeupdate", () => {
@@ -1079,17 +1307,17 @@
       if (entries.length <= 1) return;
       touchStartX = e.changedTouches[0].screenX;
       isDragging = true;
-      layerSlots[activeSlot].style.transition = "none";
+      worldSlots[activeSlot].style.transition = "none";
     }, { passive: true });
 
     touchArea.addEventListener("touchmove", (e) => {
       if (!isDragging || entries.length <= 1) return;
       const deltaX = e.changedTouches[0].screenX - touchStartX;
       const dampenedX = deltaX * 0.34;
-      const stretchX = 1 + Math.min(Math.abs(deltaX) / 2200, 0.04);
+      const stretchX = 1 + Math.min(Math.abs(deltaX) / 2200, 0.035);
       const squashY = 1 - Math.min(Math.abs(deltaX) / 3600, 0.02);
 
-      layerSlots[activeSlot].style.transform = `translate3d(${dampenedX}px, 0, 0) scale(${stretchX}, ${squashY})`;
+      worldSlots[activeSlot].style.transform = `translate3d(${dampenedX}px, 0, 0) scale(${stretchX}, ${squashY})`;
     }, { passive: true });
 
     touchArea.addEventListener("touchend", (e) => {
@@ -1100,13 +1328,15 @@
       if (Math.abs(diff) > 36) {
         renderEntry(diff > 0 ? currentIndex - 1 : currentIndex + 1, diff > 0 ? -1 : 1);
       } else {
-        const currentLayer = layerSlots[activeSlot];
-        currentLayer.style.transition = "transform 0.36s var(--ease-liquid)";
-        currentLayer.style.transform = "translate3d(0, 0, 0) scale(1, 1)";
+        const currentSlot = worldSlots[activeSlot];
+        currentSlot.style.transition = "transform 0.38s var(--ease-liquid)";
+        currentSlot.style.transform = "translate3d(0, 0, 0) scale(1, 1)";
       }
     }, { passive: true });
 
-    initAtmosphericParticles();
+    initFilmGrain();
+    initAtmosphereCanvas();
+    initLookAround();
     entries.forEach(item => preloadImage(item.src));
     renderEntry(0, 0);
     syncGitHubAssets();

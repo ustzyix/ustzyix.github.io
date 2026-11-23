@@ -1,1 +1,478 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ustzyix — archive</title>
+  <style>
+    :root {
+      --fg-color: #f4f4f5;
+      --fg-muted: rgba(244, 244, 245, 0.58);
+      --border-color: rgba(244, 244, 245, 0.16);
+      --glass-bg: rgba(16, 16, 18, 0.35);
+    }
 
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      color: var(--fg-color);
+      background-color: #0b0b0d;
+      transition: color 0.6s ease;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #ambient-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(circle at 50% 38%, #1d1922 0%, #0b0b0d 85%);
+      transition: background 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 26px;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    .brand {
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: lowercase;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button.pill {
+      background: var(--glass-bg);
+      color: var(--fg-color);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    button.pill:hover, button.pill.active {
+      border-color: var(--fg-color);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 22px 32px;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Focus View */
+    .focus-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 20px;
+    }
+
+    .frame-wrap {
+      position: relative;
+      max-width: 100%;
+      max-height: 68dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .frame-wrap img {
+      max-width: min(90vw, 760px);
+      max-height: 65dvh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 6px;
+      box-shadow: 0 28px 70px -15px rgba(0, 0, 0, 0.6);
+      transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      user-select: none;
+    }
+
+    .meta-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .caption {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+
+    .swatches {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--fg-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .swatch-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .swatch-dot:hover { transform: scale(1.25); }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+
+    /* Archive Grid View */
+    .grid-stage {
+      display: none;
+      width: 100%;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      padding-top: 8px;
+    }
+
+    .grid-stage.visible { display: grid; }
+    .focus-stage.hidden { display: none; }
+
+    .grid-item {
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+    }
+
+    .grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .grid-item:hover img { transform: scale(1.04); }
+
+    .grid-item span {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      backdrop-filter: blur(6px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 14px;
+      font-size: 11px;
+      color: var(--fg-muted);
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 16px 18px; }
+      .grid-stage { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="ambient-layer"></div>
+
+  <header>
+    <div class="brand">ustzyix</div>
+    <div class="nav-actions">
+      <button class="pill active" id="btn-focus">Focus</button>
+      <button class="pill" id="btn-grid">Archive</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="focus-stage" id="focus-stage">
+      <div class="frame-wrap" id="touch-area">
+        <img id="hero-img" alt="ustzyix photograph" />
+      </div>
+      <div class="meta-bar">
+        <div class="caption" id="photo-caption">Magenta — 01</div>
+        <div class="swatches" id="swatch-bar"></div>
+        <div class="controls">
+          <button class="pill" id="prev-btn">← Prev</button>
+          <span id="counter">1 / 3</span>
+          <button class="pill" id="next-btn">Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-stage" id="grid-stage"></section>
+  </main>
+
+  <footer id="repo-status">gh://NeiAkawaii/ustzyix-gallery/images</footer>
+
+  <script>
+    const REPO_CONFIG = {
+      owner: "NeiAkawaii",
+      repo: "ustzyix-gallery",
+      folder: "images"
+    };
+
+    // รายการรูปภาพเริ่มต้นทั้ง 3 ไฟล์ตามที่อัปโหลดไว้ในโฟลเดอร์ images/
+    const CURATED_PHOTOS = [
+      {
+        file: "IMG_5639 (1).jpg",
+        src: "./images/IMG_5639%20(1).jpg",
+        caption: "Magenta — 01"
+      },
+      {
+        file: "IMG_5738 (1).jpg",
+        src: "./images/IMG_5738%20(1).jpg",
+        caption: "Magenta — 02"
+      },
+      {
+        file: "IMG_5836 (1).jpg",
+        src: "./images/IMG_5836%20(1).jpg",
+        caption: "Magenta — 03"
+      }
+    ];
+
+    let photos = [...CURATED_PHOTOS];
+    let currentIndex = 0;
+
+    const heroImg = document.getElementById("hero-img");
+    const captionEl = document.getElementById("photo-caption");
+    const counterEl = document.getElementById("counter");
+    const swatchBar = document.getElementById("swatch-bar");
+    const ambientLayer = document.getElementById("ambient-layer");
+    const gridStage = document.getElementById("grid-stage");
+    const focusStage = document.getElementById("focus-stage");
+    const statusEl = document.getElementById("repo-status");
+
+    function formatNewCaption(filename) {
+      return filename
+        .replace(/\.[^/.]+$/, "")
+        .replace(/\(\d+\)/g, "")
+        .replace(/^IMG[-_]?/i, "")
+        .replace(/[-_]/g, " ")
+        .trim() || "Untitled";
+    }
+
+    // ตรวจสอบไฟล์ใหม่ในโฟลเดอร์ images/ อัตโนมัติเมื่อมีการอัปโหลดเพิ่มในอนาคต
+    async function syncAdditionalGitHubPhotos() {
+      try {
+        const apiUrl = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
+        const res = await fetch(apiUrl);
+        if (!res.ok) return;
+        const files = await res.json();
+
+        const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
+        const existingNames = new Set(photos.map(p => p.file));
+
+        const extraPhotos = files
+          .filter(f => f.type === "file" && validExt.test(f.name) && !existingNames.has(f.name))
+          .map(f => ({
+            file: f.name,
+            src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
+            caption: formatNewCaption(f.name)
+          }));
+
+        if (extraPhotos.length > 0) {
+          photos = [...photos, ...extraPhotos];
+          renderGrid();
+          counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+        }
+        statusEl.textContent = `gh://${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/${REPO_CONFIG.folder} (${photos.length})`;
+      } catch (_) {
+        // ใช้รายการ CURATED_PHOTOS ต่อเนื่องได้ทันทีแม้ขณะออฟไลน์หรือติด API Limit
+      }
+    }
+
+    // สกัดทั้งสีหลัก (Accent Highlight) และสีรอง (Secondary Shadow/Midtone)
+    function extractDualPalette(imgElement) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const size = 56;
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(imgElement, 0, 0, size, size);
+
+      const data = ctx.getImageData(0, 0, size, size).data;
+      let primary = [180, 90, 140];
+      let secondary = [22, 68, 76];
+      let bestPrimaryScore = -1;
+      let bestSecondaryScore = -1;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const sat = max === 0 ? 0 : (max - min) / max;
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+        // 1. สีไฮไลต์หลักที่สดและสว่าง
+        if (lum > 0.25 && lum < 0.88) {
+          const pScore = sat * 1.4 + lum * 0.5;
+          if (pScore > bestPrimaryScore) {
+            bestPrimaryScore = pScore;
+            primary = [r, g, b];
+          }
+        }
+
+        // 2. สีโทนกลาง-เข้มที่ต่างเฉดสีกับสีหลัก (เช่น สี Cyan/Teal ตัดกับ Magenta)
+        const colorDist = Math.abs(r - primary[0]) + Math.abs(g - primary[1]) + Math.abs(b - primary[2]);
+        if (lum > 0.12 && lum < 0.65 && colorDist > 95) {
+          const sScore = sat + (colorDist / 765);
+          if (sScore > bestSecondaryScore) {
+            bestSecondaryScore = sScore;
+            secondary = [r, g, b];
+          }
+        }
+      }
+
+      return { primary, secondary };
+    }
+
+    function rgbToHex([r, g, b]) {
+      return "#" + [r, g, b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+    }
+
+    function applyAdaptiveTheme(imgElement) {
+      try {
+        const { primary, secondary } = extractDualPalette(imgElement);
+        const primaryHex = rgbToHex(primary);
+        const secondaryHex = rgbToHex(secondary);
+        const deepBaseHex = rgbToHex(secondary.map(v => v * 0.28));
+
+        ambientLayer.style.background = `
+          radial-gradient(circle at 50% 30%, ${primaryHex}b8 0%, transparent 62%),
+          radial-gradient(circle at 20% 75%, ${secondaryHex}aa 0%, ${deepBaseHex} 78%, #09090b 100%)
+        `;
+
+        const lum = (0.299 * primary[0] + 0.587 * primary[1] + 0.114 * primary[2]) / 255;
+        const isBright = lum > 0.68;
+        document.documentElement.style.setProperty("--fg-color", isBright ? "#121214" : "#f4f4f5");
+        document.documentElement.style.setProperty("--fg-muted", isBright ? "rgba(18,18,20,0.62)" : "rgba(244,244,245,0.58)");
+        document.documentElement.style.setProperty("--border-color", isBright ? "rgba(18,18,20,0.2)" : "rgba(244,244,245,0.16)");
+        document.documentElement.style.setProperty("--glass-bg", isBright ? "rgba(255,255,255,0.35)" : "rgba(16,16,18,0.35)");
+
+        swatchBar.innerHTML = `
+          <span class="swatch-dot" style="background:${primaryHex}" title="Copy ${primaryHex}" onclick="navigator.clipboard?.writeText('${primaryHex}')"></span>
+          <span>${primaryHex.toUpperCase()}</span>
+          <span>·</span>
+          <span class="swatch-dot" style="background:${secondaryHex}" title="Copy ${secondaryHex}" onclick="navigator.clipboard?.writeText('${secondaryHex}')"></span>
+          <span>${secondaryHex.toUpperCase()}</span>
+        `;
+      } catch (_) {}
+    }
+
+    function showPhoto(index) {
+      if (!photos.length) return;
+      currentIndex = (index + photos.length) % photos.length;
+      const item = photos[currentIndex];
+
+      heroImg.style.opacity = "0.2";
+      heroImg.onload = () => {
+        heroImg.style.opacity = "1";
+        applyAdaptiveTheme(heroImg);
+      };
+      heroImg.src = item.src;
+      captionEl.textContent = item.caption;
+      counterEl.textContent = `${currentIndex + 1} / ${photos.length}`;
+    }
+
+    function renderGrid() {
+      gridStage.innerHTML = "";
+      photos.forEach((item, idx) => {
+        const card = document.createElement("div");
+        card.className = "grid-item";
+
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.caption;
+        img.loading = "lazy";
+
+        const label = document.createElement("span");
+        label.textContent = item.caption;
+
+        card.appendChild(img);
+        card.appendChild(label);
+
+        card.addEventListener("mouseenter", () => {
+          if (img.complete) applyAdaptiveTheme(img);
+        });
+        card.addEventListener("click", () => {
+          setView("focus");
+          showPhoto(idx);
+        });
+
+        gridStage.appendChild(card);
+      });
+    }
+
+    function setView(mode) {
+      const isGrid = mode === "grid";
+      focusStage.classList.toggle("hidden", isGrid);
+      gridStage.classList.toggle("visible", isGrid);
+      document.getElementById("btn-focus").classList.toggle("active", !isGrid);
+      document.getElementById("btn-grid").classList.toggle("active", isGrid);
+    }
+
+    document.getElementById("prev-btn").onclick = () => showPhoto(currentIndex - 1);
+    document.getElementById("next-btn").onclick = () => showPhoto(currentIndex + 1);
+    document.getElementById("btn-focus").onclick = () => setView("focus");
+    document.getElementById("btn-grid").onclick = () => setView("grid");
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") showPhoto(currentIndex - 1);
+      if (e.key === "ArrowRight") showPhoto(currentIndex + 1);
+    });
+
+    let touchStartX = 0;
+    const touchArea = document.getElementById("touch-area");
+    touchArea.addEventListener("touchstart", e => touchStartX = e.changedTouches[0].screenX, { passive: true });
+    touchArea.addEventListener("touchend", e => {
+      const diff = e.changedTouches[0].screenX - touchStartX;
+      if (Math.abs(diff) > 40) showPhoto(diff > 0 ? currentIndex - 1 : currentIndex + 1);
+    }, { passive: true });
+
+    renderGrid();
+    showPhoto(0);
+    syncAdditionalGitHubPhotos();
+  </script>
+</body>
+</html>

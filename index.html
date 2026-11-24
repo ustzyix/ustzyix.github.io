@@ -12,9 +12,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"/>
 <style>
-@property --aura-1{syntax:"<color>";inherits:true;initial-value:#9b221c}
-@property --aura-2{syntax:"<color>";inherits:true;initial-value:#481a16}
-@property --abyss{syntax:"<color>";inherits:true;initial-value:#1c0907}
+@property --aura-1{syntax:"<color>";inherits:true;initial-value:#262630}
+@property --aura-2{syntax:"<color>";inherits:true;initial-value:#14141a}
+@property --abyss{syntax:"<color>";inherits:true;initial-value:#08080b}
 :root{
  --bg:#050507;--fg:#f5f5f9;--fg2:rgba(245,245,249,.7);--fg3:rgba(245,245,249,.42);
  --ease:cubic-bezier(.22,1,.36,1);
@@ -94,13 +94,12 @@ header>*{pointer-events:auto}
 @media(max-width:640px){.count{display:none}.tab{padding:0 10px;font-size:11px}}
 
 /* ---------- project switcher window ---------- */
-.pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,5,8,.36);opacity:0;visibility:hidden;transition:opacity .26s var(--ease),visibility 0s linear .26s}
-.pm.open{opacity:1;visibility:visible;transition:opacity .26s var(--ease)}
-.pm-box{width:100%;max-width:420px;max-height:min(78dvh,560px);display:flex;flex-direction:column;border-radius:30px;overflow:hidden;
- box-shadow:0 34px 90px rgba(0,0,0,.78),0 0 80px -22px var(--aura-1);
- transform:translate3d(0,12px,0);transition:transform .34s var(--ease)}
-.pm.open .pm-box{transform:translate3d(0,0,0)}
-.pm-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,5,8,.42);opacity:0;pointer-events:none;transition:opacity .22s var(--ease)}
+.pm.open{opacity:1;pointer-events:auto}
+.pm-box{width:100%;max-width:420px;max-height:min(78dvh,560px);display:flex;flex-direction:column;border-radius:30px;
+ box-shadow:0 34px 90px rgba(0,0,0,.78),0 0 80px -22px var(--aura-1)}
+.pm-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.1);opacity:0;transform:translate3d(0,6px,0);transition:opacity .24s var(--ease),transform .28s var(--ease)}
+.pm.open .pm-hd{opacity:1;transform:translate3d(0,0,0)}
 .pm-t{font-family:var(--sans);font-size:15px;font-weight:600;letter-spacing:.03em;line-height:1.2;text-shadow:0 1px 10px rgba(0,0,0,.35)}
 .pm-x{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;
  background:radial-gradient(120% 100% at 20% 0%,rgba(255,255,255,.18),transparent 60%),rgba(255,255,255,.07);
@@ -108,7 +107,8 @@ header>*{pointer-events:auto}
  cursor:pointer;transition:transform .2s var(--ease),background .2s var(--ease)}
 .pm-x:active{transform:scale(.9)}
 .pm-x svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.pm-list{display:flex;flex-direction:column;gap:10px;padding:14px 16px 18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.pm-list{display:flex;flex-direction:column;gap:10px;padding:14px 16px 18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;opacity:0;transform:translate3d(0,8px,0);transition:opacity .26s var(--ease),transform .3s var(--ease)}
+.pm.open .pm-list{opacity:1;transform:translate3d(0,0,0)}
 .pm-list::-webkit-scrollbar{display:none}
 .pitem{display:flex;align-items:center;gap:14px;width:100%;padding:10px;border:0;border-radius:22px;text-align:left;cursor:pointer;
  background:radial-gradient(120% 100% at 12% 0%,rgba(255,255,255,.11),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
@@ -463,22 +463,36 @@ function hexToPalette(h){
 async function palette(key,source){
  if(palCache.has(key))return palCache.get(key);
  try{let bm=source;
+  if(source instanceof HTMLVideoElement&&(source.readyState<2||!source.videoWidth))return null;
   if(source instanceof HTMLImageElement){try{bm=await createImageBitmap(source,{resizeWidth:36,resizeHeight:36,resizeQuality:"low"})}catch(_){bm=source}}
   sx.clearRect(0,0,36,36);sx.drawImage(bm,0,0,36,36);bm.close?.();const d=sx.getImageData(0,0,36,36).data,bk=new Map();
-  let R=0,G=0,B=0,n=0;
-  for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],b=d[i+2];R+=r;G+=g;B+=b;n++;
+  let R=0,G=0,B=0,n=0,opaque=0;
+  for(let i=0;i<d.length;i+=4){
+   if(d[i+3]<128)continue;
+   opaque++;
+   const r=d[i],g=d[i+1],b=d[i+2];R+=r;G+=g;B+=b;n++;
    const mx=Math.max(r,g,b),mn=Math.min(r,g,b),s=mx?(mx-mn)/mx:0,l=(.299*r+.587*g+.114*b)/255;
-   if(l<.08||l>.9)continue;
+   if(l<.06||l>.92)continue;
    const k=`${r/28|0},${g/28|0},${b/28|0}`;let o=bk.get(k);if(!o)bk.set(k,o={r:0,g:0,b:0,c:0,s:0});
    o.r+=r;o.g+=g;o.b+=b;o.c++;o.s+=s}
+  if(opaque<130)return null;
   const cl=[...bk.values()].map(o=>({rgb:[o.r/o.c,o.g/o.c,o.b/o.c],sc:o.c*(.45+o.s/o.c*1.15)})).sort((a,b)=>b.sc-a.sc);
+  if(!cl.length&&(R+G+B)/(n*3)<16)return null;
   const p=cl.length?cl[0].rgb:[R/n,G/n,B/n];
   let s2=null;for(let i=1;i<cl.length;i++){const c=cl[i].rgb;if(Math.abs(c[0]-p[0])+Math.abs(c[1]-p[1])+Math.abs(c[2]-p[2])>75){s2=c;break}}
   if(!s2)s2=p.map(v=>v*.45);
   const res={a:hex(p),b:hex(s2),abyss:hex(p.map(v=>v*.2)),tint:[180+p[0]*.28,180+p[1]*.28,185+p[2]*.28].map(Math.round)};
   palCache.set(key,res);return res}catch(_){return null}}
+function samplePoster(posterUrl){
+ return new Promise(res=>{
+  const im=new Image();im.decoding="async";
+  im.onload=async()=>res(await palette(posterUrl,im));
+  im.onerror=()=>res(null);
+  im.src=posterUrl;
+ });
+}
 let front=$("#atmA"),back=$("#atmB"),curA="",fadeT=0;
-[["--aura-1","#9b221c"],["--aura-2","#481a16"],["--abyss","#1c0907"]].forEach(([k,v])=>front.style.setProperty(k,v));
+[["--aura-1","#262630"],["--aura-2","#14141a"],["--abyss","#08080b"]].forEach(([k,v])=>front.style.setProperty(k,v));
 function applyAtmosphere(p){if(!p)return;tint=p.tint;
  $("#sw1").style.background=p.a;$("#sw2").style.background=p.b;$("#swHex").textContent=p.a.toUpperCase();
  if(p.a===curA)return;curA=p.a;
@@ -599,7 +613,7 @@ let selTok=0;
 async function select(i,open){
  if(!entries.length)return;cur=(i+entries.length)%entries.length;const it=entries[cur],mediaEl=cards[cur]?.querySelector("img,video"),tok=++selTok;
  const manualPal=it.aura?hexToPalette(it.aura):null;
- const palProm=manualPal?Promise.resolve(manualPal):((mediaEl&&(mediaEl.complete||mediaEl.readyState>=2))?palette(it.thumb,mediaEl):Promise.resolve(null));
+ const palProm=manualPal?Promise.resolve(manualPal):(it.isVid&&it.poster?samplePoster(it.poster):((mediaEl&&(mediaEl.complete||mediaEl.readyState>=2))?palette(it.thumb,mediaEl):Promise.resolve(null)));
  if(open){
   const[,p]=await Promise.all([it.isVid?Promise.resolve():predecode(it.src),palProm]);
   if(tok!==selTok)return;
@@ -642,12 +656,19 @@ function addCard(it,i){
   :`<img alt="${esc(it.caption)}" decoding="async" draggable="false">`;
  el.innerHTML=`<div class="frame">${mediaHtml}</div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div>${it.tag?`<span class="tag glass">${esc(it.tag)}</span>`:""}</div>`;
  const frame=el.querySelector(".frame"),mediaEl=el.querySelector("img,video");
+ const applyCardPal=p=>{if(!p)return;el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)};
  const onReady=async()=>{
   const w=mediaEl.naturalWidth||mediaEl.videoWidth,h=mediaEl.naturalHeight||mediaEl.videoHeight;
   if(w&&h)frame.style.aspectRatio=`${w}/${h}`;
   frame.classList.add("loaded");scheduleLayout();
-  const p=it.aura?hexToPalette(it.aura):await palette(it.thumb,mediaEl);
-  if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}
+  if(it.aura){applyCardPal(hexToPalette(it.aura));return}
+  if(it.isVid&&it.poster){applyCardPal(await samplePoster(it.poster));return}
+  const p=await palette(it.thumb,mediaEl);
+  if(p)applyCardPal(p);
+  else if(it.isVid){
+   const retry=()=>{if(mediaEl.currentTime>.12){mediaEl.removeEventListener("timeupdate",retry);palette(it.thumb,mediaEl).then(applyCardPal)}};
+   mediaEl.addEventListener("timeupdate",retry,{passive:true});
+  }
  };
  if(it.isVid){
   mediaEl.onloadeddata=onReady;
@@ -734,12 +755,12 @@ async function loadProject(baseProj,pushHash){
  if(pushHash&&baseProj.id)history.replaceState(null,"","#"+encodeURIComponent(baseProj.id));
  canvas.innerHTML="";cards=[];entries=[];canvas.style.height="";canvas.removeAttribute("data-empty");
  if(stage.scrollTop)stage.scrollTop=0;
- if(baseProj.aura)applyAtmosphere(hexToPalette(baseProj.aura));
+ if(mode!=="gallery"&&baseProj.aura)applyAtmosphere(hexToPalette(baseProj.aura));
 
  const{ok,proj}=await fetchProjectDetail(baseProj);
  if(tok!==loadTok)return;
  activeProj=proj;
- if(proj.aura)applyAtmosphere(hexToPalette(proj.aura));
+ if(mode!=="gallery"&&proj.aura)applyAtmosphere(hexToPalette(proj.aura));
 
  if(!ok&&proj.data){
   updateCount(`Could not load ${proj.data} — check file syntax.`);
@@ -750,6 +771,7 @@ async function loadProject(baseProj,pushHash){
  if(mode==="playlist"){mountPlaylist(proj);return}
 
  entries=(proj.photos||[]).filter(p=>p&&(typeof p==="string"||p.file||p.src)).map((p,i)=>toEntry(p,i,proj.folder,proj.thumbFolder));
+ if(!entries.length&&proj.aura)applyAtmosphere(hexToPalette(proj.aura));
  entries.forEach(addCard);
  updateCount();scheduleLayout();
  if(proj.discover!==false){

@@ -10,7 +10,6 @@ window.GALLERY = {
       title: "Archive",
       sub: "Color Grading",
       year: "2024 — 2026",
-      aura: "#9b221c",
       data: "data/archive-01.js"
     },
     {
@@ -20,7 +19,6 @@ window.GALLERY = {
       title: "Motion",
       sub: "Video Editor",
       year: "2023 — 2026",
-      aura: "#b91c1c",
       data: "data/videos-01.js"
     }
   ]

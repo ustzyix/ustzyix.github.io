@@ -2,13 +2,15 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="ustzyix — Atmospheric visual and photographic archive with dynamic soundscapes." />
+  <meta name="theme-color" content="#020203" />
   <title>ustzyix</title>
   <style>
     :root {
       --fg-color: #e6e6ea;
-      --fg-muted: rgba(230, 230, 234, 0.52);
-      --fg-whisper: rgba(230, 230, 234, 0.28);
+      --fg-muted: rgba(230, 230, 234, 0.62);
+      --fg-whisper: rgba(230, 230, 234, 0.38);
       --aura-primary: #8c1d18;
       --aura-secondary: #3b1814;
       --px: 0px;
@@ -22,32 +24,41 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none !important;
-      -webkit-user-select: none !important;
-      -webkit-touch-callout: none !important;
       -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100% !important;
-      height: 100dvh !important;
-      max-height: 100dvh !important;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
       background-color: #020203;
       color: var(--fg-color);
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
-      overflow: hidden !important;
-      overscroll-behavior: none !important;
-      touch-action: none !important;
+      overflow: hidden;
+      overscroll-behavior: none;
       -webkit-font-smoothing: antialiased;
       -webkit-text-size-adjust: 100%;
+    }
+
+    /* Selection & Drag Guard */
+    .scatter-canvas, header, .floating-dock, .lightbox {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     img {
       -webkit-user-drag: none;
       user-drag: none;
       pointer-events: none;
+    }
+
+    /* Focus accessibility styling */
+    :focus-visible {
+      outline: 2px solid var(--aura-primary);
+      outline-offset: 3px;
     }
 
     /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก */
@@ -60,9 +71,10 @@
         radial-gradient(ellipse 90% 70% at 50% 80%, rgba(72, 26, 22, 0.44) 0%, #020203 86%);
       transition: background 1.2s ease;
       pointer-events: none;
+      will-change: background;
     }
 
-    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ */
+    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ (GPU composited) */
     .mist-far {
       position: fixed;
       inset: -24%;
@@ -72,6 +84,7 @@
       background:
         radial-gradient(ellipse 74% 58% at 24% 34%, var(--aura-primary) 0%, transparent 76%),
         radial-gradient(ellipse 70% 62% at 76% 68%, var(--aura-secondary) 0%, transparent 78%);
+      will-change: transform;
       animation: mistSwayA 28s ease-in-out infinite alternate;
     }
 
@@ -84,6 +97,7 @@
       background:
         radial-gradient(ellipse 62% 48% at 72% 32%, var(--aura-primary) 0%, transparent 74%),
         radial-gradient(ellipse 72% 50% at 30% 76%, rgba(205, 210, 225, 0.08) 0%, transparent 78%);
+      will-change: transform;
       animation: mistSwayB 20s ease-in-out infinite alternate;
     }
 
@@ -108,6 +122,7 @@
         radial-gradient(ellipse 22% 78% at 36% 24%, var(--aura-primary) 0%, transparent 78%),
         radial-gradient(ellipse 18% 72% at 54% 28%, rgba(255, 248, 236, 0.14) 0%, transparent 78%);
       transform: rotate(-22deg);
+      will-change: transform, opacity;
       animation: raySweep 17s ease-in-out infinite alternate;
     }
 
@@ -131,7 +146,7 @@
       );
     }
 
-    /* ชั้นที่ 5: Canvas 60fps ละอองฝุ่นลอยในอากาศ */
+    /* ชั้นที่ 5: Canvas ละอองฝุ่นลอยในอากาศ */
     #atmosphere-canvas {
       position: fixed;
       inset: 0;
@@ -141,22 +156,33 @@
       pointer-events: none;
     }
 
-    /* ชั้นที่ 6: เกรนฟิล์มอนาล็อกบางเบา */
+    /* ชั้นที่ 6: เกรนฟิล์มอนาล็อกบางเบา (GPU transform - ประหยัดพลังงาน 100% ไร้ CPU Repaint) */
     .film-grain {
       position: fixed;
-      inset: 0;
+      inset: -40px;
+      width: calc(100% + 80px);
+      height: calc(100% + 80px);
       z-index: 5;
       pointer-events: none;
       opacity: 0.035;
       background-repeat: repeat;
-      animation: grainShift 0.36s steps(2) infinite;
+      will-change: transform;
+      animation: grainShift 0.4s steps(3) infinite;
     }
 
     @keyframes grainShift {
-      0% { background-position: 0 0; }
-      33% { background-position: 24px -18px; }
-      66% { background-position: -19px 27px; }
-      100% { background-position: 14px 12px; }
+      0% { transform: translate3d(0, 0, 0); }
+      33% { transform: translate3d(20px, -16px, 0); }
+      66% { transform: translate3d(-18px, 22px, 0); }
+      100% { transform: translate3d(12px, 10px, 0); }
+    }
+
+    /* หยุดแอนิเมชันพื้นหลังเมื่อเปิดโมดอล เพื่อเซฟแบตเตอรี่และทรัพยากร GPU */
+    body.modal-active .mist-far,
+    body.modal-active .mist-near,
+    body.modal-active .god-rays,
+    body.modal-active .film-grain {
+      animation-play-state: paused !important;
     }
 
     /* แถบหัวเว็บลอยโปร่งแสงด้านบน */
@@ -168,7 +194,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: max(18px, env(safe-area-inset-top)) 26px 14px;
+      padding: max(18px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) 14px max(26px, env(safe-area-inset-left));
       font-size: 12px;
       z-index: 20;
       background: linear-gradient(to bottom, rgba(2, 2, 3, 0.72) 0%, transparent 100%);
@@ -206,7 +232,7 @@
       50% { opacity: 0.85; transform: scale(1.25); }
     }
 
-    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ (ล็อกหน้า 1 ห้ามเลื่อน) */
+    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ */
     main {
       position: fixed;
       inset: 0;
@@ -216,24 +242,23 @@
       margin: 0 auto;
       padding: 76px 16px 96px;
       z-index: 2;
-      overflow: hidden !important;
-      overscroll-behavior: none !important;
-      touch-action: none !important;
+      overflow: hidden;
+      overscroll-behavior: none;
       transition: filter 0.45s var(--ease-liquid), transform 0.5s var(--ease-drift), opacity 0.45s ease;
     }
 
     body.modal-active main {
       filter: blur(8px) brightness(0.75);
       transform: scale(0.975);
-      pointer-events: none !important;
+      pointer-events: none;
     }
 
     .scatter-canvas {
       position: relative;
       width: 100%;
       height: 100%;
-      overflow: hidden !important;
-      touch-action: none !important;
+      overflow: hidden;
+      touch-action: pan-y;
     }
 
     /* การ์ดรูปภาพแต่ละใบ */
@@ -244,14 +269,24 @@
       align-items: flex-start;
       gap: 9px;
       cursor: pointer;
-      touch-action: none;
+      touch-action: manipulation;
       opacity: 0;
       transform: translate3d(0, 18px, 0);
       transition:
         opacity 0.85s var(--ease-liquid),
-        transform 0.85s var(--ease-drift),
-        z-index 0s;
+        transform 0.85s var(--ease-drift);
       will-change: transform, opacity;
+      border: none;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+    }
+
+    .scatter-item:focus-visible {
+      outline: 2px solid var(--aura-primary);
+      outline-offset: 6px;
+      border-radius: 8px;
+      z-index: 15 !important;
     }
 
     .scatter-item.is-visible {
@@ -308,6 +343,7 @@
     .scatter-frame {
       position: relative;
       width: 100%;
+      aspect-ratio: 16 / 9;
       overflow: hidden;
       border-radius: 6px;
       border: none;
@@ -321,7 +357,7 @@
     .scatter-frame img {
       display: block;
       width: 100%;
-      height: auto;
+      height: 100%;
       object-fit: cover;
       transform: scale(1.015);
       transition: transform 8s ease-out;
@@ -355,11 +391,10 @@
     }
 
     .scatter-title {
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: rgba(230, 230, 234, 0.84);
+      color: rgba(235, 235, 240, 0.90);
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       overflow: hidden;
@@ -369,9 +404,9 @@
 
     .scatter-sub {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
+      font-size: 10px;
       letter-spacing: 0.06em;
-      color: rgba(230, 230, 234, 0.42);
+      color: var(--fg-muted);
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       overflow: hidden;
@@ -386,9 +421,7 @@
       opacity: 0.88;
     }
 
-    /* ============================================================
-       แถบเพลงลอยด้านล่างแบบไร้กรอบปุ่ม (Soft Atmospheric Mist Text)
-       ============================================================ */
+    /* แถบเพลงลอยด้านล่างแบบไร้กรอบปุ่ม */
     .floating-dock {
       position: fixed;
       bottom: max(22px, env(safe-area-inset-bottom));
@@ -400,7 +433,6 @@
       align-items: center;
       width: max-content;
       max-width: 90vw;
-      touch-action: none;
     }
 
     .music-pill {
@@ -409,39 +441,26 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      max-width: min(88vw, 340px);
-      height: 32px;
-      padding: 0 14px;
-      border-radius: 0;
-      border: none;
-      outline: none;
-      background: transparent;
-      box-shadow: none;
+      max-width: min(88vw, 360px);
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(8, 8, 12, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: var(--fg-muted);
-      font-size: 11px;
-      letter-spacing: 0.1em;
+      font-size: 11.5px;
+      letter-spacing: 0.08em;
       text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
       cursor: pointer;
       touch-action: manipulation;
-      transition: color 0.35s ease, transform 0.25s ease, opacity 0.35s ease;
+      transition: color 0.35s ease, transform 0.25s ease, opacity 0.35s ease, border-color 0.35s ease;
     }
 
-    .music-pill::before {
-      content: "";
-      position: absolute;
-      inset: -14px -26px;
-      z-index: -1;
-      pointer-events: none;
-      background: radial-gradient(
-        ellipse 60% 55% at 50% 50%,
-        rgba(6, 6, 9, 0.72) 0%,
-        rgba(6, 6, 9, 0.28) 54%,
-        transparent 80%
-      );
-      filter: blur(8px);
-      -webkit-filter: blur(8px);
-      opacity: 0.85;
-      transition: opacity 0.4s ease;
+    .music-pill:hover {
+      color: var(--fg-color);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     .music-pill:active {
@@ -449,7 +468,8 @@
     }
 
     .music-pill.playing {
-      color: rgba(236, 236, 240, 0.92);
+      color: rgba(236, 236, 240, 0.96);
+      border-color: rgba(255, 255, 255, 0.14);
     }
 
     .eq-bars {
@@ -459,7 +479,7 @@
       height: 10px;
       width: 10px;
       flex-shrink: 0;
-      opacity: 0.78;
+      opacity: 0.85;
     }
 
     .eq-bars i {
@@ -469,6 +489,7 @@
       background-color: currentColor;
       transform-origin: bottom;
       transform: scaleY(0.35);
+      transition: transform 0.2s ease;
     }
 
     .eq-bars i:nth-child(2) { transform: scaleY(0.85); }
@@ -498,26 +519,24 @@
       font-size: 9px;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      opacity: 0.55;
+      opacity: 0.6;
       flex-shrink: 0;
     }
 
     .music-progress {
       position: absolute;
-      left: 14px;
-      right: 14px;
-      bottom: 2px;
-      height: 1px;
-      width: auto;
+      left: 16px;
+      right: 16px;
+      bottom: 3px;
+      height: 1.5px;
       background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
-      opacity: 0.35;
+      opacity: 0.45;
       transform: scaleX(0);
       transform-origin: left;
+      border-radius: 1px;
     }
 
-    /* ============================================================
-       หน้า 2: โหมดขยายดูรูปเดี่ยว (ล็อกหน้า 2 ห้ามเลื่อน & แตะออกติด 100%)
-       ============================================================ */
+    /* Lightbox Modal */
     .lightbox {
       position: fixed;
       inset: 0;
@@ -530,28 +549,111 @@
       justify-content: center;
       padding: 24px 20px 84px;
       background: rgba(2, 2, 3, 0.92);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      overflow: hidden !important;
-      overscroll-behavior: none !important;
-      touch-action: none !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      overflow: hidden;
+      overscroll-behavior: none;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.38s var(--ease-liquid), visibility 0s linear 0.38s;
+      transition: opacity 0.35s var(--ease-liquid), visibility 0s linear 0.35s;
     }
 
     .lightbox.is-open {
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      transition: opacity 0.38s var(--ease-liquid), visibility 0s linear 0s;
+      transition: opacity 0.35s var(--ease-liquid), visibility 0s linear 0s;
     }
 
     .lightbox.is-closing {
       opacity: 0;
-      pointer-events: none !important;
-      transition: opacity 0.28s ease-out;
+      pointer-events: none;
+      transition: opacity 0.25s ease-out;
+    }
+
+    /* ปุ่มปิด Lightbox */
+    .lightbox-close {
+      position: absolute;
+      top: max(18px, env(safe-area-inset-top));
+      right: max(20px, env(safe-area-inset-right));
+      z-index: 55;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 14, 18, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--fg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.85;
+      transition: opacity 0.25s, transform 0.25s, background 0.25s;
+      touch-action: manipulation;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
+      transform: scale(1.08);
+      background: rgba(25, 25, 32, 0.95);
+    }
+
+    .lightbox-close svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+    }
+
+    /* ปุ่มเปลี่ยนรูปซ้าย-ขวา */
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 48;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(12, 12, 16, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: var(--fg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.25s, transform 0.25s, background 0.25s;
+      touch-action: manipulation;
+    }
+
+    .lightbox-nav:hover {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.08);
+      background: rgba(24, 24, 32, 0.9);
+    }
+
+    .lightbox-nav.prev {
+      left: max(16px, env(safe-area-inset-left));
+    }
+
+    .lightbox-nav.next {
+      right: max(16px, env(safe-area-inset-right));
+    }
+
+    .lightbox-nav svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+
+    @media (max-width: 680px) {
+      .lightbox-nav {
+        display: none;
+      }
     }
 
     .lightbox-inner {
@@ -559,36 +661,27 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 16px;
       max-width: 92vw;
-      touch-action: none !important;
       pointer-events: none;
     }
 
-    /* แอนิเมชัน Motion Blur ตอนกดเปิดรูปเข้า Lightbox และตอนกดปิด */
     .lightbox.is-open .flip-scene {
-      animation: openZoomBlur 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: openZoomBlur 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     .lightbox.is-closing .flip-scene {
-      animation: closeZoomBlur 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
+      animation: closeZoomBlur 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
     }
 
     @keyframes openZoomBlur {
       0% {
         opacity: 0;
-        transform: scale(0.76) translate3d(0, 22px, 0);
-        filter: blur(16px) brightness(1.15);
-      }
-      45% {
-        opacity: 0.92;
-        transform: scale(1.015) translate3d(0, -2px, 0);
-        filter: blur(4px) brightness(1.03);
+        transform: scale(0.82) translate3d(0, 18px, 0);
       }
       100% {
         opacity: 1;
         transform: scale(1) translate3d(0, 0, 0);
-        filter: blur(0px) brightness(1);
       }
     }
 
@@ -596,75 +689,22 @@
       0% {
         opacity: 1;
         transform: scale(1) translate3d(0, 0, 0);
-        filter: blur(0px);
       }
       100% {
         opacity: 0;
-        transform: scale(0.84) translate3d(0, 14px, 0);
-        filter: blur(12px);
+        transform: scale(0.86) translate3d(0, 12px, 0);
       }
     }
 
-    .lightbox.is-open .lightbox-caption {
-      animation: openCaptionBlur 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
-    }
-
-    .lightbox.is-open .lightbox-hint {
-      animation: openHintBlur 0.76s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
-    }
-
-    .lightbox.is-closing .lightbox-caption,
-    .lightbox.is-closing .lightbox-hint {
-      opacity: 0;
-      filter: blur(8px);
-      transition: opacity 0.2s ease, filter 0.2s ease;
-    }
-
-    @keyframes openCaptionBlur {
-      0% {
-        opacity: 0;
-        transform: translate3d(-14px, 8px, 0) scaleX(1.16);
-        filter: blur(8px);
-        text-shadow: -14px 0 10px rgba(230, 230, 234, 0.7), 14px 0 10px rgba(230, 230, 234, 0.7);
-      }
-      55% {
-        opacity: 0.85;
-        transform: translate3d(2px, 0, 0) scaleX(1.03);
-        filter: blur(2.5px);
-        text-shadow: -4px 0 4px rgba(230, 230, 234, 0.35), 4px 0 4px rgba(230, 230, 234, 0.35);
-      }
-      100% {
-        opacity: 0.9;
-        transform: translate3d(0, 0, 0) scaleX(1);
-        filter: blur(0px);
-        text-shadow: none;
-      }
-    }
-
-    @keyframes openHintBlur {
-      0% {
-        opacity: 0;
-        transform: translate3d(12px, 6px, 0) scaleX(1.12);
-        filter: blur(6px);
-        text-shadow: -10px 0 8px rgba(230, 230, 234, 0.5), 10px 0 8px rgba(230, 230, 234, 0.5);
-      }
-      100% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scaleX(1);
-        filter: blur(0px);
-        text-shadow: none;
-      }
-    }
-
-    /* เวที 3D Flip Card (เปิดรับสัมผัสเฉพาะตัวการ์ด พื้นที่รอบนอกแตะกลับหน้า 1 ได้ทันที) */
+    /* 3D Flip Card Scene */
     .flip-scene {
       perspective: 1400px;
       display: grid;
       place-items: center;
       cursor: pointer;
       pointer-events: auto;
-      touch-action: none !important;
-      will-change: transform, opacity, filter;
+      touch-action: manipulation;
+      will-change: transform, opacity;
     }
 
     .flip-card {
@@ -673,13 +713,12 @@
       place-items: center;
       transform-style: preserve-3d;
       -webkit-transform-style: preserve-3d;
-      transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
-      touch-action: none !important;
+      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .flip-card.is-pressing {
       transform: scale(0.975);
-      transition: transform 0.25s ease-out;
+      transition: transform 0.2s ease-out;
     }
 
     .flip-card.is-flipped {
@@ -690,7 +729,7 @@
       transform: rotateY(180deg) scale(0.975);
     }
 
-    /* ด้านหน้า: รูปภาพคมชัด */
+    /* ด้านหน้ารูป */
     .flip-front {
       grid-area: 1 / 1;
       position: relative;
@@ -707,26 +746,26 @@
     .flip-front img {
       display: block;
       max-width: min(90vw, 760px);
-      max-height: 60dvh;
+      max-height: 58dvh;
       width: auto;
       height: auto;
       object-fit: contain;
       pointer-events: none;
     }
 
-    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี (ห้ามเลือก/ห้ามเลื่อน) */
+    /* ด้านหลัง: ข้อมูล EXIF & กล้อง */
     .flip-back {
       grid-area: 1 / 1;
       width: 100%;
       height: 100%;
-      min-width: min(86vw, 340px);
-      min-height: 256px;
+      min-width: min(86vw, 360px);
+      min-height: 270px;
       border-radius: 6px;
-      padding: 20px 22px;
+      padding: 22px 24px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 12px;
+      gap: 14px;
       text-align: left;
       background:
         radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.045) 0%, transparent 65%),
@@ -734,86 +773,12 @@
       box-shadow:
         0 30px 90px rgba(0, 0, 0, 0.96),
         0 0 70px -16px var(--aura-primary),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
       transform: rotateY(180deg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      overflow: hidden !important;
-      touch-action: none !important;
+      overflow: hidden;
       pointer-events: none;
-    }
-
-    /* ตัวหนังสือหลังการ์ดพร้อม Motion Blur แนวนอนแบบ Native GPU */
-    .flip-back .exif-top,
-    .flip-back .exif-metrics,
-    .flip-back .exif-row {
-      opacity: 0;
-      transform: translate3d(-24px, 0, 0) scaleX(1.14);
-      filter: blur(7px);
-      text-shadow: -14px 0 9px rgba(230, 230, 234, 0.65), 14px 0 9px rgba(230, 230, 234, 0.65);
-      will-change: transform, opacity, filter;
-    }
-
-    .flip-card.is-flipped .exif-top {
-      animation: exifTextMotionIn 0.78s cubic-bezier(0.16, 1, 0.3, 1) 0.14s forwards;
-    }
-
-    .flip-card.is-flipped .exif-metrics {
-      animation: exifTextMotionIn 0.82s cubic-bezier(0.16, 1, 0.3, 1) 0.20s forwards;
-    }
-
-    .flip-card.is-flipped .exif-row:nth-child(1) {
-      animation: exifTextMotionIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.26s forwards;
-    }
-
-    .flip-card.is-flipped .exif-row:nth-child(2) {
-      animation: exifTextMotionIn 0.88s cubic-bezier(0.16, 1, 0.3, 1) 0.31s forwards;
-    }
-
-    .flip-card.is-flipped .exif-row:nth-child(3) {
-      animation: exifTextMotionIn 0.90s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
-    }
-
-    .flip-card.is-flipping-back .exif-top,
-    .flip-card.is-flipping-back .exif-metrics,
-    .flip-card.is-flipping-back .exif-row {
-      animation: exifTextMotionOut 0.36s cubic-bezier(0.4, 0, 1, 1) forwards !important;
-    }
-
-    @keyframes exifTextMotionIn {
-      0% {
-        opacity: 0;
-        transform: translate3d(-28px, 0, 0) scaleX(1.18);
-        filter: blur(8px);
-        text-shadow: -18px 0 11px rgba(230, 230, 234, 0.75), 18px 0 11px rgba(230, 230, 234, 0.75);
-      }
-      50% {
-        opacity: 0.82;
-        transform: translate3d(5px, 0, 0) scaleX(1.04);
-        filter: blur(2.5px);
-        text-shadow: -6px 0 5px rgba(230, 230, 234, 0.35), 6px 0 5px rgba(230, 230, 234, 0.35);
-      }
-      100% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scaleX(1);
-        filter: blur(0px);
-        text-shadow: none;
-      }
-    }
-
-    @keyframes exifTextMotionOut {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scaleX(1);
-        filter: blur(0px);
-        text-shadow: none;
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(26px, 0, 0) scaleX(1.16);
-        filter: blur(7px);
-        text-shadow: -16px 0 10px rgba(230, 230, 234, 0.7), 16px 0 10px rgba(230, 230, 234, 0.7);
-      }
     }
 
     .exif-top {
@@ -822,43 +787,42 @@
       align-items: center;
       gap: 10px;
       padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .exif-device {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-size: 12px;
+      gap: 8px;
+      font-size: 13px;
       font-weight: 500;
       letter-spacing: 0.03em;
       color: var(--fg-color);
     }
 
     .exif-device svg {
-      width: 14px;
-      height: 14px;
-      opacity: 0.72;
+      width: 15px;
+      height: 15px;
+      opacity: 0.75;
       flex-shrink: 0;
     }
 
     .exif-date {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
+      font-size: 10px;
       letter-spacing: 0.06em;
       color: var(--fg-muted);
       white-space: nowrap;
     }
 
-    /* แถบค่ากล้อง 4 ช่อง: รูรับแสง / ชัตเตอร์ / ระยะเลนส์ / ISO */
     .exif-metrics {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       padding: 10px 8px;
-      border-radius: 5px;
+      border-radius: 6px;
       background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       text-align: center;
     }
 
@@ -884,7 +848,6 @@
       color: var(--fg-whisper);
     }
 
-    /* รายละเอียดไฟล์และแอปแต่งสี */
     .exif-rows {
       display: flex;
       flex-direction: column;
@@ -896,7 +859,7 @@
       justify-content: space-between;
       align-items: baseline;
       gap: 12px;
-      font-size: 11px;
+      font-size: 11.5px;
     }
 
     .exif-key {
@@ -910,17 +873,17 @@
 
     .exif-val {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10.5px;
-      color: rgba(230, 230, 234, 0.85);
+      font-size: 11px;
+      color: rgba(235, 235, 240, 0.88);
       text-align: right;
       word-break: break-word;
     }
 
     .exif-badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 2px 9px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.08);
       color: var(--fg-color);
       font-size: 10px;
       letter-spacing: 0.04em;
@@ -928,38 +891,58 @@
 
     .lightbox-caption {
       font-family: Georgia, "Times New Roman", serif;
-      font-size: 15px;
-      letter-spacing: 0.22em;
+      font-size: 16px;
+      letter-spacing: 0.20em;
       color: var(--fg-color);
-      opacity: 0.9;
+      opacity: 0.92;
       text-align: center;
       pointer-events: none;
-      transition: filter 0.45s var(--ease-liquid), transform 0.45s var(--ease-liquid), opacity 0.45s ease;
+      transition: opacity 0.3s ease;
     }
 
-    .lightbox-caption.is-blur-pulse {
-      animation: captionMotionPulse 0.72s cubic-bezier(0.22, 1, 0.36, 1) !important;
+    .lightbox-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
     }
 
-    @keyframes captionMotionPulse {
-      0% {
-        opacity: 0.9;
-        filter: blur(0px);
-        transform: scaleX(1);
-        text-shadow: none;
-      }
-      38% {
-        opacity: 0.42;
-        filter: blur(5px);
-        transform: scaleX(1.14);
-        text-shadow: -16px 0 10px rgba(230, 230, 234, 0.75), 16px 0 10px rgba(230, 230, 234, 0.75);
-      }
-      100% {
-        opacity: 0.9;
-        filter: blur(0px);
-        transform: scaleX(1);
-        text-shadow: none;
-      }
+    /* ปุ่มพลิกดูข้อมูล EXIF */
+    .flip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 14, 18, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--fg-muted);
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.25s ease;
+    }
+
+    .flip-btn:hover {
+      color: var(--fg-color);
+      background: rgba(26, 26, 34, 0.9);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .flip-btn svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 1.8;
+      transition: transform 0.4s ease;
+    }
+
+    .flip-card.is-flipped ~ .lightbox-controls .flip-btn svg {
+      transform: rotate(180deg);
     }
 
     .lightbox-hint {
@@ -969,42 +952,45 @@
       text-transform: uppercase;
       color: var(--fg-whisper);
       text-align: center;
-      line-height: 1.6;
+      line-height: 1.5;
       pointer-events: none;
-      transition: opacity 0.28s ease, filter 0.34s ease, transform 0.34s var(--ease-liquid);
     }
 
-    .lightbox-hint.is-switching {
-      opacity: 0 !important;
-      filter: blur(6px) !important;
-      transform: translateY(3px) scaleX(1.1) !important;
-      text-shadow: -12px 0 8px rgba(230, 230, 234, 0.6), 12px 0 8px rgba(230, 230, 234, 0.6) !important;
+    /* Reduced Motion Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .mist-far, .mist-near, .god-rays, .film-grain,
+      .pulse-dot, .scatter-frame img, .music-pill.playing .eq-bars i {
+        animation: none !important;
+      }
+      .scatter-item, .flip-card, .lightbox, main {
+        transition-duration: 0.05s !important;
+      }
     }
   </style>
 </head>
 <body>
   <div id="ambient-layer"></div>
-  <div class="mist-far"></div>
-  <div class="mist-near"></div>
-  <div class="god-rays"></div>
-  <div class="void-vignette"></div>
-  <canvas id="atmosphere-canvas"></canvas>
-  <div class="film-grain" id="film-grain"></div>
+  <div class="mist-far" aria-hidden="true"></div>
+  <div class="mist-near" aria-hidden="true"></div>
+  <div class="god-rays" aria-hidden="true"></div>
+  <div class="void-vignette" aria-hidden="true"></div>
+  <canvas id="atmosphere-canvas" aria-hidden="true"></canvas>
+  <div class="film-grain" id="film-grain" aria-hidden="true"></div>
 
-  <header>
+  <header role="banner">
     <div class="brand">ustzyix</div>
     <div class="presence-status">
-      <span class="pulse-dot"></span>
+      <span class="pulse-dot" aria-hidden="true"></span>
       <span id="archive-count">stillness</span>
     </div>
   </header>
 
-  <main>
+  <main role="main">
     <div class="scatter-canvas" id="scatter-canvas"></div>
   </main>
 
   <div class="floating-dock">
-    <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio">
+    <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio playback">
       <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
       <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
       <span class="music-state" id="music-state">play</span>
@@ -1012,22 +998,41 @@
     </button>
   </div>
 
-  <!-- หน้า 2: Lightbox ดูรูปเดี่ยว + Motion Blur เปิดรูป & กดค้างพลิกการ์ด -->
-  <div class="lightbox" id="lightbox">
+  <!-- Lightbox Modal -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo view" aria-describedby="lightbox-caption">
+    <button class="lightbox-close" id="lightbox-close" type="button" aria-label="Close photo view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <button class="lightbox-nav prev" id="lightbox-prev" type="button" aria-label="Previous photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
+    <button class="lightbox-nav next" id="lightbox-next" type="button" aria-label="Next photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+
     <div class="lightbox-inner" id="lightbox-inner">
-      <div class="flip-scene" id="flip-scene">
+      <div class="flip-scene" id="flip-scene" role="button" tabindex="0" aria-label="Flip card for EXIF camera information">
         <div class="flip-card" id="flip-card">
           <!-- ด้านหน้ารูป -->
           <div class="flip-front">
             <img id="lightbox-img" alt="" draggable="false" />
-            <div class="edge-dissolve"></div>
+            <div class="edge-dissolve" aria-hidden="true"></div>
           </div>
 
-          <!-- ด้านหลัง: ข้อมูลเทคนิคการถ่ายและแต่งสี (EXIF) -->
+          <!-- ด้านหลัง: ข้อมูล EXIF กล้อง -->
           <div class="flip-back">
             <div class="exif-top">
               <div class="exif-device">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="9"></circle>
                   <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
                   <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
@@ -1079,36 +1084,25 @@
       </div>
 
       <div class="lightbox-caption" id="lightbox-caption"></div>
-      <div class="lightbox-hint" id="lightbox-hint">hold photo for camera & color info · tap outside to return</div>
+
+      <div class="lightbox-controls">
+        <button class="flip-btn" id="flip-btn" type="button" aria-label="Toggle camera information">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span id="flip-btn-text">Camera Info</span>
+        </button>
+      </div>
+
+      <div class="lightbox-hint" id="lightbox-hint">tap photo or button to flip · tap outside or press esc to return</div>
     </div>
   </div>
 
   <audio id="bg-audio" loop preload="metadata"></audio>
 
   <script>
-    /* ล็อกหน้า 1 และหน้า 2 ห้ามเลื่อน (Scroll/Swipe/Bounce) และห้ามเลือกข้อความ/ลากภาพเด็ดขาด */
-    document.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener("wheel", (e) => {
-      e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener("selectstart", (e) => {
-      e.preventDefault();
-    });
-
-    document.addEventListener("dragstart", (e) => {
-      e.preventDefault();
-    });
-
-    window.addEventListener("scroll", () => {
-      if (window.scrollX !== 0 || window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-      }
-    }, { passive: true });
-
     const REPO_CONFIG = {
       owner: "ustzyix",
       repo: "ustzyix.github.io",
@@ -1119,7 +1113,7 @@
     const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
     const DEFAULT_SONG = "TV Girl · Loving Machine";
 
-    /* ข้อมูลเทคนิคการถ่ายและแต่งสีของแต่ละรูป */
+    /* ข้อมูลเทคนิคการถ่ายและแต่งสี (Fallback Base Entries) */
     const ENTRIES = [
       {
         file: "IMG_5755 (2).jpg",
@@ -1190,8 +1184,13 @@
     const musicProgressEl = document.getElementById("music-progress");
 
     const lightbox = document.getElementById("lightbox");
+    const lightboxClose = document.getElementById("lightbox-close");
+    const lightboxPrev = document.getElementById("lightbox-prev");
+    const lightboxNext = document.getElementById("lightbox-next");
     const flipScene = document.getElementById("flip-scene");
     const flipCard = document.getElementById("flip-card");
+    const flipBtn = document.getElementById("flip-btn");
+    const flipBtnText = document.getElementById("flip-btn-text");
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxCaption = document.getElementById("lightbox-caption");
     const lightboxHint = document.getElementById("lightbox-hint");
@@ -1206,6 +1205,7 @@
     const exifResEl = document.getElementById("exif-res");
     const exifFileEl = document.getElementById("exif-file");
 
+    /* 1. Film Grain Canvas Texture */
     function initFilmGrain() {
       const c = document.createElement("canvas");
       c.width = 96;
@@ -1224,6 +1224,11 @@
       filmGrainEl.style.backgroundImage = `url(${c.toDataURL("image/png")})`;
     }
 
+    /* 2. Atmosphere Particle Canvas (ประหยัดพลังงาน: หยุดทำงานเมื่อแท็บซ่อนหรือเปิดโมดอล) */
+    let isCanvasRunning = true;
+    let canvasAnimId = null;
+    let lastBassLevel = 0;
+
     function initAtmosphereCanvas() {
       const canvas = document.getElementById("atmosphere-canvas");
       const ctx = canvas.getContext("2d");
@@ -1239,12 +1244,17 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
       resize();
+
+      let resizeTimeout = null;
       window.addEventListener("resize", () => {
-        resize();
-        layoutScatterItems();
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          resize();
+          layoutScatterItems();
+        }, 120);
       }, { passive: true });
 
-      const count = width < 600 ? 36 : 56;
+      const count = width < 600 ? 30 : 48;
       const motes = Array.from({ length: count }, () => {
         const depth = Math.random();
         return {
@@ -1261,6 +1271,11 @@
       });
 
       function tick() {
+        if (!isCanvasRunning || document.hidden || document.body.classList.contains("modal-active")) {
+          canvasAnimId = null;
+          return;
+        }
+
         ctx.clearRect(0, 0, width, height);
         const { r, g, b } = particleTint;
 
@@ -1270,7 +1285,10 @@
           let sum = 0;
           for (let k = 0; k < 6; k++) sum += freqData[k];
           bass = sum / (6 * 255);
-          document.documentElement.style.setProperty("--bass-boost", bass.toFixed(3));
+          if (Math.abs(bass - lastBassLevel) > 0.015) {
+            lastBassLevel = bass;
+            document.documentElement.style.setProperty("--bass-boost", bass.toFixed(3));
+          }
         }
 
         for (let i = 0; i < motes.length; i++) {
@@ -1294,42 +1312,85 @@
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalAlpha.toFixed(3)})`;
           ctx.fill();
         }
-        requestAnimationFrame(tick);
+
+        canvasAnimId = requestAnimationFrame(tick);
       }
-      requestAnimationFrame(tick);
+
+      window.startCanvasLoop = function() {
+        if (!canvasAnimId && isCanvasRunning && !document.hidden && !document.body.classList.contains("modal-active")) {
+          canvasAnimId = requestAnimationFrame(tick);
+        }
+      };
+
+      window.startCanvasLoop();
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+          canvasAnimId = null;
+        } else {
+          window.startCanvasLoop();
+        }
+      });
     }
 
+    /* 3. Parallax Look-Around (ประหยัดพลังงาน: อัปเดตเฉพาะเมื่อขยับ และหยุดลูปเมื่อค่านิ่ง) */
     function initLookAround() {
       let targetX = 0;
       let targetY = 0;
       let curX = 0;
       let curY = 0;
+      let isParallaxActive = false;
+
+      function stepParallax() {
+        const dx = targetX - curX;
+        const dy = targetY - curY;
+
+        if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
+          curX = targetX;
+          curY = targetY;
+          document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
+          document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
+          isParallaxActive = false;
+          return;
+        }
+
+        curX += dx * 0.06;
+        curY += dy * 0.06;
+        document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
+        document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
+
+        requestAnimationFrame(stepParallax);
+      }
+
+      function wakeParallax() {
+        if (!isParallaxActive) {
+          isParallaxActive = true;
+          requestAnimationFrame(stepParallax);
+        }
+      }
 
       window.addEventListener("pointermove", (e) => {
+        if (document.body.classList.contains("modal-active")) return;
         const nx = (e.clientX / window.innerWidth) * 2 - 1;
         const ny = (e.clientY / window.innerHeight) * 2 - 1;
         targetX = nx * 10;
         targetY = ny * 8;
+        wakeParallax();
       }, { passive: true });
 
       window.addEventListener("deviceorientation", (e) => {
+        if (document.body.classList.contains("modal-active")) return;
         if (e.gamma === null || e.beta === null) return;
         const gx = Math.max(-25, Math.min(25, e.gamma)) / 25;
         const gy = Math.max(-25, Math.min(25, e.beta - 45)) / 25;
         targetX = gx * 10;
         targetY = gy * 8;
+        wakeParallax();
       }, { passive: true });
-
-      function updateParallax() {
-        curX += (targetX - curX) * 0.06;
-        curY += (targetY - curY) * 0.06;
-        document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
-        document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
-        requestAnimationFrame(updateParallax);
-      }
-      requestAnimationFrame(updateParallax);
     }
 
+    /* 4. Audio Analyser (ปลอดภัย ไม่กระทบระบบเสียงของเบราว์เซอร์) */
     function initAudioAnalyser() {
       if (audioCtx) return;
       try {
@@ -1356,14 +1417,19 @@
         .trim() || "Stillness";
     }
 
-    /* อ่าน EXIF Metadata จากไฟล์ JPEG อัตโนมัติสำหรับรูปใหม่ที่อัปโหลดเพิ่ม */
+    /* 5. Safe & Efficient EXIF Extraction (อ่านเฉพาะ 64KB แรกของไฟล์ ไม่โหลดภาพเต็ม) */
     async function extractImageExif(src) {
       if (exifAutoCache.has(src)) return exifAutoCache.get(src);
       try {
-        const res = await fetch(src);
+        let res = await fetch(src, { headers: { Range: "bytes=0-65535" } }).catch(() => null);
+        if (!res || (res.status !== 206 && res.status !== 200)) {
+          res = await fetch(src).catch(() => null);
+        }
+        if (!res || !res.ok) return null;
+
         const buf = await res.arrayBuffer();
         const view = new DataView(buf);
-        if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return null;
+        if (view.byteLength < 16 || view.getUint16(0) !== 0xFFD8) return null;
 
         let offset = 2;
         while (offset < view.byteLength - 4) {
@@ -1371,6 +1437,7 @@
           offset += 2;
           if (marker === 0xFFE1) {
             const len = view.getUint16(offset);
+            if (offset + len > view.byteLength) break;
             const header = String.fromCharCode(
               view.getUint8(offset + 2),
               view.getUint8(offset + 3),
@@ -1379,13 +1446,15 @@
             );
             if (header === "Exif") {
               const tiffStart = offset + 8;
+              if (tiffStart + 8 > view.byteLength) break;
               const little = view.getUint16(tiffStart) === 0x4949;
-              const get16 = (o) => view.getUint16(o, little);
-              const get32 = (o) => view.getUint32(o, little);
+              const get16 = (o) => (tiffStart + o + 2 <= view.byteLength ? view.getUint16(tiffStart + o, little) : 0);
+              const get32 = (o) => (tiffStart + o + 4 <= view.byteLength ? view.getUint32(tiffStart + o, little) : 0);
               const readStr = (o, count) => {
                 let s = "";
                 for (let i = 0; i < count - 1; i++) {
-                  const ch = view.getUint8(o + i);
+                  if (tiffStart + o + i >= view.byteLength) break;
+                  const ch = view.getUint8(tiffStart + o + i);
                   if (ch === 0) break;
                   s += String.fromCharCode(ch);
                 }
@@ -1394,47 +1463,45 @@
 
               const parsed = {};
               const parseIFD = (ifdOffset) => {
-                if (!ifdOffset || tiffStart + ifdOffset >= view.byteLength - 2) return;
-                const entriesCount = get16(tiffStart + ifdOffset);
+                if (!ifdOffset || tiffStart + ifdOffset + 2 > view.byteLength) return;
+                const entriesCount = get16(ifdOffset);
                 for (let i = 0; i < entriesCount; i++) {
-                  const entryOffset = tiffStart + ifdOffset + 2 + i * 12;
-                  if (entryOffset + 12 > view.byteLength) break;
+                  const entryOffset = ifdOffset + 2 + i * 12;
+                  if (tiffStart + entryOffset + 12 > view.byteLength) break;
                   const tag = get16(entryOffset);
                   const type = get16(entryOffset + 2);
                   const count = get32(entryOffset + 4);
                   const valOffset = get32(entryOffset + 8);
 
-                  if (tag === 0x010F && type === 2) parsed.make = readStr(tiffStart + valOffset, count);
-                  if (tag === 0x0110 && type === 2) parsed.model = readStr(tiffStart + valOffset, count);
-                  if (tag === 0x0131 && type === 2) parsed.software = readStr(tiffStart + valOffset, count);
-                  if (tag === 0x0132 && type === 2) parsed.dateTime = readStr(tiffStart + valOffset, count);
+                  if (tag === 0x010F && type === 2) parsed.make = readStr(valOffset, count);
+                  if (tag === 0x0110 && type === 2) parsed.model = readStr(valOffset, count);
+                  if (tag === 0x0131 && type === 2) parsed.software = readStr(valOffset, count);
+                  if (tag === 0x0132 && type === 2) parsed.dateTime = readStr(valOffset, count);
                   if (tag === 0x8769) parseIFD(valOffset);
 
                   if (tag === 0x829A && type === 5) {
-                    const num = get32(tiffStart + valOffset);
-                    const den = get32(tiffStart + valOffset + 4);
-                    if (num && den) {
-                      parsed.shutter = num < den ? `1/${Math.round(den / num)}s` : `${(num / den).toFixed(1)}s`;
-                    }
+                    const num = get32(valOffset);
+                    const den = get32(valOffset + 4);
+                    if (num && den) parsed.shutter = num < den ? `1/${Math.round(den / num)}s` : `${(num / den).toFixed(1)}s`;
                   }
                   if (tag === 0x829D && type === 5) {
-                    const num = get32(tiffStart + valOffset);
-                    const den = get32(tiffStart + valOffset + 4);
+                    const num = get32(valOffset);
+                    const den = get32(valOffset + 4);
                     if (num && den) parsed.aperture = `f/${(num / den).toFixed(1).replace(/\.0$/, "")}`;
                   }
                   if (tag === 0x8827 && type === 3) {
-                    const isoVal = little ? view.getUint16(entryOffset + 8, true) : view.getUint16(entryOffset + 8, false);
+                    const isoVal = get16(entryOffset + 8);
                     if (isoVal) parsed.iso = `ISO ${isoVal}`;
                   }
                   if (tag === 0x920A && type === 5) {
-                    const num = get32(tiffStart + valOffset);
-                    const den = get32(tiffStart + valOffset + 4);
+                    const num = get32(valOffset);
+                    const den = get32(valOffset + 4);
                     if (num && den) parsed.focal = `${(num / den).toFixed(2).replace(/\.00$/, "")} mm`;
                   }
                 }
               };
 
-              parseIFD(get32(tiffStart + 4));
+              parseIFD(get32(4));
               exifAutoCache.set(src, parsed);
               return parsed;
             }
@@ -1449,9 +1516,9 @@
       return null;
     }
 
+    /* 6. Extract Dominant Color Palette */
     function getDominantPalette(src, imgElement) {
       if (paletteCache.has(src)) return paletteCache.get(src);
-
       try {
         const size = 36;
         sampleCtx.clearRect(0, 0, size, size);
@@ -1496,7 +1563,7 @@
 
         clusters.sort((a, b) => b.score - a.score);
 
-        const avg = [rSum / total, gSum / total, bSum / total];
+        const avg = [rSum / (total || 1), gSum / (total || 1), bSum / (total || 1)];
         const primary = clusters.length > 0 ? clusters[0].rgb : avg;
 
         let secondary = null;
@@ -1536,7 +1603,6 @@
         .join("");
     }
 
-    /* ปรับสีพื้นหลังหน้าแรกให้กว้างและชัดขึ้นตามภาพที่เลือก */
     function applyAtmosphere(palette) {
       if (!palette) return;
       const { primaryHex, secondaryHex, glowPrimary, glowSecondary, abyssBase, tint } = palette;
@@ -1551,6 +1617,7 @@
       `;
     }
 
+    /* 7. Scatter Layout Engine */
     function layoutScatterItems() {
       const containerWidth = scatterCanvas.clientWidth;
       const containerHeight = scatterCanvas.clientHeight;
@@ -1561,25 +1628,25 @@
       if (!items.length) return;
 
       const mobilePatterns = [
-        { xPct: 0.04, wPct: 0.44, gapY: -30, depth: 0.45 },
-        { xPct: 0.55, wPct: 0.41, gapY: 42,  depth: 0.70 },
-        { xPct: 0.14, wPct: 0.52, gapY: 28,  depth: 0.85 },
+        { xPct: 0.05, wPct: 0.44, gapY: -20, depth: 0.45 },
+        { xPct: 0.52, wPct: 0.43, gapY: 36,  depth: 0.70 },
+        { xPct: 0.14, wPct: 0.52, gapY: 24,  depth: 0.85 },
         { xPct: 0.46, wPct: 0.48, gapY: -22, depth: 0.55 },
         { xPct: 0.05, wPct: 0.42, gapY: 36,  depth: 0.65 },
         { xPct: 0.50, wPct: 0.46, gapY: 30,  depth: 0.50 }
       ];
 
       const desktopPatterns = [
-        { xPct: 0.06, wPct: 0.24, gapY: -40, depth: 0.45 },
-        { xPct: 0.64, wPct: 0.26, gapY: 30,  depth: 0.75 },
-        { xPct: 0.25, wPct: 0.28, gapY: -20, depth: 0.90 },
-        { xPct: 0.46, wPct: 0.27, gapY: -55, depth: 0.60 },
-        { xPct: 0.08, wPct: 0.23, gapY: 24,  depth: 0.50 },
-        { xPct: 0.68, wPct: 0.25, gapY: -35, depth: 0.80 }
+        { xPct: 0.08, wPct: 0.28, gapY: -30, depth: 0.45 },
+        { xPct: 0.62, wPct: 0.30, gapY: 28,  depth: 0.75 },
+        { xPct: 0.25, wPct: 0.32, gapY: -15, depth: 0.90 },
+        { xPct: 0.48, wPct: 0.29, gapY: -45, depth: 0.60 },
+        { xPct: 0.08, wPct: 0.26, gapY: 24,  depth: 0.50 },
+        { xPct: 0.68, wPct: 0.27, gapY: -35, depth: 0.80 }
       ];
 
       const patterns = isMobile ? mobilePatterns : desktopPatterns;
-      let cursorY = isMobile ? 12 : 20;
+      let cursorY = isMobile ? 12 : 24;
       let prevBottom = 0;
 
       items.forEach((el, idx) => {
@@ -1592,7 +1659,7 @@
         el.style.setProperty("--depth", pat.depth);
         el.style.zIndex = Math.round(pat.depth * 10);
 
-        const rectHeight = el.offsetHeight || Math.round(widthPx * 1.25);
+        const rectHeight = el.offsetHeight || Math.round(widthPx * 0.65 + 32);
 
         if (idx === 0) {
           el.style.top = `${cursorY}px`;
@@ -1607,11 +1674,11 @@
             leftPx + widthPx + 16 > prevLeft;
 
           if (horizontalOverlap) {
-            cursorY = prevBottom + Math.max(24, pat.gapY + 28);
+            cursorY = prevBottom + Math.max(20, pat.gapY + 24);
           } else {
             cursorY = Math.max(
-              prevBottom - rectHeight * 0.42 + pat.gapY,
-              (parseFloat(prevEl.style.top) || 0) + 48
+              prevBottom - rectHeight * 0.45 + pat.gapY,
+              (parseFloat(prevEl.style.top) || 0) + 40
             );
           }
 
@@ -1624,6 +1691,7 @@
       });
     }
 
+    /* 8. Populate Back EXIF */
     async function populateBackExif(item, imgEl) {
       const manual = item.exif || {};
       const auto = manual.camera ? null : await extractImageExif(item.src);
@@ -1653,15 +1721,16 @@
       exifFileEl.textContent = item.file || "image.jpg";
     }
 
+    /* 9. Lightbox Modal Lifecycle */
     function openLightboxModal() {
       clearTimeout(closeModalTimer);
       isClosingModal = false;
       window.getSelection()?.removeAllRanges();
-      window.scrollTo(0, 0);
       lightbox.classList.remove("is-closing", "is-open");
       document.body.classList.add("modal-active");
       void lightbox.offsetWidth;
       lightbox.classList.add("is-open");
+      lightboxClose.focus();
     }
 
     function closeLightboxModal() {
@@ -1676,10 +1745,11 @@
       clearTimeout(closeModalTimer);
       closeModalTimer = setTimeout(() => {
         lightbox.classList.remove("is-open", "is-closing");
-        flipCard.classList.remove("is-flipped", "is-pressing", "is-flipping-back");
+        flipCard.classList.remove("is-flipped", "is-pressing");
+        flipBtnText.textContent = "Camera Info";
         isClosingModal = false;
-        window.scrollTo(0, 0);
-      }, 290);
+        if (window.startCanvasLoop) window.startCanvasLoop();
+      }, 260);
     }
 
     function selectEntry(index, openModal = false) {
@@ -1701,12 +1771,10 @@
       syncAudio(item, openModal);
 
       if (openModal) {
-        flipCard.classList.remove("is-flipped", "is-pressing", "is-flipping-back");
-        lightboxHint.classList.remove("is-switching");
-        lightboxCaption.classList.remove("is-blur-pulse");
+        flipCard.classList.remove("is-flipped", "is-pressing");
+        flipBtnText.textContent = "Camera Info";
         lightboxImg.src = item.src;
         lightboxCaption.textContent = item.caption;
-        lightboxHint.textContent = "hold photo for camera & color info · tap outside to return";
         populateBackExif(item, imgEl);
         openLightboxModal();
       }
@@ -1759,17 +1827,21 @@
       }
     }
 
+    /* 10. Render Gallery Cards */
     function renderGallery() {
       scatterCanvas.innerHTML = "";
       archiveCountEl.textContent = `${entries.length} frames`;
 
       entries.forEach((item, idx) => {
-        const card = document.createElement("article");
+        const card = document.createElement("button");
+        card.type = "button";
         card.className = "scatter-item" + (idx === currentIndex ? " is-active-song" : "");
-        card.style.transitionDelay = `${Math.min(idx * 90, 540)}ms`;
+        card.setAttribute("aria-label", `View ${item.caption}`);
+        card.style.transitionDelay = `${Math.min(idx * 80, 480)}ms`;
 
         const auraGlow = document.createElement("div");
         auraGlow.className = "item-aura-glow";
+        auraGlow.setAttribute("aria-hidden", "true");
 
         const frame = document.createElement("div");
         frame.className = "scatter-frame";
@@ -1797,6 +1869,7 @@
 
         const dissolve = document.createElement("div");
         dissolve.className = "edge-dissolve";
+        dissolve.setAttribute("aria-hidden", "true");
 
         frame.appendChild(img);
         frame.appendChild(dissolve);
@@ -1819,11 +1892,9 @@
         card.appendChild(frame);
         card.appendChild(meta);
 
-        card.addEventListener("pointerup", (e) => {
-          if (e.button && e.button !== 0) return;
+        card.addEventListener("click", (e) => {
           if (lightbox.classList.contains("is-open") || isClosingModal) return;
           e.preventDefault();
-          e.stopPropagation();
           selectEntry(idx, true);
         });
 
@@ -1833,19 +1904,44 @@
       layoutScatterItems();
     }
 
+    /* 11. GitHub Asset Sync with Smart Session Caching (ลด API call และป้องกัน 403 Rate Limit) */
+    const GITHUB_CACHE_KEY = "ustzyix_github_cache_v2";
+    const GITHUB_CACHE_TTL = 15 * 60 * 1000; // 15 นาที
+
+    function applyExtraPhotos(extraPhotos) {
+      if (!extraPhotos || !extraPhotos.length) return;
+      const existingNames = new Set(entries.map(p => p.file));
+      const filtered = extraPhotos.filter(p => !existingNames.has(p.file));
+      if (filtered.length > 0) {
+        entries = [...entries, ...filtered];
+        renderGallery();
+      }
+    }
+
     async function syncGitHubAssets() {
       try {
+        const cached = sessionStorage.getItem(GITHUB_CACHE_KEY);
+        if (cached) {
+          try {
+            const data = JSON.parse(cached);
+            if (Date.now() - data.time < GITHUB_CACHE_TTL && Array.isArray(data.items)) {
+              applyExtraPhotos(data.items);
+              return;
+            }
+          } catch (_) {}
+        }
+
         const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
         const audioApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.audioFolder}`;
 
-        const [imgRes, audioRes] = await Promise.all([
+        const [imgRes, audioRes] = await Promise.allSettled([
           fetch(imgApi),
-          fetch(audioApi).catch(() => null)
+          fetch(audioApi)
         ]);
 
         const audioMap = new Map();
-        if (audioRes && audioRes.ok) {
-          const audioFiles = await audioRes.json();
+        if (audioRes.status === "fulfilled" && audioRes.value.ok) {
+          const audioFiles = await audioRes.value.json();
           const validAudio = /\.(mp3|m4a|ogg|wav|aac)$/i;
           audioFiles
             .filter(f => f.type === "file" && validAudio.test(f.name))
@@ -1855,8 +1951,8 @@
             });
         }
 
-        if (imgRes && imgRes.ok) {
-          const files = await imgRes.json();
+        if (imgRes.status === "fulfilled" && imgRes.value.ok) {
+          const files = await imgRes.value.json();
           const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
           const existingNames = new Set(entries.map(p => p.file));
 
@@ -1876,14 +1972,21 @@
               };
             });
 
+          try {
+            sessionStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({
+              time: Date.now(),
+              items: extraPhotos
+            }));
+          } catch (_) {}
+
           if (extraPhotos.length > 0) {
-            entries = [...entries, ...extraPhotos];
-            renderGallery();
+            applyExtraPhotos(extraPhotos);
           }
         }
       } catch (_) {}
     }
 
+    /* 12. Audio Controls */
     musicPill.addEventListener("click", () => {
       const item = entries[currentIndex];
       if (!item || !item.audio) return;
@@ -1935,50 +2038,43 @@
       }
     });
 
-    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D พร้อม Motion Blur ตัวหนังสือ */
+    /* 13. Lightbox 3D Card Flip (รองรับทั้งคลิก/แตะ, ปุ่มเฉพาะ และกดค้าง) */
     let holdTimer = null;
     let didFlipOnHold = false;
-    let hintSwitchTimer = null;
-
-    function smoothUpdateHint(nextText) {
-      clearTimeout(hintSwitchTimer);
-      lightboxHint.classList.add("is-switching");
-      hintSwitchTimer = setTimeout(() => {
-        lightboxHint.textContent = nextText;
-        lightboxHint.classList.remove("is-switching");
-      }, 220);
-    }
 
     function toggleCardFlip() {
-      const currentlyFlipped = flipCard.classList.contains("is-flipped");
-
-      lightboxCaption.classList.remove("is-blur-pulse");
-      void lightboxCaption.offsetWidth;
-      lightboxCaption.classList.add("is-blur-pulse");
-
-      if (!currentlyFlipped) {
-        flipCard.classList.remove("is-flipping-back");
+      const isFlipped = flipCard.classList.contains("is-flipped");
+      if (!isFlipped) {
         flipCard.classList.add("is-flipped");
-        smoothUpdateHint("hold again to flip back · tap outside to return");
+        flipBtnText.textContent = "View Photo";
+        flipScene.setAttribute("aria-label", "Flip card to view photo");
       } else {
-        flipCard.classList.add("is-flipping-back");
         flipCard.classList.remove("is-flipped");
-        smoothUpdateHint("hold photo for camera & color info · tap outside to return");
-        setTimeout(() => {
-          flipCard.classList.remove("is-flipping-back");
-        }, 420);
+        flipBtnText.textContent = "Camera Info";
+        flipScene.setAttribute("aria-label", "Flip card for EXIF camera information");
       }
 
       if (navigator.vibrate) {
-        try { navigator.vibrate(14); } catch (_) {}
+        try { navigator.vibrate(12); } catch (_) {}
       }
     }
 
-    function startHold(e) {
-      if (isClosingModal) return;
-      e.preventDefault();
+    flipBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      window.getSelection()?.removeAllRanges();
+      toggleCardFlip();
+    });
+
+    /* Click or Hold on Card */
+    flipScene.addEventListener("click", (e) => {
+      if (isClosingModal || didFlipOnHold) {
+        didFlipOnHold = false;
+        return;
+      }
+      toggleCardFlip();
+    });
+
+    flipScene.addEventListener("pointerdown", (e) => {
+      if (isClosingModal) return;
       didFlipOnHold = false;
       flipCard.classList.add("is-pressing");
       clearTimeout(holdTimer);
@@ -1987,66 +2083,103 @@
         didFlipOnHold = true;
         toggleCardFlip();
       }, 340);
-    }
+    });
 
-    function endHold(e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      clearTimeout(holdTimer);
-      flipCard.classList.remove("is-pressing");
-      if (!didFlipOnHold && flipCard.classList.contains("is-flipped") && !isClosingModal) {
-        toggleCardFlip();
-      }
-    }
-
-    function cancelHold(e) {
-      if (e) e.stopPropagation();
+    function clearHold() {
       clearTimeout(holdTimer);
       flipCard.classList.remove("is-pressing");
     }
 
-    flipScene.addEventListener("pointerdown", startHold);
-    flipScene.addEventListener("pointerup", endHold);
-    flipScene.addEventListener("pointerleave", cancelHold);
-    flipScene.addEventListener("pointercancel", cancelHold);
+    flipScene.addEventListener("pointerup", clearHold);
+    flipScene.addEventListener("pointerleave", clearHold);
+    flipScene.addEventListener("pointercancel", clearHold);
     flipScene.addEventListener("contextmenu", (e) => e.preventDefault());
 
-    /* แตะพื้นที่ว่างรอบนอกในหน้า 2 เพื่อปิดกลับหน้า 1 ทันที */
-    let backdropPointerDown = false;
-    lightbox.addEventListener("pointerdown", (e) => {
-      if (e.target === lightbox) {
-        backdropPointerDown = true;
-      } else {
-        backdropPointerDown = false;
+    flipScene.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleCardFlip();
       }
     });
 
-    lightbox.addEventListener("pointerup", (e) => {
-      if (backdropPointerDown && e.target === lightbox) {
-        e.preventDefault();
-        e.stopPropagation();
-        backdropPointerDown = false;
+    /* Lightbox Navigation */
+    lightboxClose.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeLightboxModal();
+    });
+
+    lightboxPrev.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectEntry(currentIndex - 1, true);
+    });
+
+    lightboxNext.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectEntry(currentIndex + 1, true);
+    });
+
+    /* Touch Swipe Navigation on Lightbox */
+    let touchStartX = 0;
+    let touchStartY = 0;
+    lightbox.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    lightbox.addEventListener("touchend", (e) => {
+      if (e.changedTouches.length === 1) {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
+          if (dx < 0) {
+            selectEntry(currentIndex + 1, true); // Swipe left -> Next
+          } else {
+            selectEntry(currentIndex - 1, true); // Swipe right -> Prev
+          }
+        }
+      }
+    }, { passive: true });
+
+    /* Backdrop Click to Close */
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox) {
         closeLightboxModal();
       }
-      backdropPointerDown = false;
     });
 
+    /* Keyboard Shortcuts */
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeLightboxModal();
-      if (e.key === " ") {
-        e.preventDefault();
-        musicPill.click();
+      if (lightbox.classList.contains("is-open")) {
+        if (e.key === "Escape") {
+          closeLightboxModal();
+        } else if (e.key === "ArrowLeft") {
+          selectEntry(currentIndex - 1, true);
+        } else if (e.key === "ArrowRight") {
+          selectEntry(currentIndex + 1, true);
+        }
+      } else {
+        if (e.key === " ") {
+          e.preventDefault();
+          musicPill.click();
+        }
       }
     });
 
+    /* Initialization */
     initFilmGrain();
     initAtmosphereCanvas();
     initLookAround();
     renderGallery();
     syncAudio(entries[0], false);
-    syncGitHubAssets();
+    
+    // Defer GitHub API sync slightly to accelerate initial First Contentful Paint
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(syncGitHubAssets, { timeout: 2000 });
+    } else {
+      setTimeout(syncGitHubAssets, 1000);
+    }
   </script>
 </body>
 </html>

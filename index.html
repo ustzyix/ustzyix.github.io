@@ -6,6 +6,8 @@
 <meta name="description" content="ustzyix — Atmospheric visual and photographic studio archive."/>
 <meta name="theme-color" content="#050507"/>
 <title>ustzyix — Visual Studio</title>
+<link rel="preload" href="data/photos.js" as="script"/>
+<link rel="preconnect" href="https://api.github.com" crossorigin/>
 <style>
 @property --aura-1{syntax:"<color>";inherits:true;initial-value:#9b221c}
 @property --aura-2{syntax:"<color>";inherits:true;initial-value:#481a16}
@@ -19,7 +21,7 @@ img{-webkit-user-drag:none;pointer-events:none}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid rgba(255,255,255,.7);outline-offset:3px}
 
-/* ---------- atmosphere (single colour source, animated via registered props) ---------- */
+/* ---------- atmosphere ---------- */
 .atm{position:fixed;inset:0;z-index:-8;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 1s ease,visibility 0s linear 1s}
 .atm.on{opacity:1;visibility:visible;transition:opacity 1s ease}
 .atm i{position:absolute;display:block;pointer-events:none}
@@ -35,7 +37,6 @@ button{font:inherit;color:inherit}
  animation:ray 18s ease-in-out infinite alternate}
 @keyframes ray{from{transform:translate3d(-3%,-1%,0) rotate(-24deg)}to{transform:translate3d(3%,1.5%,0) rotate(-19deg)}}
 .fluted,.halftone{position:fixed;inset:0;z-index:-5;pointer-events:none;opacity:0;transition:opacity .7s var(--ease)}
-/* mirrored stops: the wave is continuous, so no hard seam at each period */
 .fluted{background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0,rgba(0,0,0,.2) 14px,rgba(255,255,255,.04) 28px)}
 .halftone{background-image:radial-gradient(rgba(255,255,255,.14) 1px,transparent 1.2px);background-size:16px 16px}
 [data-look=fluted] .fluted{opacity:.8}
@@ -44,9 +45,9 @@ button{font:inherit;color:inherit}
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
 body.modal-active .mist,body.modal-active .rays{animation-play-state:paused}
 
-/* ---------- liquid glass: gradient hairline + specular sheen, no bevel ---------- */
+/* ---------- liquid glass (GPU-locked so backdrop-filter never drops) ---------- */
 .glass,.hair{position:relative}
-.glass{background:radial-gradient(120% 100% at 14% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%)}
+.glass{background:radial-gradient(120% 100% at 14% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%);transform:translateZ(0)}
 .glass::before,.hair::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
  background:linear-gradient(145deg,rgba(255,255,255,.6),rgba(255,255,255,.07) 32%,rgba(255,255,255,.02) 62%,rgba(255,255,255,.3));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
@@ -71,12 +72,12 @@ header>*{pointer-events:auto}
 .tab{position:relative;z-index:1;height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--fg2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .3s}
 .tab.on,.tab:hover{color:var(--fg)}
 .ibtn{display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
-.ibtn:active{transform:scale(.92)}
+.ibtn:active{transform:translateZ(0) scale(.92)}
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 [data-layout=grid] .i-g,[data-layout=scatter] .i-s{display:none}
 @media(max-width:640px){.count{display:none}.tab{padding:0 10px;font-size:11.5px}}
 
-/* ---------- stage: one full-viewport scroller, so glow is never clipped inside the page ---------- */
+/* ---------- stage ---------- */
 main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 main::-webkit-scrollbar{display:none}
 .canvas{position:relative;width:calc(100% - 40px);max-width:1240px;margin:76px auto 0;min-height:calc(100dvh - 110px)}
@@ -85,17 +86,21 @@ main::-webkit-scrollbar{display:none}
 
 .canvas[data-empty]::after{content:"No photos found. Check data/photos.js and the images folder.";position:absolute;left:0;right:0;top:48px;text-align:center;font-size:13px;color:var(--fg2)}
 
-/* ---------- cards ---------- */
+/* ---------- cards + instant shimmer placeholder ---------- */
 .card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;
  box-shadow:0 22px 50px -22px rgba(0,0,0,.8),0 0 70px -26px var(--item-aura,var(--aura-1));
  transition:transform .55s var(--ease),box-shadow .55s var(--ease)}
-.card.in{opacity:1;animation:rise .9s var(--ease) var(--d,0ms) backwards}
-@keyframes rise{from{opacity:0;transform:translate3d(0,24px,0) scale(.97)}}
+.card.in{opacity:1;animation:rise .85s var(--ease) var(--d,0ms) backwards}
+@keyframes rise{from{opacity:0;transform:translate3d(0,22px,0) scale(.97)}}
 .card:active{transform:scale(.975)}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-4px);box-shadow:0 30px 70px -20px rgba(0,0,0,.9),0 0 90px -16px var(--item-aura,var(--aura-1))}.card:hover img{transform:scale(1.04)}}
-.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:20px;background:rgba(8,8,12,.6)}
+.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:20px;background:rgba(255,255,255,.04)}
+.frame::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.08) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 1.6s linear infinite;pointer-events:none;transition:opacity .4s ease}
+.frame.loaded::before{opacity:0;animation:none}
+@keyframes shimmer{to{background-position:-200% 0}}
 .frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16);pointer-events:none}
-.frame img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.frame img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s var(--ease),transform .8s var(--ease)}
+.frame.loaded img{opacity:1}
 .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 4px}
 .tw{min-width:0;display:flex;flex-direction:column;gap:3px}
 .ttl{font-size:13.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -103,11 +108,10 @@ main::-webkit-scrollbar{display:none}
 .tag{flex-shrink:0;padding:5px 11px;border-radius:999px;font-size:11px;color:var(--fg2)}
 @media(max-width:680px){body:not([data-layout=grid]) .tag{display:none}}
 
-/* ---------- lightbox ---------- */
-.lb{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 32px;background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(5,5,8,.62),rgba(5,5,8,.9));opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s linear .35s}
+/* ---------- lightbox (no opacity transition on header so glass blur stays intact) ---------- */
+.lb{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 32px;background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(5,5,8,.76),rgba(5,5,8,.95));opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s linear .35s}
 .lb.open{opacity:1;visibility:visible;transition:opacity .35s var(--ease)}
-main,header{transition:opacity .35s var(--ease)}
-body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s linear .35s}
+body.modal-active header,body.modal-active main{pointer-events:none}
 .lb .ibtn{position:absolute;z-index:5;background-color:rgba(255,255,255,.06)}
 .lb-x{top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
 .lb-p,.lb-n{top:50%;margin-top:-19px}
@@ -117,7 +121,6 @@ body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;tran
 .scene,.lb-ctl{pointer-events:auto}
 .scene{perspective:1500px;display:grid;place-items:center;cursor:pointer;transform:scale(.92) translateY(14px);transition:transform .55s var(--ease);touch-action:manipulation}
 .lb.open .scene{transform:none}
-/* no backdrop-filter inside preserve-3d: it breaks the flip and causes flicker */
 .flip{display:grid;place-items:center;transform-style:preserve-3d;transition:transform .72s var(--ease)}
 .flip.on{transform:rotateY(180deg)}
 .front,.back{grid-area:1/1;border-radius:28px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
@@ -140,7 +143,7 @@ body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;tran
 .sw i{width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 .cap{font-size:15px;font-weight:600;letter-spacing:.06em}
 .fbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:0;border-radius:999px;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
-.fbtn:active{transform:scale(.95)}
+.fbtn:active{transform:translateZ(0) scale(.95)}
 .fbtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .hint{font-size:11px;color:var(--fg3);text-align:center}
 </style>
@@ -151,7 +154,7 @@ body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;tran
 <div class="fluted"></div><div class="halftone"></div><div class="vig"></div>
 <canvas id="fx"></canvas>
 
-<header role="banner">
+<header id="topBar" role="banner">
   <div class="pill glass"><span class="mark"></span><span class="brand">ustzyix</span><span class="count"><span class="dot"></span><span id="count">2 frames</span></span></div>
   <div class="tools">
     <div class="seg glass" role="toolbar" aria-label="Atmosphere">
@@ -206,16 +209,19 @@ body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;tran
 <script>
 const G=window.GALLERY||{};
 const FOLDER=String(G.folder||"images").replace(/^\.?\/+|\/+$/g,"");
+const TFOLDER=G.thumbFolder?String(G.thumbFolder).replace(/^\.?\/+|\/+$/g,""):"";
 const IMG_OK=/\.(jpe?g|png|webp|gif|avif)$/i,pad=n=>String(n).padStart(2,"0");
 const capOf=f=>f.replace(/\.[^/.]+$/,"").replace(/\(\d+\)/g,"").replace(/^IMG[-_]?/i,"").replace(/[-_]+/g," ").trim()||"Untitled";
 function toEntry(p,i){
  if(typeof p==="string")p={file:p};
  const file=p.file||String(p.src).split("/").pop();
- return{file,src:p.src||`./${FOLDER}/${encodeURIComponent(file)}`,caption:p.title||capOf(file),sub:p.sub||`Archive · ${pad(i+1)}`,tag:p.tag||"",exif:p.exif||null,auto:!!p.auto}}
+ const src=p.src||`./${FOLDER}/${encodeURIComponent(file)}`;
+ const thumb=p.thumb||(TFOLDER?`./${TFOLDER}/${encodeURIComponent(file)}`:src);
+ return{file,src,thumb,caption:p.title||capOf(file),sub:p.sub||`Archive · ${pad(i+1)}`,tag:p.tag||"",exif:p.exif||null,auto:!!p.auto}}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const body=document.body,root=document.documentElement.style;
 let entries=(G.photos||[]).filter(p=>p&&(typeof p==='string'||p.file||p.src)).map(toEntry),cards=[],cur=0,tint=[225,215,215],modal=false,grid=false;
-const canvas=$("#canvas"),stage=$("#stage"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
+const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------- tabs with sliding glass thumb ---------- */
@@ -225,7 +231,6 @@ tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.toggle("on",x===b));b
 $("#layoutBtn").onclick=()=>{grid=!grid;body.dataset.layout=grid?"grid":"scatter";
  cards.forEach(c=>{c.style.translate="";if(grid){c.style.zIndex="";}});
  if(grid)canvas.style.height="";stage.scrollTo({top:0});scheduleLayout()};
-
 
 /* ---------- floating motes ---------- */
 let fxId=0;
@@ -243,7 +248,7 @@ let fxTick;
  let t;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(size,150)},{passive:true});
  document.addEventListener("visibilitychange",startFx);startFx()})();
 
-/* ---------- parallax: per-card `translate`, no style cascade, no transition lag ---------- */
+/* ---------- parallax ---------- */
 let tx=0,ty=0,cx=0,cy=0,pr=0;
 function par(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;
  for(const c of cards)c.style.translate=`${(cx*c._d).toFixed(2)}px ${(cy*c._d).toFixed(2)}px`;
@@ -254,8 +259,8 @@ addEventListener("pointermove",e=>{if(modal||grid)return;tx=(e.clientX/innerWidt
 const palCache=new Map(),sc=document.createElement("canvas");sc.width=sc.height=36;
 const sx=sc.getContext("2d",{willReadFrequently:true});
 const hex=a=>"#"+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
-async function palette(src,img){
- if(palCache.has(src))return palCache.get(src);
+async function palette(key,img){
+ if(palCache.has(key))return palCache.get(key);
  try{let bm;try{bm=await createImageBitmap(img,{resizeWidth:36,resizeHeight:36,resizeQuality:"low"})}catch(_){bm=img}
   sx.clearRect(0,0,36,36);sx.drawImage(bm,0,0,36,36);bm.close?.();const d=sx.getImageData(0,0,36,36).data,bk=new Map();
   let R=0,G=0,B=0,n=0;
@@ -269,7 +274,7 @@ async function palette(src,img){
   let s2=null;for(let i=1;i<cl.length;i++){const c=cl[i].rgb;if(Math.abs(c[0]-p[0])+Math.abs(c[1]-p[1])+Math.abs(c[2]-p[2])>75){s2=c;break}}
   if(!s2)s2=p.map(v=>v*.45);
   const res={a:hex(p),b:hex(s2),abyss:hex(p.map(v=>v*.2)),tint:[180+p[0]*.28,180+p[1]*.28,185+p[2]*.28].map(Math.round)};
-  palCache.set(src,res);return res}catch(_){return null}}
+  palCache.set(key,res);return res}catch(_){return null}}
 let front=$("#atmA"),back=$("#atmB"),curA="",fadeT=0;
 [["--aura-1","#9b221c"],["--aura-2","#481a16"],["--abyss","#1c0907"]].forEach(([k,v])=>front.style.setProperty(k,v));
 function applyAtmosphere(p){if(!p)return;tint=p.tint;
@@ -281,7 +286,7 @@ function applyAtmosphere(p){if(!p)return;tint=p.tint;
  n.style.zIndex=-8;front.style.zIndex=-9;n.classList.add("on");
  const old=front;front=n;back=old;clearTimeout(fadeT);fadeT=setTimeout(()=>{if(back!==front)back.classList.remove("on")},1100)}
 
-/* ---------- scatter layout (rAF-batched, two-pass: no layout thrash) ---------- */
+/* ---------- scatter layout ---------- */
 const MP=[{x:.04,w:.46,g:-12,d:.45},{x:.5,w:.46,g:36,d:.7},{x:.12,w:.56,g:24,d:.85},{x:.44,w:.5,g:-16,d:.55},{x:.04,w:.45,g:34,d:.65},{x:.48,w:.48,g:28,d:.5}];
 const DP=[{x:.07,w:.3,g:-24,d:.45},{x:.6,w:.32,g:28,d:.75},{x:.24,w:.34,g:-12,d:.9},{x:.48,w:.31,g:-40,d:.6},{x:.07,w:.28,g:24,d:.5},{x:.65,w:.29,g:-30,d:.8}];
 let lt=0;const scheduleLayout=()=>{lt||(lt=requestAnimationFrame(()=>{lt=0;layout();moveThumb()}))};
@@ -330,11 +335,12 @@ async function fillExif(it,img){
  T("#xDate",m.captured||(a.date||"").replace(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}).*$/,"$3/$2/$1 · $4"));
  T("#xAp",m.aperture||a?.aperture);T("#xSh",m.shutter||a?.shutter);T("#xFo",m.focal||a?.focal);T("#xIso",m.iso||a?.iso);
  T("#xApp",m.app||a?.software);T("#xFile",it.file);
- T("#xRes",m.resolution||(img&&img.naturalWidth?`${img.naturalWidth} × ${img.naturalHeight} (${(img.naturalWidth*img.naturalHeight/1e6).toFixed(1)} MP)`:""))}
+ const targetImg=(lbImg.naturalWidth?lbImg:img);
+ T("#xRes",m.resolution||(targetImg&&targetImg.naturalWidth?`${targetImg.naturalWidth} × ${targetImg.naturalHeight} (${(targetImg.naturalWidth*targetImg.naturalHeight/1e6).toFixed(1)} MP)`:""))}
 
 /* ---------- lightbox ---------- */
-function openLb(){modal=true;body.classList.add("modal-active");lb.classList.add("open");$("#lbX").focus({preventScroll:true})}
-function closeLb(){if(!modal)return;modal=false;body.classList.remove("modal-active");lb.classList.remove("open");
+function openLb(){modal=true;topBar.inert=true;stage.inert=true;body.classList.add("modal-active");lb.classList.add("open");$("#lbX").focus({preventScroll:true})}
+function closeLb(){if(!modal)return;modal=false;topBar.inert=false;stage.inert=false;body.classList.remove("modal-active");lb.classList.remove("open");
  setTimeout(()=>{if(!modal){flip.classList.remove("on");$("#fbtnT").textContent="Camera info"}},380);startFx()}
 const decoded=new Map();
 function predecode(src){let im=decoded.get(src);
@@ -345,7 +351,7 @@ async function select(i,open){
  if(!entries.length)return;cur=(i+entries.length)%entries.length;const it=entries[cur],img=cards[cur]?.querySelector("img"),tok=++selTok;
  if(open){await predecode(it.src);if(tok!==selTok)return;
   flip.classList.remove("on");$("#fbtnT").textContent="Camera info";lbImg.src=it.src;$("#cap").textContent=it.caption;fillExif(it,img);if(!modal)openLb()}
- if(img&&img.complete&&img.naturalWidth){const p=await palette(it.src,img);if(tok===selTok)applyAtmosphere(p)}}
+ if(img&&img.complete&&img.naturalWidth){const p=await palette(it.thumb,img);if(tok===selTok)applyAtmosphere(p)}}
 function toggleFlip(){const on=flip.classList.toggle("on");$("#fbtnT").textContent=on?"View photo":"Camera info";navigator.vibrate?.(10)}
 $("#fbtn").onclick=e=>{e.stopPropagation();toggleFlip()};
 $("#scene").onclick=toggleFlip;
@@ -361,21 +367,25 @@ addEventListener("keydown",e=>{if(!modal)return;if(e.key==="Escape")closeLb();el
 
 /* ---------- gallery ---------- */
 function addCard(it,i){
- const el=document.createElement("button");el.type="button";el.className="card glass";el.style.setProperty("--d",Math.min(i*90,540)+"ms");
+ const el=document.createElement("button");el.type="button";el.className="card glass in";el.style.setProperty("--d",Math.min(i*70,420)+"ms");
  el.setAttribute("aria-label","Inspect "+it.caption);
  el.innerHTML=`<div class="frame"><img alt="${esc(it.caption)}" decoding="async" draggable="false"></div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div>${it.tag?`<span class="tag glass">${esc(it.tag)}</span>`:""}</div>`;
- const img=el.querySelector("img");
- img.onload=async()=>{scheduleLayout();el.classList.add("in");
-  const p=await palette(it.src,img);if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}};
- img.onerror=()=>{if(it.auto){const k=entries.indexOf(it);if(k>-1){entries.splice(k,1);cards.splice(k,1)}el.remove();updateCount();scheduleLayout();return}scheduleLayout();el.classList.add("in")};
- img.src=it.src;setTimeout(()=>el.classList.add("in"),6000);
+ const frame=el.querySelector(".frame"),img=el.querySelector("img");
+ img.fetchPriority=i<4?"high":"low";
+ img.loading=i<4?"eager":"lazy";
+ img.onload=async()=>{frame.classList.add("loaded");scheduleLayout();
+  const p=await palette(it.thumb,img);if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}};
+ img.onerror=()=>{if(img.src!==new URL(it.src,location.href).href){img.src=it.src;return}
+  if(it.auto){const k=entries.indexOf(it);if(k>-1){entries.splice(k,1);cards.splice(k,1)}el.remove();updateCount();scheduleLayout();return}
+  frame.classList.add("loaded");scheduleLayout()};
+ img.src=it.thumb;
  el.onclick=()=>{if(!modal)select(entries.indexOf(it),true)};
  canvas.append(el);cards.push(el)}
 function updateCount(){$("#count").textContent=`${entries.length} frame${entries.length==1?"":"s"}`;canvas.toggleAttribute("data-empty",!entries.length)}
-entries.forEach(addCard);updateCount();
+entries.forEach(addCard);updateCount();scheduleLayout();
 
-/* ---------- discovery: photos in the folder that data/photos.js does not list ---------- */
-const DK="gallery_dir_v2",DTTL=3*60*1000;
+/* ---------- discovery: Stale-While-Revalidate (0ms cache render + background sync) ---------- */
+const DK="gallery_dir_v3",DTTL=15*60*1000;
 function repoInfo(){
  if(G.repo){const[o,r]=G.repo.split("/");return{o,r}}
  const h=location.hostname,seg=location.pathname.split("/")[1];
@@ -386,12 +396,14 @@ function addExtra(files){
  updateCount();scheduleLayout()}
 async function discover(){
  if(G.discover===false)return;const r=repoInfo();if(!r)return;
- try{const c=JSON.parse(localStorage.getItem(DK)||"null");if(c&&Date.now()-c.t<DTTL){addExtra(c.files);return}}catch(_){}
+ let cached=null;
+ try{cached=JSON.parse(localStorage.getItem(DK)||"null")}catch(_){}
+ if(cached?.files?.length){addExtra(cached.files);if(Date.now()-cached.t<DTTL)return}
  try{const res=await fetch(`https://api.github.com/repos/${r.o}/${r.r}/contents/${FOLDER}`);if(!res.ok)return;
   const files=(await res.json()).filter(f=>f.type==="file"&&IMG_OK.test(f.name)).map(f=>f.name).sort();
   try{localStorage.setItem(DK,JSON.stringify({t:Date.now(),files}))}catch(_){}
   addExtra(files)}catch(_){}}
-"requestIdleCallback"in window?requestIdleCallback(discover,{timeout:2000}):setTimeout(discover,1000);
+discover();
 requestAnimationFrame(()=>{moveThumb();requestAnimationFrame(()=>thumb.classList.add("ready"))});
 </script>
 </body>

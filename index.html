@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
@@ -87,15 +87,13 @@ header>*{pointer-events:auto}
 /* ---------- project switcher window ---------- */
 .pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,5,8,.68);opacity:0;visibility:hidden;transition:opacity .28s var(--ease),visibility 0s linear .28s}
 .pm.open{opacity:1;visibility:visible;transition:opacity .28s var(--ease)}
-.pm-box{width:100%;max-width:450px;max-height:min(78dvh,580px);display:flex;flex-direction:column;border-radius:30px;overflow:hidden;
+.pm-box{width:100%;max-width:420px;max-height:min(78dvh,560px);display:flex;flex-direction:column;border-radius:30px;overflow:hidden;
  background:radial-gradient(120% 100% at 14% 0%,rgba(255,255,255,.15),transparent 55%),rgba(14,14,20,.9);
  box-shadow:0 34px 90px rgba(0,0,0,.88),0 0 80px -22px var(--aura-1);
  transform:scale(.94) translateY(10px);transition:transform .36s var(--ease)}
 .pm.open .pm-box{transform:none}
 .pm-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
-.pm-ht{display:flex;flex-direction:column;gap:2px}
 .pm-t{font-size:14px;font-weight:600;letter-spacing:.04em}
-.pm-s{font-size:11px;color:var(--fg2)}
 .pm-x{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.08);cursor:pointer;transition:transform .2s var(--ease)}
 .pm-x:active{transform:scale(.9)}
 .pm-x svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
@@ -107,17 +105,14 @@ header>*{pointer-events:auto}
 @media(hover:hover){.pitem:hover{background:rgba(255,255,255,.085)}}
 .pitem.active{background:radial-gradient(120% 100% at 0% 0%,color-mix(in srgb,var(--aura-1) 24%,transparent),rgba(255,255,255,.07));
  box-shadow:0 10px 28px -12px rgba(0,0,0,.7),inset 0 0 0 1px color-mix(in srgb,var(--aura-1) 55%,rgba(255,255,255,.2))}
-.pthumb{flex-shrink:0;width:62px;height:52px;border-radius:13px;overflow:hidden;display:grid;place-items:center;
+.pthumb{flex-shrink:0;width:54px;height:54px;border-radius:14px;overflow:hidden;display:grid;place-items:center;
  background:radial-gradient(circle at 30% 30%,color-mix(in srgb,var(--aura-1) 42%,transparent),rgba(255,255,255,.05))}
 .pthumb img{width:100%;height:100%;object-fit:cover}
 .pthumb svg{width:20px;height:20px;fill:none;stroke:var(--fg);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .pinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.ptop{display:flex;align-items:center;gap:6px}
-.ptitle{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ptype{padding:2px 6px;border-radius:6px;font-size:9.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;background:rgba(255,255,255,.08);color:var(--fg2)}
-.psub{font-size:11.5px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pmeta{font-size:10.5px;font-family:var(--mono);color:var(--fg3)}
-.pbadge{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font-size:10.5px;color:var(--fg2);background:rgba(255,255,255,.06)}
+.ptitle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psub{font-size:12px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbadge{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:10.5px;color:var(--fg2);background:rgba(255,255,255,.06)}
 .pitem.active .pbadge{color:var(--fg);background:rgba(255,255,255,.12)}
 
 /* ---------- stage ---------- */
@@ -154,7 +149,7 @@ main::-webkit-scrollbar{display:none}
 .tag{flex-shrink:0;padding:5px 11px;border-radius:999px;font-size:11px;color:var(--fg2)}
 @media(max-width:680px){body[data-mode=gallery]:not([data-layout=grid]) .tag{display:none}}
 
-/* ---------- interactive & playlist stages (ready for future) ---------- */
+/* ---------- interactive & playlist stages ---------- */
 .ix-wrap{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:10px auto 36px;padding:12px;border-radius:30px;box-shadow:0 28px 70px -20px rgba(0,0,0,.88),0 0 80px -22px var(--aura-1);animation:rise .6s var(--ease) backwards}
 .ix-frame{position:relative;width:100%;height:min(68dvh,600px);border-radius:20px;overflow:hidden;background:#08080c;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16)}
 .ix-frame iframe{display:block;width:100%;height:100%;border:0;image-rendering:pixelated}
@@ -253,7 +248,7 @@ body.modal-active header,body.modal-active main{pointer-events:none}
     <span class="mark"></span>
     <span class="brand">ustzyix</span>
     <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
-    <span class="count"><span class="dot"></span><span id="projName">Archive — 01</span> · <span id="count">0 items</span></span>
+    <span class="count"><span class="dot"></span><span id="projName">Archive</span> · <span id="count">0 items</span></span>
   </button>
   <div class="tools">
     <div class="seg glass" role="toolbar" aria-label="Atmosphere">
@@ -272,13 +267,10 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 <main id="stage" role="main"><div class="canvas" id="canvas" data-empty-msg="No items found in this collection yet."></div></main>
 
 <!-- Project Switcher Window -->
-<div class="pm" id="pm" role="dialog" aria-modal="true" aria-label="Select project">
+<div class="pm" id="pm" role="dialog" aria-modal="true" aria-label="Another Work">
   <div class="pm-box glass">
     <div class="pm-hd">
-      <div class="pm-ht">
-        <div class="pm-t">ustzyix — Archive</div>
-        <div class="pm-s">เลือกชุดงานที่ต้องการแสดงผล</div>
-      </div>
+      <div class="pm-t">Another Work</div>
       <button class="pm-x" id="pmX" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="pm-list" id="pmList"></div>
@@ -330,7 +322,7 @@ window.setProjectData=(id,payload)=>{if(id&&payload)window.PROJECT_STORE[id]=pay
 <script>
 const G=window.GALLERY||{};
 const PROJECTS=(Array.isArray(G.projects)&&G.projects.length)?G.projects:[{
- id:"default",type:"gallery",title:"Archive — 01",sub:"Visual Collection",year:"",
+ id:"default",type:"gallery",title:"Archive",sub:"Color Grading",year:"",
  folder:G.folder||"images",thumbFolder:G.thumbFolder||"",discover:G.discover!==false,photos:G.photos||[]
 }];
 const cleanDir=d=>String(d||"").replace(/^\.?\/+|\/+$/g,"");
@@ -359,7 +351,7 @@ const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),pm=$
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* ---------- viewport observer: play visible videos only (saves battery & bandwidth on 39MB+ clips) ---------- */
+/* ---------- viewport observer: play visible videos only ---------- */
 const vidObs=new IntersectionObserver(ents=>{
  ents.forEach(en=>{
   const v=en.target;
@@ -568,13 +560,11 @@ function renderProjectList(){
   }
   const btn=document.createElement("button");
   btn.type="button";btn.className="pitem hair"+(isAct?" active":"");
-  const metaTxt=[merged.year,merged.data?merged.data.split("/").pop():""].filter(Boolean).join(" · ")||t;
   btn.innerHTML=`
    <div class="pthumb">${coverSrc?`<img src="${esc(coverSrc)}" alt="" loading="lazy"/>`:(TYPE_ICON[t]||TYPE_ICON.gallery)}</div>
    <div class="pinfo">
-    <div class="ptop"><span class="ptitle">${esc(merged.title||`Project ${pad(idx+1)}`)}</span><span class="ptype">${esc(t)}</span></div>
-    <div class="psub">${esc(merged.sub||"Collection")}</div>
-    <div class="pmeta">${esc(metaTxt)}</div>
+    <div class="ptitle">${esc(merged.title||`Project ${pad(idx+1)}`)}</div>
+    <div class="psub">${esc(merged.sub||"")}</div>
    </div>
    <span class="pbadge">${isAct?`<span class="dot"></span>Active`:`Open`}</span>`;
   btn.onclick=()=>{closePm();if(!isAct)loadProject(p,true)};
@@ -673,7 +663,7 @@ function updateCount(msg){
  canvas.toggleAttribute("data-empty",!entries.length);
 }
 
-/* ---------- mode 2 & 3 (ready for future) ---------- */
+/* ---------- mode 2 & 3 (interactive & playlist) ---------- */
 function mountInteractive(proj){
  $("#count").textContent="Interactive";canvas.removeAttribute("data-empty");
  const wrap=document.createElement("div");wrap.className="ix-wrap glass";

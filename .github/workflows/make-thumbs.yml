@@ -55,7 +55,7 @@ jobs:
                   dst = THUMB_DIR / out_name
                   expected_files.add(out_name)
 
-                  # สร้างใหม่เฉพาะไฟล์ที่ยังไม่มีหรือต้นฉบับถูกอัปเดต
+                  # Rebuild only when the thumbnail is missing or the source is newer.
                   if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
                       with Image.open(src) as im:
                           im = ImageOps.exif_transpose(im)
@@ -68,7 +68,7 @@ jobs:
 
                   thumbs_map[src.name] = f"thumbs/{out_name}"
 
-          # ลบไฟล์ย่อเก่าใน thumbs/ หากต้นฉบับใน images/ ถูกลบไปแล้ว
+          # Remove stale thumbnails whose source images no longer exist.
           for old in THUMB_DIR.iterdir():
               if old.is_file() and old.name != ".gitkeep" and old.name not in expected_files:
                   old.unlink()

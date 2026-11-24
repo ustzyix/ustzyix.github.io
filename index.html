@@ -98,12 +98,13 @@ main::-webkit-scrollbar{display:none}
 @keyframes rise{from{opacity:0;transform:translate3d(0,18px,0) scale(.97)}}
 .card:active{transform:scale(.975)}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-4px);box-shadow:0 28px 64px -20px rgba(0,0,0,.9),0 0 80px -16px var(--item-aura,var(--aura-1))}.card:hover img{transform:scale(1.04)}}
-.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:20px;background:rgba(255,255,255,.04)}
+.frame{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:20px;background:rgba(255,255,255,.04)}
+.frame.loaded{aspect-ratio:auto}
 .frame::before{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.08) 50%,transparent 75%);background-size:200% 100%;animation:shimmer 1.6s linear infinite;pointer-events:none;transition:opacity .4s ease}
 .frame.loaded::before{opacity:0;animation:none}
 @keyframes shimmer{to{background-position:-200% 0}}
 .frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16);pointer-events:none}
-.frame img{display:block;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s var(--ease),transform .7s var(--ease)}
+.frame img{display:block;width:100%;height:auto;opacity:0;transition:opacity .45s var(--ease),transform .7s var(--ease)}
 .frame.loaded img{opacity:1}
 .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 4px}
 .tw{min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -343,11 +344,11 @@ function layout(){
  const P=W<680?MP:DP,minH=Math.max(300,stage.clientHeight-110);
  cards.forEach((el,i)=>{const p=P[i%P.length],w=Math.round(W*p.w),l=Math.round(W*p.x);
   el._d=p.d;el._l=l;el._w=w;el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10)});
- const heights=cards.map((el,i)=>el.offsetHeight||el._w*.68+44);
+ const heights=cards.map(el=>el.offsetHeight||el._w*.75+44);
  let bottom=0;
  cards.forEach((el,i)=>{const p=P[i%P.length],h=heights[i];let top=8;
   if(i){const q=cards[i-1],ov=el._l<q._l+q._w+16&&el._l+el._w+16>q._l;
-   top=ov?bottom+Math.max(20,p.g+24):Math.max(bottom-h*.42+p.g,q._t+42)}
+   top=ov?bottom+Math.max(20,p.g+24):Math.max(bottom-Math.min(h,el._w*.85)*.42+p.g,q._t+42)}
   el._t=top;el.style.top=Math.round(top)+"px";bottom=Math.max(bottom,top+h)});
  canvas.style.height=Math.max(bottom+56,minH)+"px"}
 new ResizeObserver(scheduleLayout).observe(stage);
@@ -422,7 +423,8 @@ function addCard(it,i){
  const frame=el.querySelector(".frame"),img=el.querySelector("img");
  img.fetchPriority=i<4?"high":"low";
  img.loading=i<4?"eager":"lazy";
- img.onload=async()=>{frame.classList.add("loaded");scheduleLayout();
+ img.onload=async()=>{if(img.naturalWidth&&img.naturalHeight)frame.style.aspectRatio=`${img.naturalWidth}/${img.naturalHeight}`;
+  frame.classList.add("loaded");scheduleLayout();
   const p=await palette(it.thumb,img);if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}};
  img.onerror=()=>{if(img.src!==new URL(it.src,location.href).href){img.src=it.src;return}
   if(it.auto){const k=entries.indexOf(it);if(k>-1){entries.splice(k,1);cards.splice(k,1)}el.remove();updateCount();scheduleLayout();return}

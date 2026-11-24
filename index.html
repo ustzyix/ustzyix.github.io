@@ -213,6 +213,7 @@ main::-webkit-scrollbar{display:none}
  .mist{animation-duration:36s;opacity:.5}
  .glass{-webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%)}
  .card{box-shadow:0 12px 26px -12px rgba(0,0,0,.78),0 0 34px -16px var(--item-aura,var(--aura-1))}
+ #fx{display:none}
 }
 
 /* ---------- lightbox ---------- */
@@ -442,22 +443,32 @@ function captureVideoPoster(videoEl,key){
 
 /* ---------- viewport observer: play visible videos & track active video ---------- */
 const visibleVideos=new Set();
+function ensureVideoSource(videoEl){
+ if(videoEl&&!videoEl.getAttribute("src")&&videoEl.dataset.src){
+  videoEl.src=videoEl.dataset.src;
+  videoEl.load();
+ }
+}
 const vidObs=new IntersectionObserver(ents=>{
  ents.forEach(en=>{
   const v=en.target;
   if(en.isIntersecting){
    visibleVideos.add(v);
-   if(!v.getAttribute("src")&&v.dataset.src)v.src=v.dataset.src;
-   if(!modal&&!pmOpen)v.play().catch(()=>{});
+   // Load the original media only when its card is visible. Do not autoplay.
+   ensureVideoSource(v);
   }else{
    visibleVideos.delete(v);
    v.pause();
+   if(v.getAttribute("src")){
+    v.removeAttribute("src");
+    v.load();
+   }
   }
  });
  syncVideoThemeLoop();
 },{root:stage,threshold:.15});
 function syncCardVideos(pauseAll){
- cards.forEach(c=>{const v=c.querySelector("video");if(v){if(pauseAll)v.pause();else if(visibleVideos.has(v)){if(!v.getAttribute("src")&&v.dataset.src)v.src=v.dataset.src;v.play().catch(()=>{})}}});
+ cards.forEach(c=>{const v=c.querySelector("video");if(v){if(pauseAll)v.pause();else if(visibleVideos.has(v))ensureVideoSource(v)}});
  syncVideoThemeLoop();
 }
 
@@ -514,19 +525,24 @@ $("#layoutBtn").onclick=()=>{
 
 /* ---------- floating motes ---------- */
 let fxId=0,fxBusy=false;
-function startFx(){if(!fxId&&!modal&&!pmOpen&&!fxBusy&&!transitionHold&&!document.hidden&&!navigator.connection?.saveData)fxId=requestAnimationFrame(fxTick)}
+const fxDisabled=()=>innerWidth<768||matchMedia("(prefers-reduced-motion: reduce)").matches||navigator.connection?.saveData;
+function stopFx(){if(fxId){cancelAnimationFrame(fxId);fxId=0}}
+function startFx(){
+ if(fxDisabled()){stopFx();return}
+ if(!fxId&&!modal&&!pmOpen&&!fxBusy&&!transitionHold&&!document.hidden)fxId=requestAnimationFrame(fxTick)
+}
 let fxTick;
 (()=>{const cv=$("#fx"),ctx=cv.getContext("2d");let W,H,lastT=0;
  const size=()=>{const mob=innerWidth<768,d=mob?1:Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)};size();
  const motes=Array.from({length:innerWidth<768?14:36},()=>{const d=Math.random();return{x:Math.random()*W,y:Math.random()*H,r:.65+d*1.6,vx:(Math.random()-.5)*(.16+d*.24),vy:-(.14+d*.3),p:Math.random()*6.28,f:.012+Math.random()*.018,a:.08+d*.2}});
- fxTick=now=>{if(modal||pmOpen||fxBusy||transitionHold||document.hidden){fxId=0;return}
+ fxTick=now=>{if(fxDisabled()||modal||pmOpen||fxBusy||transitionHold||document.hidden){fxId=0;return}
   fxId=requestAnimationFrame(fxTick);
   if(now-lastT<40)return;lastT=now;
   ctx.clearRect(0,0,W,H);const[r,g,b]=tint;
   for(const m of motes){m.p+=m.f;m.x+=m.vx+Math.sin(m.p)*.2;m.y+=m.vy;
    if(m.y<-14){m.y=H+14;m.x=Math.random()*W}if(m.x<-14)m.x=W+14;if(m.x>W+14)m.x=-14;
    ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,6.283);ctx.fillStyle=`rgba(${r},${g},${b},${Math.min(m.a*(.65+.35*Math.sin(m.p*1.8)),.48).toFixed(3)})`;ctx.fill()}};
- let t,st;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(size,150)},{passive:true});
+ let t,st;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>{size();startFx()},150)},{passive:true});
  stage.addEventListener("scroll",()=>{fxBusy=true;clearTimeout(st);st=setTimeout(()=>{fxBusy=false;startFx();syncVideoThemeLoop()},140)},{passive:true});
  document.addEventListener("visibilitychange",()=>{startFx();syncVideoThemeLoop()});startFx()})();
 
@@ -946,7 +962,7 @@ function addCard(it,i,tok=loadTok,targetContainer=activeViewEl||canvas){
  el.addEventListener("animationend",()=>el.classList.add("settled"),{once:true});
  const initPoster=it.poster||vidPosterCache.get(it.src)||"";
  const mediaHtml=it.isVid
-  ?`<video src="${esc(it.src)}" data-src="${esc(it.src)}" ${initPoster?`poster="${esc(initPoster)}"`:""} crossorigin="anonymous" muted loop playsinline preload="metadata"></video><span class="vbadge">▶ VIDEO</span>`
+  ?`<video data-src="${esc(it.src)}" ${initPoster?`poster="${esc(initPoster)}"`:""} crossorigin="anonymous" muted loop playsinline preload="none"></video><span class="vbadge">▶ VIDEO</span>`
   :`<img alt="${esc(it.caption)}" decoding="async" draggable="false">`;
  el.innerHTML=`<div class="frame">${mediaHtml}</div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div>${it.tag?`<span class="tag glass">${esc(it.tag)}</span>`:""}</div>`;
  const frame=el.querySelector(".frame"),mediaEl=el.querySelector("img,video");

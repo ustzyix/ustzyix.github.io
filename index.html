@@ -228,16 +228,17 @@ let entries=(G.photos||[]).filter(p=>p&&(typeof p==='string'||p.file||p.src)).ma
 const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+function easeVal(t){if(t<=0)return 0;if(t>=1)return 1;let u=t;for(let i=0;i<6;i++){const m=1-u,x=3*m*m*u*.22+3*m*u*u*.36+u*u*u-t,dx=3*m*m*.22+6*m*u*.14+3*u*u*.64;if(Math.abs(x)<1e-5)break;u=Math.max(0,Math.min(1,u-x/dx))}return 3*u*(1-u)+u*u*u}
 
 /* ---------- tabs with sliding glass thumb ---------- */
 const tabs=$$("[data-look-btn]"),thumb=$("#thumb");
 function moveThumb(){const a=$(".tab.on");if(a)thumb.style.cssText=`width:${a.offsetWidth}px;transform:translateX(${a.offsetLeft}px)`}
 tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.toggle("on",x===b));body.dataset.look=b.dataset.lookBtn;moveThumb()});
 
-/* ---------- FLIP layout switch (scatter <-> grid) ---------- */
+/* ---------- FLIP layout switch with scale-compensated smooth border-radius ---------- */
 $("#layoutBtn").onclick=()=>{
  const first=cards.map(c=>c.getBoundingClientRect());
- cards.forEach(c=>c.getAnimations?.().forEach(a=>a.cancel()));
+ cards.forEach(c=>{c.getAnimations?.().forEach(a=>a.cancel());c.querySelector(".frame")?.getAnimations?.().forEach(a=>a.cancel())});
  grid=!grid;tx=ty=cx=cy=0;
  body.dataset.layout=grid?"grid":"scatter";
  cards.forEach(c=>{c.classList.add("settled");c.style.translate="";if(grid)c.style.zIndex=""});
@@ -246,15 +247,24 @@ $("#layoutBtn").onclick=()=>{
  void canvas.offsetWidth;
  const last=cards.map(c=>c.getBoundingClientRect());
  if(!reduceMotion()){
+  const STEPS=16;
   cards.forEach((c,i)=>{
    const f=first[i],l=last[i];if(!f||!l||!f.width||!l.width)return;
    const dx=f.left-l.left,dy=f.top-l.top,sw=f.width/l.width,sh=f.height/l.height;
    if(Math.abs(dx)<.5&&Math.abs(dy)<.5&&Math.abs(sw-1)<.002&&Math.abs(sh-1)<.002)return;
+   const frame=c.querySelector(".frame"),cardKf=[],frameKf=[];
+   for(let k=0;k<=STEPS;k++){
+    const e=easeVal(k/STEPS),inv=1-e,csx=sw+(1-sw)*e,csy=sh+(1-sh)*e;
+    cardKf.push({
+     transform:`translate3d(${(dx*inv).toFixed(2)}px,${(dy*inv).toFixed(2)}px,0) scale(${csx.toFixed(4)},${csy.toFixed(4)})`,
+     borderRadius:`${(28/csx).toFixed(2)}px / ${(28/csy).toFixed(2)}px`
+    });
+    frameKf.push({borderRadius:`${(20/csx).toFixed(2)}px / ${(20/csy).toFixed(2)}px`});
+   }
+   const opts={duration:620,delay:Math.min(i*28,220),easing:"linear",fill:"backwards"};
    c.style.transformOrigin="0 0";
-   const anim=c.animate([
-    {transform:`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(${sw.toFixed(4)},${sh.toFixed(4)})`},
-    {transform:"translate3d(0,0,0) scale(1,1)"}
-   ],{duration:620,delay:Math.min(i*28,220),easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"});
+   const anim=c.animate(cardKf,opts);
+   frame?.animate(frameKf,opts);
    anim.onfinish=()=>{c.style.transformOrigin=""};
   });
  }

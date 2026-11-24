@@ -22,22 +22,32 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -webkit-touch-callout: none !important;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
-      width: 100%;
-      min-height: 100%;
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100dvh !important;
+      max-height: 100dvh !important;
       background-color: #020203;
       color: var(--fg-color);
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior-y: none;
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      touch-action: none !important;
       -webkit-font-smoothing: antialiased;
       -webkit-text-size-adjust: 100%;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
+    }
+
+    img {
+      -webkit-user-drag: none;
+      user-drag: none;
+      pointer-events: none;
     }
 
     /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก */
@@ -170,7 +180,6 @@
       letter-spacing: 0.28em;
       text-transform: lowercase;
       color: var(--fg-muted);
-      pointer-events: auto;
     }
 
     .presence-status {
@@ -197,26 +206,34 @@
       50% { opacity: 0.85; transform: scale(1.25); }
     }
 
-    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ */
+    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ (ล็อกหน้า 1 ห้ามเลื่อน) */
     main {
-      position: relative;
+      position: fixed;
+      inset: 0;
       width: 100%;
       max-width: 1180px;
+      height: 100dvh;
       margin: 0 auto;
-      padding: 84px 16px 130px;
+      padding: 76px 16px 96px;
       z-index: 2;
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      touch-action: none !important;
       transition: filter 0.45s var(--ease-liquid), transform 0.5s var(--ease-drift), opacity 0.45s ease;
     }
 
     body.modal-active main {
       filter: blur(8px) brightness(0.75);
       transform: scale(0.975);
+      pointer-events: none;
     }
 
     .scatter-canvas {
       position: relative;
       width: 100%;
-      min-height: 82dvh;
+      height: 100%;
+      overflow: hidden !important;
+      touch-action: none !important;
     }
 
     /* การ์ดรูปภาพแต่ละใบ */
@@ -227,6 +244,7 @@
       align-items: flex-start;
       gap: 9px;
       cursor: pointer;
+      touch-action: none;
       opacity: 0;
       transform: translate3d(0, 18px, 0);
       transition:
@@ -333,6 +351,7 @@
       gap: 2px;
       padding-left: 2px;
       max-width: 100%;
+      pointer-events: none;
     }
 
     .scatter-title {
@@ -381,6 +400,7 @@
       align-items: center;
       width: max-content;
       max-width: 90vw;
+      touch-action: none;
     }
 
     .music-pill {
@@ -496,11 +516,13 @@
     }
 
     /* ============================================================
-       หน้า 2: โหมดขยายดูรูปเดี่ยว + Motion Blur ตอนกดเปิด & กดค้างพลิก
+       หน้า 2: โหมดขยายดูรูปเดี่ยว (ล็อกหน้า 2 ห้ามเลื่อนและห้ามเลือกเด็ดขาด)
        ============================================================ */
     .lightbox {
       position: fixed;
       inset: 0;
+      width: 100%;
+      height: 100dvh;
       z-index: 40;
       display: flex;
       flex-direction: column;
@@ -510,6 +532,9 @@
       background: rgba(2, 2, 3, 0.92);
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
+      overflow: hidden !important;
+      overscroll-behavior: none !important;
+      touch-action: none !important;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.42s var(--ease-liquid);
@@ -527,6 +552,7 @@
       align-items: center;
       gap: 18px;
       max-width: 92vw;
+      touch-action: none !important;
     }
 
     /* แอนิเมชัน Motion Blur ตอนกดเปิดรูปเข้า Lightbox และตอนกดปิด */
@@ -616,7 +642,7 @@
       display: grid;
       place-items: center;
       cursor: pointer;
-      touch-action: manipulation;
+      touch-action: none !important;
       will-change: transform, opacity, filter;
     }
 
@@ -627,6 +653,7 @@
       transform-style: preserve-3d;
       -webkit-transform-style: preserve-3d;
       transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
+      touch-action: none !important;
     }
 
     .flip-card.is-pressing {
@@ -650,6 +677,7 @@
       overflow: hidden;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      pointer-events: none;
       box-shadow:
         0 30px 90px rgba(0, 0, 0, 0.96),
         0 0 80px -10px var(--aura-primary);
@@ -665,7 +693,7 @@
       pointer-events: none;
     }
 
-    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี */
+    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี (ห้ามเลือก/ห้ามเลื่อน) */
     .flip-back {
       grid-area: 1 / 1;
       width: 100%;
@@ -689,7 +717,9 @@
       transform: rotateY(180deg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      overflow: hidden;
+      overflow: hidden !important;
+      touch-action: none !important;
+      pointer-events: none;
     }
 
     /* เตรียมตัวหนังสือหลังการ์ดให้มี Motion Blur และ Stagger ตามจังหวะพลิก */
@@ -876,6 +906,7 @@
       color: var(--fg-color);
       opacity: 0.9;
       text-align: center;
+      pointer-events: none;
       transition: filter 0.45s var(--ease-liquid), transform 0.45s var(--ease-liquid), opacity 0.45s ease;
     }
 
@@ -909,6 +940,7 @@
       color: var(--fg-whisper);
       text-align: center;
       line-height: 1.6;
+      pointer-events: none;
       transition: opacity 0.28s ease, filter 0.34s ease, transform 0.34s var(--ease-liquid);
     }
 
@@ -965,7 +997,7 @@
         <div class="flip-card" id="flip-card">
           <!-- ด้านหน้ารูป -->
           <div class="flip-front">
-            <img id="lightbox-img" alt="" />
+            <img id="lightbox-img" alt="" draggable="false" />
             <div class="edge-dissolve"></div>
           </div>
 
@@ -1032,6 +1064,29 @@
   <audio id="bg-audio" loop preload="metadata"></audio>
 
   <script>
+    /* ล็อกหน้า 1 และหน้า 2 ห้ามเลื่อน (Scroll/Swipe/Bounce) และห้ามเลือกข้อความ/ลากภาพเด็ดขาด */
+    document.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("wheel", (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("selectstart", (e) => {
+      e.preventDefault();
+    });
+
+    document.addEventListener("dragstart", (e) => {
+      e.preventDefault();
+    });
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollX !== 0 || window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    }, { passive: true });
+
     const REPO_CONFIG = {
       owner: "ustzyix",
       repo: "ustzyix.github.io",
@@ -1475,7 +1530,8 @@
 
     function layoutScatterItems() {
       const containerWidth = scatterCanvas.clientWidth;
-      if (!containerWidth) return;
+      const containerHeight = scatterCanvas.clientHeight;
+      if (!containerWidth || !containerHeight) return;
 
       const isMobile = containerWidth < 680;
       const items = Array.from(scatterCanvas.querySelectorAll(".scatter-item"));
@@ -1500,7 +1556,7 @@
       ];
 
       const patterns = isMobile ? mobilePatterns : desktopPatterns;
-      let cursorY = isMobile ? 16 : 24;
+      let cursorY = isMobile ? 12 : 20;
       let prevBottom = 0;
 
       items.forEach((el, idx) => {
@@ -1528,20 +1584,21 @@
             leftPx + widthPx + 16 > prevLeft;
 
           if (horizontalOverlap) {
-            cursorY = prevBottom + Math.max(32, pat.gapY + 34);
+            cursorY = prevBottom + Math.max(24, pat.gapY + 28);
           } else {
             cursorY = Math.max(
               prevBottom - rectHeight * 0.42 + pat.gapY,
-              (parseFloat(prevEl.style.top) || 0) + 56
+              (parseFloat(prevEl.style.top) || 0) + 48
             );
           }
+
+          const maxTop = Math.max(12, containerHeight - rectHeight - 12);
+          cursorY = Math.min(cursorY, maxTop);
 
           el.style.top = `${Math.round(cursorY)}px`;
           prevBottom = Math.max(prevBottom, cursorY + rectHeight);
         }
       });
-
-      scatterCanvas.style.height = `${Math.round(prevBottom + 60)}px`;
     }
 
     async function populateBackExif(item, imgEl) {
@@ -1575,6 +1632,8 @@
 
     function openLightboxModal() {
       clearTimeout(closeModalTimer);
+      window.getSelection()?.removeAllRanges();
+      window.scrollTo(0, 0);
       lightbox.classList.remove("is-closing", "is-open");
       document.body.classList.add("modal-active");
       void lightbox.offsetWidth;
@@ -1583,12 +1642,16 @@
 
     function closeLightboxModal() {
       if (!lightbox.classList.contains("is-open") || lightbox.classList.contains("is-closing")) return;
+      clearTimeout(holdTimer);
+      window.getSelection()?.removeAllRanges();
+      flipCard.classList.remove("is-pressing");
       lightbox.classList.add("is-closing");
       document.body.classList.remove("modal-active");
       clearTimeout(closeModalTimer);
       closeModalTimer = setTimeout(() => {
         lightbox.classList.remove("is-open", "is-closing");
         flipCard.classList.remove("is-flipped", "is-pressing", "is-flipping-back");
+        window.scrollTo(0, 0);
       }, 320);
     }
 
@@ -1688,6 +1751,7 @@
         img.src = item.src;
         img.alt = item.caption;
         img.decoding = "async";
+        img.draggable = false;
 
         img.onload = () => {
           const pal = getDominantPalette(item.src, img);
@@ -1880,7 +1944,9 @@
     }
 
     function startHold(e) {
+      e.preventDefault();
       e.stopPropagation();
+      window.getSelection()?.removeAllRanges();
       didFlipOnHold = false;
       flipCard.classList.add("is-pressing");
       clearTimeout(holdTimer);
@@ -1898,13 +1964,12 @@
     }
 
     flipScene.addEventListener("pointerdown", startHold);
-    flipScene.addEventListener("pointerup", (e) => {
-      cancelHold(e);
-    });
+    flipScene.addEventListener("pointerup", cancelHold);
     flipScene.addEventListener("pointerleave", cancelHold);
     flipScene.addEventListener("pointercancel", cancelHold);
     flipScene.addEventListener("contextmenu", (e) => e.preventDefault());
     flipScene.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
       if (!didFlipOnHold && flipCard.classList.contains("is-flipped")) {
         toggleCardFlip();

@@ -400,7 +400,6 @@
       transition: color 0.35s ease, transform 0.25s ease, opacity 0.35s ease;
     }
 
-    /* ออร่าเบลอฟุ้งด้านหลังตัวหนังสือ ไม่เป็นกรอบปุ่มแข็งๆ */
     .music-pill::before {
       content: "";
       position: absolute;
@@ -477,7 +476,6 @@
       flex-shrink: 0;
     }
 
-    /* เส้นเวลาเล่นเพลงบางเบากลางอากาศใต้ชื่อเพลง */
     .music-progress {
       position: absolute;
       left: 14px;
@@ -492,7 +490,7 @@
     }
 
     /* ============================================================
-       หน้า 2: โหมดขยายดูรูปเดี่ยว (คงความมืดเดิม + กดค้างพลิกการ์ด EXIF)
+       หน้า 2: โหมดขยายดูรูปเดี่ยว + Motion Blur บนตัวหนังสือจังหวะพลิก
        ============================================================ */
     .lightbox {
       position: fixed;
@@ -546,7 +544,7 @@
       place-items: center;
       transform-style: preserve-3d;
       -webkit-transform-style: preserve-3d;
-      transition: transform 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.82s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .flip-card.is-pressing {
@@ -585,7 +583,7 @@
       pointer-events: none;
     }
 
-    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี (Camera EXIF & Color Grading) */
+    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี */
     .flip-back {
       grid-area: 1 / 1;
       width: 100%;
@@ -609,7 +607,76 @@
       transform: rotateY(180deg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      overflow-y: auto;
+      overflow: hidden;
+    }
+
+    /* เตรียมตัวหนังสือหลังการ์ดให้มี Motion Blur และ Stagger ตามจังหวะพลิก */
+    .flip-back .exif-top,
+    .flip-back .exif-metrics,
+    .flip-back .exif-row {
+      opacity: 0;
+      transform: translate3d(-18px, 0, 0) scaleX(1.06);
+      filter: url(#text-motion-blur) blur(5px);
+      will-change: transform, opacity, filter;
+    }
+
+    /* จังหวะพลิกเข้าด้านหลัง: ตัวหนังสือพุ่งเบลอแนวนอนแล้วค่อยๆ คมชัดเข้าที่ทีละบรรทัด */
+    .flip-card.is-flipped .exif-top {
+      animation: exifTextMotionIn 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.16s forwards;
+    }
+
+    .flip-card.is-flipped .exif-metrics {
+      animation: exifTextMotionIn 0.76s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards;
+    }
+
+    .flip-card.is-flipped .exif-row:nth-child(1) {
+      animation: exifTextMotionIn 0.78s cubic-bezier(0.16, 1, 0.3, 1) 0.27s forwards;
+    }
+
+    .flip-card.is-flipped .exif-row:nth-child(2) {
+      animation: exifTextMotionIn 0.80s cubic-bezier(0.16, 1, 0.3, 1) 0.31s forwards;
+    }
+
+    .flip-card.is-flipped .exif-row:nth-child(3) {
+      animation: exifTextMotionIn 0.82s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards;
+    }
+
+    /* จังหวะพลิกกลับด้านหน้า: ตัวหนังสือเบลอฟุ้งออกไปตามแรงเหวี่ยง */
+    .flip-card.is-flipping-back .exif-top,
+    .flip-card.is-flipping-back .exif-metrics,
+    .flip-card.is-flipping-back .exif-row {
+      animation: exifTextMotionOut 0.34s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+    }
+
+    @keyframes exifTextMotionIn {
+      0% {
+        opacity: 0;
+        transform: translate3d(-24px, 0, 0) scaleX(1.12);
+        filter: url(#text-motion-blur) blur(6px);
+      }
+      45% {
+        opacity: 0.78;
+        transform: translate3d(4px, 0, 0) scaleX(1.02);
+        filter: blur(2.5px);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scaleX(1);
+        filter: blur(0px);
+      }
+    }
+
+    @keyframes exifTextMotionOut {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scaleX(1);
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(22px, 0, 0) scaleX(1.12);
+        filter: url(#text-motion-blur) blur(6px);
+      }
     }
 
     .exif-top {
@@ -729,6 +796,29 @@
       color: var(--fg-color);
       opacity: 0.9;
       text-align: center;
+      transition: filter 0.45s var(--ease-liquid), transform 0.45s var(--ease-liquid), opacity 0.45s ease;
+    }
+
+    .lightbox-caption.is-blur-pulse {
+      animation: captionMotionPulse 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes captionMotionPulse {
+      0% {
+        opacity: 0.9;
+        filter: blur(0px);
+        transform: scaleX(1);
+      }
+      38% {
+        opacity: 0.42;
+        filter: url(#text-motion-blur) blur(3px);
+        transform: scaleX(1.08);
+      }
+      100% {
+        opacity: 0.9;
+        filter: blur(0px);
+        transform: scaleX(1);
+      }
     }
 
     .lightbox-hint {
@@ -739,10 +829,26 @@
       color: var(--fg-whisper);
       text-align: center;
       line-height: 1.6;
+      transition: opacity 0.28s ease, filter 0.34s ease, transform 0.34s var(--ease-liquid);
+    }
+
+    .lightbox-hint.is-switching {
+      opacity: 0;
+      filter: blur(5px);
+      transform: translateY(3px) scaleX(1.04);
     }
   </style>
 </head>
 <body>
+  <!-- SVG Filter สำหรับ Directional Motion Blur แนวนอนเฉพาะตัวหนังสือตอนพลิกรูป -->
+  <svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+    <defs>
+      <filter id="text-motion-blur" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="10 0" />
+      </filter>
+    </defs>
+  </svg>
+
   <div id="ambient-layer"></div>
   <div class="mist-far"></div>
   <div class="mist-near"></div>
@@ -1405,7 +1511,9 @@
       syncAudio(item, openModal);
 
       if (openModal) {
-        flipCard.classList.remove("is-flipped", "is-pressing");
+        flipCard.classList.remove("is-flipped", "is-pressing", "is-flipping-back");
+        lightboxHint.classList.remove("is-switching");
+        lightboxCaption.classList.remove("is-blur-pulse");
         lightboxImg.src = item.src;
         lightboxCaption.textContent = item.caption;
         lightboxHint.textContent = "hold photo for camera & color info · tap outside to return";
@@ -1632,15 +1740,40 @@
       }
     });
 
-    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D ดู EXIF ในหน้าดูรูปเดี่ยว */
+    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D พร้อม Motion Blur เฉพาะตัวหนังสือ */
     let holdTimer = null;
     let didFlipOnHold = false;
+    let hintSwitchTimer = null;
+
+    function smoothUpdateHint(nextText) {
+      clearTimeout(hintSwitchTimer);
+      lightboxHint.classList.add("is-switching");
+      hintSwitchTimer = setTimeout(() => {
+        lightboxHint.textContent = nextText;
+        lightboxHint.classList.remove("is-switching");
+      }, 220);
+    }
 
     function toggleCardFlip() {
-      const isFlipped = flipCard.classList.toggle("is-flipped");
-      lightboxHint.textContent = isFlipped
-        ? "hold again to flip back · tap outside to return"
-        : "hold photo for camera & color info · tap outside to return";
+      const currentlyFlipped = flipCard.classList.contains("is-flipped");
+
+      lightboxCaption.classList.remove("is-blur-pulse");
+      void lightboxCaption.offsetWidth;
+      lightboxCaption.classList.add("is-blur-pulse");
+
+      if (!currentlyFlipped) {
+        flipCard.classList.remove("is-flipping-back");
+        flipCard.classList.add("is-flipped");
+        smoothUpdateHint("hold again to flip back · tap outside to return");
+      } else {
+        flipCard.classList.add("is-flipping-back");
+        flipCard.classList.remove("is-flipped");
+        smoothUpdateHint("hold photo for camera & color info · tap outside to return");
+        setTimeout(() => {
+          flipCard.classList.remove("is-flipping-back");
+        }, 420);
+      }
+
       if (navigator.vibrate) {
         try { navigator.vibrate(14); } catch (_) {}
       }

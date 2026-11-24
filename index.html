@@ -71,26 +71,29 @@ header>*{pointer-events:auto}
 .thumb.ready{transition:transform .5s var(--ease),width .5s var(--ease)}
 .tab{position:relative;z-index:1;height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--fg2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .3s}
 .tab.on,.tab:hover{color:var(--fg)}
-.ibtn{display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+.ibtn{position:relative;display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
 .ibtn:active{transform:translateZ(0) scale(.92)}
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-[data-layout=grid] .i-g,[data-layout=scatter] .i-s{display:none}
+.ibtn .i-s,.ibtn .i-g{position:absolute;transition:opacity .35s var(--ease),transform .45s var(--ease)}
+[data-layout=grid] .i-g,[data-layout=scatter] .i-s{opacity:0;transform:scale(.6) rotate(-25deg);pointer-events:none}
+[data-layout=grid] .i-s,[data-layout=scatter] .i-g{opacity:1;transform:scale(1) rotate(0deg)}
 @media(max-width:640px){.count{display:none}.tab{padding:0 10px;font-size:11.5px}}
 
 /* ---------- stage ---------- */
 main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 main::-webkit-scrollbar{display:none}
 .canvas{position:relative;width:calc(100% - 40px);max-width:1240px;margin:76px auto 0;min-height:calc(100dvh - 110px)}
-[data-layout=grid] .canvas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px;margin-top:84px;padding-bottom:48px;height:auto!important}
+[data-layout=grid] .canvas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));align-content:start;align-items:start;min-height:0;gap:22px;margin-top:84px;padding-bottom:48px;height:auto!important}
 [data-layout=grid] .card{position:relative!important;left:auto!important;top:auto!important;width:auto!important;translate:none!important}
 
 .canvas[data-empty]::after{content:"No photos found. Check data/photos.js and the images folder.";position:absolute;left:0;right:0;top:48px;text-align:center;font-size:13px;color:var(--fg2)}
 
 /* ---------- cards + instant shimmer placeholder ---------- */
-.card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;
+.card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;will-change:transform;
  box-shadow:0 22px 50px -22px rgba(0,0,0,.8),0 0 70px -26px var(--item-aura,var(--aura-1));
  transition:transform .55s var(--ease),box-shadow .55s var(--ease)}
 .card.in{opacity:1;animation:rise .85s var(--ease) var(--d,0ms) backwards}
+.card.settled{opacity:1;animation:none}
 @keyframes rise{from{opacity:0;transform:translate3d(0,22px,0) scale(.97)}}
 .card:active{transform:scale(.975)}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-4px);box-shadow:0 30px 70px -20px rgba(0,0,0,.9),0 0 90px -16px var(--item-aura,var(--aura-1))}.card:hover img{transform:scale(1.04)}}
@@ -108,11 +111,12 @@ main::-webkit-scrollbar{display:none}
 .tag{flex-shrink:0;padding:5px 11px;border-radius:999px;font-size:11px;color:var(--fg2)}
 @media(max-width:680px){body:not([data-layout=grid]) .tag{display:none}}
 
-/* ---------- lightbox (no opacity transition on header so glass blur stays intact) ---------- */
+/* ---------- lightbox (flicker-free controls inside opacity transition) ---------- */
 .lb{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 32px;background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(5,5,8,.76),rgba(5,5,8,.95));opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s linear .35s}
 .lb.open{opacity:1;visibility:visible;transition:opacity .35s var(--ease)}
 body.modal-active header,body.modal-active main{pointer-events:none}
-.lb .ibtn{position:absolute;z-index:5;background-color:rgba(255,255,255,.06)}
+.lb .ibtn,.lb .fbtn{-webkit-backdrop-filter:none;backdrop-filter:none;background:radial-gradient(120% 100% at 14% 0%,rgba(255,255,255,.15),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03)),rgba(16,16,22,.82)}
+.lb .ibtn{position:absolute;z-index:5}
 .lb-x{top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
 .lb-p,.lb-n{top:50%;margin-top:-19px}
 .lb-p{left:max(18px,env(safe-area-inset-left))}.lb-n{right:max(18px,env(safe-area-inset-right))}
@@ -223,14 +227,39 @@ const body=document.body,root=document.documentElement.style;
 let entries=(G.photos||[]).filter(p=>p&&(typeof p==='string'||p.file||p.src)).map(toEntry),cards=[],cur=0,tint=[225,215,215],modal=false,grid=false;
 const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- tabs with sliding glass thumb ---------- */
 const tabs=$$("[data-look-btn]"),thumb=$("#thumb");
 function moveThumb(){const a=$(".tab.on");if(a)thumb.style.cssText=`width:${a.offsetWidth}px;transform:translateX(${a.offsetLeft}px)`}
 tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.toggle("on",x===b));body.dataset.look=b.dataset.lookBtn;moveThumb()});
-$("#layoutBtn").onclick=()=>{grid=!grid;body.dataset.layout=grid?"grid":"scatter";
- cards.forEach(c=>{c.style.translate="";if(grid){c.style.zIndex="";}});
- if(grid)canvas.style.height="";stage.scrollTo({top:0});scheduleLayout()};
+
+/* ---------- FLIP layout switch (scatter <-> grid) ---------- */
+$("#layoutBtn").onclick=()=>{
+ const first=cards.map(c=>c.getBoundingClientRect());
+ cards.forEach(c=>c.getAnimations?.().forEach(a=>a.cancel()));
+ grid=!grid;tx=ty=cx=cy=0;
+ body.dataset.layout=grid?"grid":"scatter";
+ cards.forEach(c=>{c.classList.add("settled");c.style.translate="";if(grid)c.style.zIndex=""});
+ if(grid)canvas.style.height="";else layout();
+ if(stage.scrollTop)stage.scrollTop=0;
+ void canvas.offsetWidth;
+ const last=cards.map(c=>c.getBoundingClientRect());
+ if(!reduceMotion()){
+  cards.forEach((c,i)=>{
+   const f=first[i],l=last[i];if(!f||!l||!f.width||!l.width)return;
+   const dx=f.left-l.left,dy=f.top-l.top,sw=f.width/l.width,sh=f.height/l.height;
+   if(Math.abs(dx)<.5&&Math.abs(dy)<.5&&Math.abs(sw-1)<.002&&Math.abs(sh-1)<.002)return;
+   c.style.transformOrigin="0 0";
+   const anim=c.animate([
+    {transform:`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(${sw.toFixed(4)},${sh.toFixed(4)})`},
+    {transform:"translate3d(0,0,0) scale(1,1)"}
+   ],{duration:620,delay:Math.min(i*28,220),easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"});
+   anim.onfinish=()=>{c.style.transformOrigin=""};
+  });
+ }
+ moveThumb();
+};
 
 /* ---------- floating motes ---------- */
 let fxId=0;
@@ -250,7 +279,7 @@ let fxTick;
 
 /* ---------- parallax ---------- */
 let tx=0,ty=0,cx=0,cy=0,pr=0;
-function par(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;
+function par(){if(modal||grid){pr=0;return}cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;
  for(const c of cards)c.style.translate=`${(cx*c._d).toFixed(2)}px ${(cy*c._d).toFixed(2)}px`;
  pr=Math.abs(tx-cx)+Math.abs(ty-cy)>.02?requestAnimationFrame(par):0}
 addEventListener("pointermove",e=>{if(modal||grid)return;tx=(e.clientX/innerWidth*2-1)*12;ty=(e.clientY/innerHeight*2-1)*9;pr||(pr=requestAnimationFrame(par))},{passive:true});
@@ -349,9 +378,10 @@ function predecode(src){let im=decoded.get(src);
 let selTok=0;
 async function select(i,open){
  if(!entries.length)return;cur=(i+entries.length)%entries.length;const it=entries[cur],img=cards[cur]?.querySelector("img"),tok=++selTok;
- if(open){await predecode(it.src);if(tok!==selTok)return;
-  flip.classList.remove("on");$("#fbtnT").textContent="Camera info";lbImg.src=it.src;$("#cap").textContent=it.caption;fillExif(it,img);if(!modal)openLb()}
- if(img&&img.complete&&img.naturalWidth){const p=await palette(it.thumb,img);if(tok===selTok)applyAtmosphere(p)}}
+ const palProm=(img&&img.complete&&img.naturalWidth)?palette(it.thumb,img):Promise.resolve(null);
+ if(open){const[,p]=await Promise.all([predecode(it.src),palProm]);if(tok!==selTok)return;
+  applyAtmosphere(p);flip.classList.remove("on");$("#fbtnT").textContent="Camera info";lbImg.src=it.src;$("#cap").textContent=it.caption;fillExif(it,img);if(!modal)openLb()}
+ else{const p=await palProm;if(tok===selTok)applyAtmosphere(p)}}
 function toggleFlip(){const on=flip.classList.toggle("on");$("#fbtnT").textContent=on?"View photo":"Camera info";navigator.vibrate?.(10)}
 $("#fbtn").onclick=e=>{e.stopPropagation();toggleFlip()};
 $("#scene").onclick=toggleFlip;

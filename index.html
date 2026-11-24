@@ -1,1967 +1,374 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="ustzyix — Atmospheric visual and photographic studio archive." />
-  <meta name="theme-color" content="#050507" />
-  <title>ustzyix — Visual Studio</title>
-  <style>
-    :root {
-      /* Liquid Glass & Pryzm Studio Tokens */
-      --bg-obsidian: #050507;
-      --fg-color: #f4f4f8;
-      --fg-muted: rgba(244, 244, 248, 0.66);
-      --fg-whisper: rgba(244, 244, 248, 0.38);
-      --aura-primary: #9b221c;
-      --aura-secondary: #481a16;
-      --liquid-bg: rgba(255, 255, 255, 0.045);
-      --liquid-bg-hover: rgba(255, 255, 255, 0.085);
-      --liquid-bg-active: rgba(255, 255, 255, 0.14);
-      --liquid-rim: inset 0 1px 0.5px rgba(255, 255, 255, 0.22), inset 0 -1px 0.5px rgba(255, 255, 255, 0.04);
-      --liquid-rim-strong: inset 0 1px 1px rgba(255, 255, 255, 0.34), inset 0 -1px 1px rgba(255, 255, 255, 0.06);
-      --px: 0px;
-      --py: 0px;
-      --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
-      --ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100dvh;
-      max-height: 100dvh;
-      background-color: var(--bg-obsidian);
-      color: var(--fg-color);
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", sans-serif;
-      overflow: hidden;
-      overscroll-behavior: none;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .scatter-canvas, header, .lightbox {
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    img {
-      -webkit-user-drag: none;
-      pointer-events: none;
-    }
-
-    :focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.65);
-      outline-offset: 3px;
-    }
-
-    /* =========================================================
-       UNIFIED ATMOSPHERIC LAYERS (NO DOUBLE-LAYER SEAMS)
-       ========================================================= */
-    #ambient-layer {
-      position: fixed;
-      inset: 0;
-      z-index: -8;
-      background:
-        radial-gradient(ellipse 85% 65% at 50% 34%, rgba(155, 34, 28, 0.56) 0%, transparent 72%),
-        radial-gradient(ellipse 95% 78% at 50% 82%, rgba(72, 26, 22, 0.42) 0%, var(--bg-obsidian) 88%);
-      transition: background 1.2s var(--ease-liquid);
-      pointer-events: none;
-    }
-
-    .mist-far {
-      position: fixed;
-      inset: -24%;
-      z-index: -7;
-      pointer-events: none;
-      opacity: 0.66;
-      background:
-        radial-gradient(ellipse 70% 56% at 24% 32%, var(--aura-primary) 0%, transparent 75%),
-        radial-gradient(ellipse 68% 62% at 78% 68%, var(--aura-secondary) 0%, transparent 78%);
-      will-change: transform;
-      animation: mistSwayA 26s ease-in-out infinite alternate;
-    }
-
-    .mist-near {
-      position: fixed;
-      inset: -18%;
-      z-index: -6;
-      pointer-events: none;
-      opacity: 0.40;
-      background:
-        radial-gradient(ellipse 60% 48% at 72% 28%, var(--aura-primary) 0%, transparent 74%),
-        radial-gradient(ellipse 72% 52% at 28% 76%, rgba(220, 225, 245, 0.09) 0%, transparent 78%);
-      will-change: transform;
-      animation: mistSwayB 19s ease-in-out infinite alternate;
-    }
-
-    @keyframes mistSwayA {
-      0% { transform: translate3d(-2.5%, -1.2%, 0) scale(1); }
-      100% { transform: translate3d(2.5%, 1.5%, 0) scale(1.06); }
-    }
-
-    @keyframes mistSwayB {
-      0% { transform: translate3d(2%, 1.1%, 0) scale(1.03); }
-      100% { transform: translate3d(-2.4%, -1.3%, 0) scale(0.98); }
-    }
-
-    /* Fluted Glass Texture without hard cutoff band */
-    .fluted-glass-layer {
-      position: fixed;
-      inset: 0;
-      z-index: -5;
-      pointer-events: none;
-      opacity: 0;
-      background-image: repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.04) 0px,
-        rgba(255, 255, 255, 0.008) 11px,
-        rgba(0, 0, 0, 0.24) 22px,
-        rgba(255, 255, 255, 0.025) 34px
-      );
-      transition: opacity 0.7s var(--ease-liquid);
-    }
-
-    body[data-look="fluted"] .fluted-glass-layer {
-      opacity: 0.85;
-    }
-
-    .halftone-layer {
-      position: fixed;
-      inset: 0;
-      z-index: -5;
-      pointer-events: none;
-      opacity: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
-      background-size: 16px 16px;
-      transition: opacity 0.7s var(--ease-liquid);
-    }
-
-    body[data-look="halftone"] .halftone-layer {
-      opacity: 0.52;
-    }
-
-    .god-rays {
-      position: fixed;
-      inset: -20%;
-      z-index: -4;
-      pointer-events: none;
-      opacity: 0.28;
-      background:
-        radial-gradient(ellipse 20% 78% at 36% 24%, var(--aura-primary) 0%, transparent 78%),
-        radial-gradient(ellipse 16% 72% at 54% 28%, rgba(255, 248, 240, 0.13) 0%, transparent 78%);
-      transform: rotate(-22deg);
-      will-change: transform, opacity;
-      animation: raySweep 17s ease-in-out infinite alternate;
-    }
-
-    @keyframes raySweep {
-      0% { transform: translate3d(-3%, -1%, 0) rotate(-24deg); opacity: 0.18; }
-      50% { opacity: 0.32; }
-      100% { transform: translate3d(3%, 1.5%, 0) rotate(-19deg); opacity: 0.22; }
-    }
-
-    /* Smooth edge falloff that never creates a stepped band */
-    .void-vignette {
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      pointer-events: none;
-      background: radial-gradient(
-        ellipse 82% 76% at 50% 48%,
-        transparent 45%,
-        rgba(5, 5, 7, 0.38) 78%,
-        rgba(3, 3, 5, 0.78) 100%
-      );
-    }
-
-    #atmosphere-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 4;
-      pointer-events: none;
-    }
-
-    .film-grain {
-      position: fixed;
-      inset: -40px;
-      width: calc(100% + 80px);
-      height: calc(100% + 80px);
-      z-index: 5;
-      pointer-events: none;
-      opacity: 0.038;
-      background-repeat: repeat;
-      will-change: transform;
-      animation: grainShift 0.4s steps(3) infinite;
-    }
-
-    @keyframes grainShift {
-      0% { transform: translate3d(0, 0, 0); }
-      33% { transform: translate3d(20px, -16px, 0); }
-      66% { transform: translate3d(-18px, 22px, 0); }
-      100% { transform: translate3d(12px, 10px, 0); }
-    }
-
-    body.modal-active .mist-far,
-    body.modal-active .mist-near,
-    body.modal-active .god-rays,
-    body.modal-active .film-grain {
-      animation-play-state: paused !important;
-    }
-
-    /* =========================================================
-       LIQUID GLASS TOP BAR (BORDERLESS / SPECULAR RIM ONLY)
-       ========================================================= */
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 12px max(22px, env(safe-area-inset-left));
-      z-index: 25;
-      pointer-events: none;
-    }
-
-    .header-pill {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      height: 36px;
-      padding: 0 15px;
-      border-radius: 999px;
-      background: var(--liquid-bg);
-      border: none;
-      box-shadow: var(--liquid-rim), 0 12px 32px rgba(0, 0, 0, 0.32);
-      backdrop-filter: blur(22px) saturate(150%);
-      -webkit-backdrop-filter: blur(22px) saturate(150%);
-    }
-
-    .brand-mark {
-      width: 14px;
-      height: 14px;
-      border-radius: 5px;
-      background: conic-gradient(from 140deg, var(--aura-primary), #f472b6, #818cf8, var(--aura-primary));
-      box-shadow: 0 0 14px var(--aura-primary);
-      transition: background 0.8s ease, box-shadow 0.8s ease;
-    }
-
-    .brand {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: lowercase;
-      color: var(--fg-color);
-    }
-
-    .brand-divider {
-      width: 1px;
-      height: 12px;
-      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.18), transparent);
-    }
-
-    .presence-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--fg-muted);
-    }
-
-    .pulse-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
-      animation: solitaryPulse 3.6s ease-in-out infinite;
-    }
-
-    @keyframes solitaryPulse {
-      0%, 100% { opacity: 0.45; transform: scale(0.88); }
-      50% { opacity: 1; transform: scale(1.2); }
-    }
-
-    .studio-controls {
-      pointer-events: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      height: 36px;
-      padding: 4px;
-      border-radius: 999px;
-      background: var(--liquid-bg);
-      border: none;
-      box-shadow: var(--liquid-rim), 0 12px 32px rgba(0, 0, 0, 0.32);
-      backdrop-filter: blur(22px) saturate(150%);
-      -webkit-backdrop-filter: blur(22px) saturate(150%);
-    }
-
-    .studio-tab {
-      height: 28px;
-      padding: 0 11px;
-      border-radius: 999px;
-      border: none;
-      background: transparent;
-      color: var(--fg-muted);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.25s var(--ease-liquid);
-      white-space: nowrap;
-    }
-
-    .studio-tab:hover {
-      color: var(--fg-color);
-      background: var(--liquid-bg-hover);
-    }
-
-    .studio-tab.is-active {
-      background: var(--liquid-bg-active);
-      color: var(--fg-color);
-      box-shadow: var(--liquid-rim);
-    }
-
-    @media (max-width: 640px) {
-      .hide-mobile { display: none; }
-      header { padding: max(12px, env(safe-area-inset-top)) 14px 10px 14px; }
-      .studio-tab { padding: 0 9px; font-size: 9.5px; }
-    }
-
-    /* =========================================================
-       MAIN CANVAS (FULL HEIGHT WITHOUT BOTTOM MUSIC BAR)
-       ========================================================= */
-    main {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      max-width: 1240px;
-      height: 100dvh;
-      margin: 0 auto;
-      padding: 72px 20px 28px;
-      z-index: 2;
-      overflow: hidden;
-      transition: filter 0.45s var(--ease-liquid), transform 0.5s var(--ease-drift);
-    }
-
-    body.modal-active main {
-      filter: blur(12px) brightness(0.68);
-      transform: scale(0.975);
-      pointer-events: none;
-    }
-
-    .scatter-canvas {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      touch-action: pan-y;
-    }
-
-    .scatter-canvas.is-grid-mode {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-      align-content: center;
-      gap: 24px;
-      padding: 12px 8px;
-      overflow-y: auto;
-    }
-
-    .scatter-canvas.is-grid-mode .scatter-item {
-      position: relative !important;
-      left: auto !important;
-      top: auto !important;
-      width: 100% !important;
-      transform: none !important;
-    }
-
-    /* =========================================================
-       LIQUID GLASS SPECIMEN CARDS (NO HARD OUTER BORDER)
-       ========================================================= */
-    .scatter-item {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 10px;
-      border-radius: 20px;
-      background: linear-gradient(155deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 100%);
-      border: none;
-      box-shadow:
-        var(--liquid-rim),
-        0 24px 60px -14px rgba(0, 0, 0, 0.75),
-        0 0 60px -16px var(--item-aura, var(--aura-primary));
-      backdrop-filter: blur(20px) saturate(145%);
-      -webkit-backdrop-filter: blur(20px) saturate(145%);
-      cursor: pointer;
-      touch-action: manipulation;
-      opacity: 0;
-      transform: translate3d(0, 20px, 0);
-      transition:
-        opacity 0.8s var(--ease-liquid),
-        transform 0.8s var(--ease-drift),
-        box-shadow 0.45s ease,
-        background 0.35s ease;
-      will-change: transform, opacity;
-      text-align: left;
-    }
-
-    .scatter-item.is-visible {
-      opacity: 1;
-      transform: translate3d(
-        calc(var(--px) * var(--depth, 0.5)),
-        calc(var(--py) * var(--depth, 0.5)),
-        0
-      );
-    }
-
-    @media (hover: hover) {
-      .scatter-item:hover {
-        z-index: 15 !important;
-        background: linear-gradient(155deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.03) 100%);
-        box-shadow:
-          var(--liquid-rim-strong),
-          0 32px 80px -10px rgba(0, 0, 0, 0.88),
-          0 0 82px -6px var(--item-aura, var(--aura-primary));
-      }
-      .scatter-item:hover .scatter-frame img {
-        transform: scale(1.045);
-      }
-    }
-
-    .scatter-item:active {
-      transform: translate3d(
-        calc(var(--px) * var(--depth, 0.5)),
-        calc(var(--py) * var(--depth, 0.5)),
-        0
-      ) scale(0.975);
-    }
-
-    .scatter-frame {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      border-radius: 13px;
-      background-color: rgba(8, 8, 12, 0.65);
-      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14);
-    }
-
-    .scatter-frame img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scale(1.01);
-      transition: transform 0.75s var(--ease-drift);
-    }
-
-    .frame-chip {
-      position: absolute;
-      top: 9px;
-      right: 9px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      box-shadow: var(--liquid-rim), 0 4px 12px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #ffffff;
-      pointer-events: none;
-    }
-
-    .scatter-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 0 4px 2px;
-      pointer-events: none;
-    }
-
-    .scatter-title-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .scatter-title {
-      font-size: 12.5px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      color: var(--fg-color);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .scatter-sub {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: var(--fg-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .scatter-tag {
-      flex-shrink: 0;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: var(--liquid-bg);
-      box-shadow: var(--liquid-rim);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: lowercase;
-      color: var(--fg-muted);
-    }
-
-    /* =========================================================
-       LIQUID GLASS LIGHTBOX & 3D FLIP CARD
-       ========================================================= */
-    .lightbox {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100dvh;
-      z-index: 40;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 20px 36px;
-      background: rgba(5, 5, 8, 0.78);
-      backdrop-filter: blur(26px) saturate(145%);
-      -webkit-backdrop-filter: blur(26px) saturate(145%);
-      overflow: hidden;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.35s var(--ease-liquid), visibility 0s linear 0.35s;
-    }
-
-    .lightbox.is-open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition: opacity 0.35s var(--ease-liquid), visibility 0s linear 0s;
-    }
-
-    .lightbox.is-closing {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease-out;
-    }
-
-    .lightbox-close,
-    .lightbox-nav {
-      position: absolute;
-      z-index: 55;
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      border: none;
-      background: var(--liquid-bg-hover);
-      box-shadow: var(--liquid-rim), 0 12px 28px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      color: var(--fg-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.25s var(--ease-liquid);
-      touch-action: manipulation;
-    }
-
-    .lightbox-close {
-      top: max(18px, env(safe-area-inset-top));
-      right: max(20px, env(safe-area-inset-right));
-    }
-
-    .lightbox-close:hover {
-      transform: scale(1.06);
-      background: var(--liquid-bg-active);
-      box-shadow: var(--liquid-rim-strong);
-    }
-
-    .lightbox-nav {
-      top: 50%;
-      transform: translateY(-50%);
-    }
-
-    .lightbox-nav:hover {
-      transform: translateY(-50%) scale(1.06);
-      background: var(--liquid-bg-active);
-      box-shadow: var(--liquid-rim-strong);
-    }
-
-    .lightbox-nav.prev { left: max(18px, env(safe-area-inset-left)); }
-    .lightbox-nav.next { right: max(18px, env(safe-area-inset-right)); }
-
-    .lightbox-close svg,
-    .lightbox-nav svg {
-      width: 18px;
-      height: 18px;
-      stroke-width: 2;
-    }
-
-    @media (max-width: 680px) {
-      .lightbox-nav { display: none; }
-    }
-
-    .lightbox-inner {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      max-width: 92vw;
-      pointer-events: none;
-    }
-
-    .lightbox.is-open .flip-scene {
-      animation: openZoomBlur 0.5s var(--ease-drift) forwards;
-    }
-
-    .lightbox.is-closing .flip-scene {
-      animation: closeZoomBlur 0.24s ease-in forwards;
-    }
-
-    @keyframes openZoomBlur {
-      0% { opacity: 0; transform: scale(0.88) translate3d(0, 16px, 0); }
-      100% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
-    }
-
-    @keyframes closeZoomBlur {
-      0% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
-      100% { opacity: 0; transform: scale(0.90) translate3d(0, 10px, 0); }
-    }
-
-    .flip-scene {
-      perspective: 1500px;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      pointer-events: auto;
-      touch-action: manipulation;
-    }
-
-    .flip-card {
-      position: relative;
-      display: grid;
-      place-items: center;
-      transform-style: preserve-3d;
-      -webkit-transform-style: preserve-3d;
-      transition: transform 0.72s var(--ease-liquid);
-    }
-
-    .flip-card.is-pressing {
-      transform: scale(0.975);
-      transition: transform 0.18s ease-out;
-    }
-
-    .flip-card.is-flipped {
-      transform: rotateY(180deg);
-    }
-
-    .flip-card.is-flipped.is-pressing {
-      transform: rotateY(180deg) scale(0.975);
-    }
-
-    .flip-front {
-      grid-area: 1 / 1;
-      position: relative;
-      padding: 11px;
-      border-radius: 20px;
-      background: linear-gradient(155deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.02) 100%);
-      border: none;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      pointer-events: none;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow:
-        var(--liquid-rim-strong),
-        0 34px 95px rgba(0, 0, 0, 0.9),
-        0 0 85px -10px var(--aura-primary);
-    }
-
-    .flip-front img {
-      display: block;
-      max-width: min(88vw, 760px);
-      max-height: 56dvh;
-      width: auto;
-      height: auto;
-      border-radius: 12px;
-      object-fit: contain;
-    }
-
-    .flip-back {
-      grid-area: 1 / 1;
-      width: 100%;
-      height: 100%;
-      min-width: min(88vw, 390px);
-      min-height: 295px;
-      border-radius: 20px;
-      padding: 22px 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 14px;
-      text-align: left;
-      background:
-        radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.09) 0%, transparent 60%),
-        rgba(14, 14, 20, 0.88);
-      border: none;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      box-shadow:
-        var(--liquid-rim-strong),
-        0 34px 95px rgba(0, 0, 0, 0.92),
-        0 0 75px -14px var(--aura-primary);
-      transform: rotateY(180deg);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      pointer-events: none;
-    }
-
-    .exif-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding-bottom: 12px;
-      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    .exif-device {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--fg-color);
-    }
-
-    .exif-device svg {
-      width: 15px;
-      height: 15px;
-      opacity: 0.8;
-    }
-
-    .exif-date {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      color: var(--fg-muted);
-    }
-
-    .exif-metrics {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .metric-cell {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 10px 6px;
-      border-radius: 12px;
-      background: var(--liquid-bg);
-      box-shadow: var(--liquid-rim);
-      text-align: center;
-    }
-
-    .metric-val {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--fg-color);
-    }
-
-    .metric-lbl {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 8px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--fg-whisper);
-    }
-
-    .exif-rows {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .exif-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-size: 11.5px;
-    }
-
-    .exif-key {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--fg-whisper);
-    }
-
-    .exif-val {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      color: var(--fg-color);
-      text-align: right;
-    }
-
-    .exif-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 11px;
-      border-radius: 999px;
-      background: var(--liquid-bg-hover);
-      box-shadow: var(--liquid-rim);
-      color: var(--fg-color);
-      font-size: 10px;
-    }
-
-    .swatch-pair {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .swatch-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-      background: var(--aura-primary);
-    }
-
-    .lightbox-caption-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      pointer-events: none;
-    }
-
-    .lightbox-caption {
-      font-size: 15px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      color: var(--fg-color);
-    }
-
-    .lightbox-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .flip-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      height: 36px;
-      padding: 0 18px;
-      border-radius: 999px;
-      border: none;
-      background: var(--liquid-bg-hover);
-      box-shadow: var(--liquid-rim), 0 8px 24px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      color: var(--fg-color);
-      font-size: 10.5px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-
-    .flip-btn:hover {
-      background: var(--liquid-bg-active);
-      box-shadow: var(--liquid-rim-strong);
-    }
-
-    .flip-btn svg {
-      width: 13px;
-      height: 13px;
-      stroke-width: 1.9;
-    }
-
-    .lightbox-hint {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--fg-whisper);
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="description" content="ustzyix — Atmospheric visual and photographic studio archive."/>
+<meta name="theme-color" content="#050507"/>
+<title>ustzyix — Visual Studio</title>
+<style>
+@property --aura-1{syntax:"<color>";inherits:true;initial-value:#9b221c}
+@property --aura-2{syntax:"<color>";inherits:true;initial-value:#481a16}
+@property --abyss{syntax:"<color>";inherits:true;initial-value:#1c0907}
+:root{--bg:#050507;--fg:#f5f5f9;--fg2:rgba(245,245,249,.7);--fg3:rgba(245,245,249,.42);--ease:cubic-bezier(.22,1,.36,1);--mono:ui-monospace,SFMono-Regular,Menlo,monospace;transition:--aura-1 1.1s ease,--aura-2 1.1s ease,--abyss 1.1s ease}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{position:fixed;inset:0;width:100%;height:100dvh;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text","Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+header,.card,.lb{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+img{-webkit-user-drag:none;pointer-events:none}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid rgba(255,255,255,.7);outline-offset:3px}
+
+/* ---------- atmosphere (single colour source, animated via registered props) ---------- */
+#ambient{position:fixed;inset:0;z-index:-8;pointer-events:none;background:
+ radial-gradient(ellipse 85% 65% at 50% 34%,color-mix(in srgb,var(--aura-1) 72%,transparent),transparent 72%),
+ radial-gradient(ellipse 95% 78% at 50% 82%,color-mix(in srgb,var(--aura-2) 55%,transparent),var(--abyss) 86%,var(--bg))}
+.mist{position:fixed;inset:-14%;z-index:-7;pointer-events:none;opacity:.58;will-change:transform;
+ background:radial-gradient(ellipse 70% 56% at 24% 32%,var(--aura-1),transparent 75%),radial-gradient(ellipse 68% 62% at 78% 68%,var(--aura-2),transparent 78%);
+ animation:sway 24s ease-in-out infinite alternate}
+@keyframes sway{from{transform:translate3d(-2.5%,-1.2%,0) scale(1)}to{transform:translate3d(2.5%,1.5%,0) scale(1.05)}}
+.rays{position:fixed;inset:-20%;z-index:-4;pointer-events:none;opacity:.24;will-change:transform;transform:rotate(-22deg);
+ background:radial-gradient(ellipse 20% 78% at 36% 24%,var(--aura-1),transparent 78%),radial-gradient(ellipse 16% 72% at 54% 28%,rgba(255,248,240,.14),transparent 78%);
+ animation:ray 18s ease-in-out infinite alternate}
+@keyframes ray{from{transform:translate3d(-3%,-1%,0) rotate(-24deg)}to{transform:translate3d(3%,1.5%,0) rotate(-19deg)}}
+.fluted,.halftone{position:fixed;inset:0;z-index:-5;pointer-events:none;opacity:0;transition:opacity .7s var(--ease)}
+/* mirrored stops: the wave is continuous, so no hard seam at each period */
+.fluted{background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0,rgba(0,0,0,.2) 14px,rgba(255,255,255,.04) 28px)}
+.halftone{background-image:radial-gradient(rgba(255,255,255,.14) 1px,transparent 1.2px);background-size:16px 16px}
+[data-look=fluted] .fluted{opacity:.8}
+[data-look=halftone] .halftone{opacity:.5}
+.vig{position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(ellipse 82% 76% at 50% 48%,transparent 45%,rgba(5,5,7,.4) 78%,rgba(3,3,5,.8))}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+/* static grain doubles as dithering: removes gradient banding "lines" on dark screens */
+.grain{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:.05;background-repeat:repeat}
+body.modal-active .mist,body.modal-active .rays{animation-play-state:paused}
+
+/* ---------- liquid glass: gradient hairline + specular sheen, no bevel ---------- */
+.glass,.hair{position:relative}
+.glass{background:radial-gradient(120% 100% at 14% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.03));-webkit-backdrop-filter:blur(26px) saturate(190%);backdrop-filter:blur(26px) saturate(190%)}
+.glass::before,.hair::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+ background:linear-gradient(145deg,rgba(255,255,255,.6),rgba(255,255,255,.07) 32%,rgba(255,255,255,.02) 62%,rgba(255,255,255,.3));
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+ mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+
+/* ---------- header ---------- */
+header{position:fixed;top:0;left:0;right:0;z-index:25;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;
+ padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left))}
+header>*{pointer-events:auto}
+.pill{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;box-shadow:0 10px 30px -12px rgba(0,0,0,.6)}
+.mark{width:14px;height:14px;border-radius:5px;background:conic-gradient(from 140deg,var(--aura-1),#f472b6,#818cf8,var(--aura-1));box-shadow:0 0 14px var(--aura-1)}
+.brand{font-size:12.5px;font-weight:600;letter-spacing:.16em}
+.count{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg2);padding-left:10px;border-left:1px solid rgba(255,255,255,.14)}
+.dot{width:5px;height:5px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.8);animation:pulse 3.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45;transform:scale(.85)}}
+.tools{display:flex;align-items:center;gap:8px}
+.seg{display:flex;height:38px;padding:4px;border-radius:999px;box-shadow:0 10px 30px -12px rgba(0,0,0,.6)}
+.thumb{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:999px;background:rgba(255,255,255,.18);box-shadow:0 3px 12px rgba(0,0,0,.28),inset 0 0 0 .5px rgba(255,255,255,.28)}
+.thumb.ready{transition:transform .5s var(--ease),width .5s var(--ease)}
+.tab{position:relative;z-index:1;height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:var(--fg2);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:color .3s}
+.tab.on,.tab:hover{color:var(--fg)}
+.ibtn{display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+.ibtn:active{transform:scale(.92)}
+.ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+[data-layout=grid] .i-g,[data-layout=scatter] .i-s{display:none}
+@media(max-width:640px){.count{display:none}.tab{padding:0 10px;font-size:11.5px}}
+
+/* ---------- stage: one full-viewport scroller, so glow is never clipped inside the page ---------- */
+main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+main::-webkit-scrollbar{display:none}
+.canvas{position:relative;width:calc(100% - 40px);max-width:1240px;margin:76px auto 0;min-height:calc(100dvh - 110px)}
+[data-layout=grid] .canvas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px;margin-top:84px;padding-bottom:48px;height:auto!important}
+[data-layout=grid] .card{position:relative!important;left:auto!important;top:auto!important;width:auto!important;translate:none!important}
+
+/* ---------- cards ---------- */
+.card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;
+ box-shadow:0 22px 50px -22px rgba(0,0,0,.8),0 0 70px -26px var(--item-aura,var(--aura-1));
+ transition:transform .55s var(--ease),box-shadow .55s var(--ease)}
+.card.in{opacity:1;animation:rise .9s var(--ease) var(--d,0ms) backwards}
+@keyframes rise{from{opacity:0;transform:translate3d(0,24px,0) scale(.97)}}
+.card:active{transform:scale(.975)}
+@media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-4px);box-shadow:0 30px 70px -20px rgba(0,0,0,.9),0 0 90px -16px var(--item-aura,var(--aura-1))}.card:hover img{transform:scale(1.04)}}
+.frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:20px;background:rgba(8,8,12,.6)}
+.frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16);pointer-events:none}
+.frame img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 4px}
+.tw{min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttl{font-size:13.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:11.5px;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{flex-shrink:0;padding:5px 11px;border-radius:999px;font-size:11px;color:var(--fg2)}
+@media(max-width:680px){body:not([data-layout=grid]) .tag{display:none}}
+
+/* ---------- lightbox ---------- */
+.lb{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 32px;background:rgba(5,5,8,.7);
+ -webkit-backdrop-filter:blur(28px) saturate(150%);backdrop-filter:blur(28px) saturate(150%);opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s linear .35s}
+.lb.open{opacity:1;visibility:visible;transition:opacity .35s var(--ease)}
+.lb .ibtn{position:absolute;z-index:5;background-color:rgba(255,255,255,.06)}
+.lb-x{top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
+.lb-p,.lb-n{top:50%;margin-top:-19px}
+.lb-p{left:max(18px,env(safe-area-inset-left))}.lb-n{right:max(18px,env(safe-area-inset-right))}
+@media(max-width:680px){.lb-p,.lb-n{display:none}}
+.lb-in{display:flex;flex-direction:column;align-items:center;gap:16px;max-width:92vw;pointer-events:none}
+.scene,.lb-ctl{pointer-events:auto}
+.scene{perspective:1500px;display:grid;place-items:center;cursor:pointer;transform:scale(.92) translateY(14px);transition:transform .55s var(--ease);touch-action:manipulation}
+.lb.open .scene{transform:none}
+/* no backdrop-filter inside preserve-3d: it breaks the flip and causes flicker */
+.flip{display:grid;place-items:center;transform-style:preserve-3d;transition:transform .72s var(--ease)}
+.flip.on{transform:rotateY(180deg)}
+.front,.back{grid-area:1/1;border-radius:28px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.front{padding:8px;background:rgba(255,255,255,.06);box-shadow:0 34px 90px rgba(0,0,0,.85),0 0 80px -18px var(--aura-1)}
+.front img{display:block;max-width:min(88vw,760px);max-height:56dvh;width:auto;height:auto;border-radius:20px}
+.back{width:100%;height:100%;min-width:min(88vw,390px);min-height:290px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;transform:rotateY(180deg);
+ background:radial-gradient(circle at 16% 8%,rgba(255,255,255,.1),transparent 60%),rgba(17,17,23,.95);box-shadow:0 34px 90px rgba(0,0,0,.88),0 0 70px -18px var(--aura-1)}
+.ex-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.ex-cam{font-size:13.5px;font-weight:600}
+.ex-date{font-size:11px;color:var(--fg2)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mc{display:flex;flex-direction:column;gap:4px;padding:10px 4px;border-radius:16px;text-align:center;background:rgba(255,255,255,.05)}
+.mv{font-family:var(--mono);font-size:11.5px;font-weight:600}
+.ml{font-size:10px;color:var(--fg3)}
+.rows{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.rk{font-size:11px;color:var(--fg3)}
+.rv{font-family:var(--mono);font-size:11px;text-align:right}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:13px;height:13px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.cap{font-size:15px;font-weight:600;letter-spacing:.06em}
+.fbtn{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 18px;border:0;border-radius:999px;font-size:12.5px;font-weight:500;cursor:pointer;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+.fbtn:active{transform:scale(.95)}
+.fbtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hint{font-size:11px;color:var(--fg3);text-align:center}
+</style>
 </head>
-<body data-look="fluted">
-  <!-- Atmospheric Shader & Glass Layers -->
-  <div id="ambient-layer"></div>
-  <div class="mist-far" aria-hidden="true"></div>
-  <div class="mist-near" aria-hidden="true"></div>
-  <div class="fluted-glass-layer" aria-hidden="true"></div>
-  <div class="halftone-layer" aria-hidden="true"></div>
-  <div class="god-rays" aria-hidden="true"></div>
-  <div class="void-vignette" aria-hidden="true"></div>
-  <canvas id="atmosphere-canvas" aria-hidden="true"></canvas>
-  <div class="film-grain" id="film-grain" aria-hidden="true"></div>
+<body data-look="fluted" data-layout="scatter">
+<div id="ambient"></div><div class="mist"></div><div class="fluted"></div><div class="halftone"></div><div class="rays"></div><div class="vig"></div>
+<canvas id="fx"></canvas><div class="grain" id="grain"></div>
 
-  <!-- Liquid Glass Top Bar -->
-  <header role="banner">
-    <div class="header-pill">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand">ustzyix</span>
-      <span class="brand-divider hide-mobile" aria-hidden="true"></span>
-      <span class="presence-status hide-mobile">
-        <span class="pulse-dot" aria-hidden="true"></span>
-        <span id="archive-count">2 frames</span>
-      </span>
+<header role="banner">
+  <div class="pill glass"><span class="mark"></span><span class="brand">ustzyix</span><span class="count"><span class="dot"></span><span id="count">2 frames</span></span></div>
+  <div class="tools">
+    <div class="seg glass" role="toolbar" aria-label="Atmosphere">
+      <span class="thumb" id="thumb"></span>
+      <button class="tab on" type="button" data-look-btn="fluted">Fluted</button>
+      <button class="tab" type="button" data-look-btn="mist">Mist</button>
+      <button class="tab" type="button" data-look-btn="halftone">Halftone</button>
     </div>
-
-    <div class="studio-controls" role="toolbar" aria-label="Atmosphere and layout controls">
-      <button class="studio-tab is-active" type="button" data-look-btn="fluted">Fluted</button>
-      <button class="studio-tab" type="button" data-look-btn="mist">Mist</button>
-      <button class="studio-tab" type="button" data-look-btn="halftone">Halftone</button>
-      <span class="brand-divider" aria-hidden="true"></span>
-      <button class="studio-tab" type="button" id="layout-toggle-btn" title="Switch Scatter / Grid">Scatter</button>
-    </div>
-  </header>
-
-  <main role="main">
-    <div class="scatter-canvas" id="scatter-canvas"></div>
-  </main>
-
-  <!-- Lightbox Modal -->
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo view" aria-describedby="lightbox-caption">
-    <button class="lightbox-close" id="lightbox-close" type="button" aria-label="Close photo view">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
+    <button class="ibtn glass" id="layoutBtn" type="button" aria-label="Switch scatter or grid layout">
+      <svg class="i-s" viewBox="0 0 24 24"><rect x="3" y="4" width="9" height="7" rx="2"/><rect x="12" y="13" width="9" height="7" rx="2"/></svg>
+      <svg class="i-g" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg>
     </button>
+  </div>
+</header>
 
-    <button class="lightbox-nav prev" id="lightbox-prev" type="button" aria-label="Previous photo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="15 18 9 12 15 6"></polyline>
-      </svg>
-    </button>
+<main id="stage" role="main"><div class="canvas" id="canvas"></div></main>
 
-    <button class="lightbox-nav next" id="lightbox-next" type="button" aria-label="Next photo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="9 18 15 12 9 6"></polyline>
-      </svg>
-    </button>
-
-    <div class="lightbox-inner" id="lightbox-inner">
-      <div class="flip-scene" id="flip-scene" role="button" tabindex="0" aria-label="Flip card for EXIF camera information">
-        <div class="flip-card" id="flip-card">
-          <div class="flip-front">
-            <img id="lightbox-img" alt="" draggable="false" />
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo view">
+  <button class="ibtn glass lb-x" id="lbX" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <button class="ibtn glass lb-p" id="lbP" type="button" aria-label="Previous photo"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+  <button class="ibtn glass lb-n" id="lbN" type="button" aria-label="Next photo"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+  <div class="lb-in">
+    <div class="scene" id="scene" role="button" tabindex="0" aria-label="Flip card for camera information">
+      <div class="flip" id="flip">
+        <div class="front hair"><img id="lbImg" alt="" draggable="false"/></div>
+        <div class="back hair">
+          <div class="ex-top"><span class="ex-cam" id="xCam"></span><span class="ex-date" id="xDate"></span></div>
+          <div class="metrics">
+            <div class="mc"><span class="mv" id="xAp"></span><span class="ml">Aperture</span></div>
+            <div class="mc"><span class="mv" id="xSh"></span><span class="ml">Shutter</span></div>
+            <div class="mc"><span class="mv" id="xFo"></span><span class="ml">Focal</span></div>
+            <div class="mc"><span class="mv" id="xIso"></span><span class="ml">ISO</span></div>
           </div>
-
-          <div class="flip-back">
-            <div class="exif-top">
-              <div class="exif-device">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9"></circle>
-                  <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
-                  <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
-                  <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
-                  <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
-                  <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
-                  <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
-                </svg>
-                <span id="exif-camera">Apple iPhone 7 Plus</span>
-              </div>
-              <span class="exif-date" id="exif-captured">12 ต.ค. 2025 · 12:16</span>
-            </div>
-
-            <div class="exif-metrics">
-              <div class="metric-cell">
-                <span class="metric-val" id="exif-aperture">f/1.8</span>
-                <span class="metric-lbl">Aperture</span>
-              </div>
-              <div class="metric-cell">
-                <span class="metric-val" id="exif-shutter">1/1500s</span>
-                <span class="metric-lbl">Shutter</span>
-              </div>
-              <div class="metric-cell">
-                <span class="metric-val" id="exif-focal">3.99 mm</span>
-                <span class="metric-lbl">Focal</span>
-              </div>
-              <div class="metric-cell">
-                <span class="metric-val" id="exif-iso">ISO 20</span>
-                <span class="metric-lbl">ISO</span>
-              </div>
-            </div>
-
-            <div class="exif-rows">
-              <div class="exif-row">
-                <span class="exif-key">Aura Palette</span>
-                <span class="swatch-pair">
-                  <span class="swatch-dot" id="swatch-primary"></span>
-                  <span class="swatch-dot" id="swatch-secondary"></span>
-                  <span class="exif-val" id="swatch-hex">#9B221C</span>
-                </span>
-              </div>
-              <div class="exif-row">
-                <span class="exif-key">Color Grade</span>
-                <span class="exif-badge" id="exif-app">Adobe Lightroom</span>
-              </div>
-              <div class="exif-row">
-                <span class="exif-key">Resolution</span>
-                <span class="exif-val" id="exif-res">2612 × 1470 (3.8 MP)</span>
-              </div>
-              <div class="exif-row">
-                <span class="exif-key">Asset File</span>
-                <span class="exif-val" id="exif-file">IMG_5755 (2).jpg</span>
-              </div>
-            </div>
+          <div class="rows">
+            <div class="row"><span class="rk">Palette</span><span class="sw"><i id="sw1"></i><i id="sw2"></i><span class="rv" id="swHex"></span></span></div>
+            <div class="row"><span class="rk">Edited with</span><span class="rv" id="xApp"></span></div>
+            <div class="row"><span class="rk">Resolution</span><span class="rv" id="xRes"></span></div>
+            <div class="row"><span class="rk">File</span><span class="rv" id="xFile"></span></div>
           </div>
         </div>
       </div>
-
-      <div class="lightbox-caption-bar">
-        <div class="lightbox-caption" id="lightbox-caption"></div>
-      </div>
-
-      <div class="lightbox-controls">
-        <button class="flip-btn" id="flip-btn" type="button" aria-label="Toggle camera information">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>
-          <span id="flip-btn-text">Inspect Node / EXIF</span>
-        </button>
-      </div>
-
-      <div class="lightbox-hint">tap frame to flip node · swipe or arrows to navigate · esc to close</div>
     </div>
+    <div class="cap" id="cap"></div>
+    <div class="lb-ctl">
+      <button class="fbtn glass" id="fbtn" type="button"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16m0 0v5m0-5h5M3 12A9 9 0 0 1 18.5 5.8L21 8m0 0V3m0 5h-5"/></svg><span id="fbtnT">Camera info</span></button>
+    </div>
+    <div class="hint">tap to flip · swipe to browse · esc to close</div>
   </div>
-
-  <script>
-    const REPO_CONFIG = {
-      owner: "ustzyix",
-      repo: "ustzyix.github.io",
-      folder: "images"
-    };
-
-    const ENTRIES = [
-      {
-        file: "IMG_5755 (2).jpg",
-        src: "./images/IMG_5755%20(2).jpg",
-        caption: "Crimson — 01",
-        sub: "Nocturne · 01",
-        tag: "fluted · grain",
-        exif: {
-          camera: "Apple iPhone 7 Plus",
-          captured: "12 ต.ค. 2025 · 12:16",
-          aperture: "f/1.8",
-          shutter: "1/1500s",
-          focal: "3.99 mm",
-          iso: "ISO 20",
-          app: "Adobe Lightroom",
-          resolution: "2612 × 1470 (3.8 MP)"
-        }
-      },
-      {
-        file: "IMG_5738 (1).jpg",
-        src: "./images/IMG_5738%20(1).jpg",
-        caption: "Magenta — 02",
-        sub: "Stillness · 02",
-        tag: "bloom · grain",
-        exif: {
-          camera: "Apple iPhone 7 Plus",
-          captured: "12 ต.ค. 2025 · 11:59",
-          aperture: "f/1.8",
-          shutter: "1/100s",
-          focal: "3.99 mm",
-          iso: "ISO 32",
-          app: "Adobe Lightroom",
-          resolution: "3024 × 1701 (5.1 MP)"
-        }
-      }
-    ];
-
-    let entries = [...ENTRIES];
-    let currentIndex = 0;
-    let particleTint = { r: 225, g: 215, b: 215 };
-    let closeModalTimer = null;
-    let isClosingModal = false;
-    let isGridMode = false;
-
-    const paletteCache = new Map();
-    const exifAutoCache = new Map();
-    const sampleCanvas = document.createElement("canvas");
-    sampleCanvas.width = 36;
-    sampleCanvas.height = 36;
-    const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
-
-    const scatterCanvas = document.getElementById("scatter-canvas");
-    const ambientLayer = document.getElementById("ambient-layer");
-    const archiveCountEl = document.getElementById("archive-count");
-    const filmGrainEl = document.getElementById("film-grain");
-    const layoutToggleBtn = document.getElementById("layout-toggle-btn");
-
-    const lightbox = document.getElementById("lightbox");
-    const lightboxClose = document.getElementById("lightbox-close");
-    const lightboxPrev = document.getElementById("lightbox-prev");
-    const lightboxNext = document.getElementById("lightbox-next");
-    const flipScene = document.getElementById("flip-scene");
-    const flipCard = document.getElementById("flip-card");
-    const flipBtn = document.getElementById("flip-btn");
-    const flipBtnText = document.getElementById("flip-btn-text");
-    const lightboxImg = document.getElementById("lightbox-img");
-    const lightboxCaption = document.getElementById("lightbox-caption");
-
-    const exifCameraEl = document.getElementById("exif-camera");
-    const exifCapturedEl = document.getElementById("exif-captured");
-    const exifApertureEl = document.getElementById("exif-aperture");
-    const exifShutterEl = document.getElementById("exif-shutter");
-    const exifFocalEl = document.getElementById("exif-focal");
-    const exifIsoEl = document.getElementById("exif-iso");
-    const exifAppEl = document.getElementById("exif-app");
-    const exifResEl = document.getElementById("exif-res");
-    const exifFileEl = document.getElementById("exif-file");
-    const swatchPrimaryEl = document.getElementById("swatch-primary");
-    const swatchSecondaryEl = document.getElementById("swatch-secondary");
-    const swatchHexEl = document.getElementById("swatch-hex");
-
-    document.querySelectorAll("[data-look-btn]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll("[data-look-btn]").forEach(b => b.classList.remove("is-active"));
-        btn.classList.add("is-active");
-        document.body.setAttribute("data-look", btn.dataset.lookBtn);
-      });
-    });
-
-    layoutToggleBtn.addEventListener("click", () => {
-      isGridMode = !isGridMode;
-      scatterCanvas.classList.toggle("is-grid-mode", isGridMode);
-      layoutToggleBtn.textContent = isGridMode ? "Grid" : "Scatter";
-      layoutToggleBtn.classList.toggle("is-active", isGridMode);
-      if (!isGridMode) layoutScatterItems();
-    });
-
-    function initFilmGrain() {
-      const c = document.createElement("canvas");
-      c.width = 96;
-      c.height = 96;
-      const ctx = c.getContext("2d");
-      const imgData = ctx.createImageData(96, 96);
-      const buf = imgData.data;
-      for (let i = 0; i < buf.length; i += 4) {
-        const v = (Math.random() * 255) | 0;
-        buf[i] = v;
-        buf[i + 1] = v;
-        buf[i + 2] = v;
-        buf[i + 3] = 255;
-      }
-      ctx.putImageData(imgData, 0, 0);
-      filmGrainEl.style.backgroundImage = `url(${c.toDataURL("image/png")})`;
-    }
-
-    let isCanvasRunning = true;
-    let canvasAnimId = null;
-
-    function initAtmosphereCanvas() {
-      const canvas = document.getElementById("atmosphere-canvas");
-      const ctx = canvas.getContext("2d");
-      let width = 0;
-      let height = 0;
-
-      function resize() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      }
-      resize();
-
-      let resizeTimeout = null;
-      window.addEventListener("resize", () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          resize();
-          if (!isGridMode) layoutScatterItems();
-        }, 120);
-      }, { passive: true });
-
-      const count = width < 600 ? 28 : 44;
-      const motes = Array.from({ length: count }, () => {
-        const depth = Math.random();
-        return {
-          x: Math.random() * width,
-          y: Math.random() * height,
-          r: 0.65 + depth * 1.7,
-          vx: (Math.random() - 0.5) * (0.14 + depth * 0.22),
-          vy: -(0.12 + depth * 0.28),
-          phase: Math.random() * Math.PI * 2,
-          freq: 0.009 + Math.random() * 0.015,
-          alpha: 0.08 + depth * 0.22,
-          depth
-        };
-      });
-
-      function tick() {
-        if (!isCanvasRunning || document.hidden || document.body.classList.contains("modal-active")) {
-          canvasAnimId = null;
-          return;
-        }
-
-        ctx.clearRect(0, 0, width, height);
-        const { r, g, b } = particleTint;
-
-        for (let i = 0; i < motes.length; i++) {
-          const m = motes[i];
-          m.phase += m.freq;
-          m.x += m.vx + Math.sin(m.phase) * 0.20;
-          m.y += m.vy;
-
-          if (m.y < -14) { m.y = height + 14; m.x = Math.random() * width; }
-          if (m.x < -14) m.x = width + 14;
-          if (m.x > width + 14) m.x = -14;
-
-          const twinkle = 0.65 + 0.35 * Math.sin(m.phase * 1.8);
-          const finalAlpha = Math.min(m.alpha * twinkle, 0.5);
-
-          ctx.beginPath();
-          ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalAlpha.toFixed(3)})`;
-          ctx.fill();
-        }
-
-        canvasAnimId = requestAnimationFrame(tick);
-      }
-
-      window.startCanvasLoop = function() {
-        if (!canvasAnimId && isCanvasRunning && !document.hidden && !document.body.classList.contains("modal-active")) {
-          canvasAnimId = requestAnimationFrame(tick);
-        }
-      };
-
-      window.startCanvasLoop();
-
-      document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-          if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
-          canvasAnimId = null;
-        } else {
-          window.startCanvasLoop();
-        }
-      });
-    }
-
-    function initLookAround() {
-      let targetX = 0, targetY = 0, curX = 0, curY = 0, isParallaxActive = false;
-
-      function stepParallax() {
-        const dx = targetX - curX;
-        const dy = targetY - curY;
-        if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
-          curX = targetX;
-          curY = targetY;
-          document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
-          document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
-          isParallaxActive = false;
-          return;
-        }
-        curX += dx * 0.06;
-        curY += dy * 0.06;
-        document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
-        document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
-        requestAnimationFrame(stepParallax);
-      }
-
-      function wakeParallax() {
-        if (!isParallaxActive) {
-          isParallaxActive = true;
-          requestAnimationFrame(stepParallax);
-        }
-      }
-
-      window.addEventListener("pointermove", (e) => {
-        if (document.body.classList.contains("modal-active") || isGridMode) return;
-        targetX = ((e.clientX / window.innerWidth) * 2 - 1) * 10;
-        targetY = ((e.clientY / window.innerHeight) * 2 - 1) * 8;
-        wakeParallax();
-      }, { passive: true });
-    }
-
-    function formatNewCaption(filename) {
-      return filename
-        .replace(/\.[^/.]+$/, "")
-        .replace(/\(\d+\)/g, "")
-        .replace(/^IMG[-_]?/i, "")
-        .replace(/[-_]/g, " ")
-        .trim() || "Stillness";
-    }
-
-    async function extractImageExif(src) {
-      if (exifAutoCache.has(src)) return exifAutoCache.get(src);
-      try {
-        let res = await fetch(src, { headers: { Range: "bytes=0-65535" } }).catch(() => null);
-        if (!res || (res.status !== 206 && res.status !== 200)) {
-          res = await fetch(src).catch(() => null);
-        }
-        if (!res || !res.ok) return null;
-
-        const buf = await res.arrayBuffer();
-        const view = new DataView(buf);
-        if (view.byteLength < 16 || view.getUint16(0) !== 0xFFD8) return null;
-
-        let offset = 2;
-        while (offset < view.byteLength - 4) {
-          const marker = view.getUint16(offset);
-          offset += 2;
-          if (marker === 0xFFE1) {
-            const len = view.getUint16(offset);
-            if (offset + len > view.byteLength) break;
-            const header = String.fromCharCode(
-              view.getUint8(offset + 2),
-              view.getUint8(offset + 3),
-              view.getUint8(offset + 4),
-              view.getUint8(offset + 5)
-            );
-            if (header === "Exif") {
-              const tiffStart = offset + 8;
-              if (tiffStart + 8 > view.byteLength) break;
-              const little = view.getUint16(tiffStart) === 0x4949;
-              const get16 = (o) => (tiffStart + o + 2 <= view.byteLength ? view.getUint16(tiffStart + o, little) : 0);
-              const get32 = (o) => (tiffStart + o + 4 <= view.byteLength ? view.getUint32(tiffStart + o, little) : 0);
-              const readStr = (o, count) => {
-                let s = "";
-                for (let i = 0; i < count - 1; i++) {
-                  if (tiffStart + o + i >= view.byteLength) break;
-                  const ch = view.getUint8(tiffStart + o + i);
-                  if (ch === 0) break;
-                  s += String.fromCharCode(ch);
-                }
-                return s.trim();
-              };
-
-              const parsed = {};
-              const parseIFD = (ifdOffset) => {
-                if (!ifdOffset || tiffStart + ifdOffset + 2 > view.byteLength) return;
-                const entriesCount = get16(ifdOffset);
-                for (let i = 0; i < entriesCount; i++) {
-                  const entryOffset = ifdOffset + 2 + i * 12;
-                  if (tiffStart + entryOffset + 12 > view.byteLength) break;
-                  const tag = get16(entryOffset);
-                  const type = get16(entryOffset + 2);
-                  const count = get32(entryOffset + 4);
-                  const valOffset = get32(entryOffset + 8);
-
-                  if (tag === 0x010F && type === 2) parsed.make = readStr(valOffset, count);
-                  if (tag === 0x0110 && type === 2) parsed.model = readStr(valOffset, count);
-                  if (tag === 0x0131 && type === 2) parsed.software = readStr(valOffset, count);
-                  if (tag === 0x0132 && type === 2) parsed.dateTime = readStr(valOffset, count);
-                  if (tag === 0x8769) parseIFD(valOffset);
-
-                  if (tag === 0x829A && type === 5) {
-                    const num = get32(valOffset);
-                    const den = get32(valOffset + 4);
-                    if (num && den) parsed.shutter = num < den ? `1/${Math.round(den / num)}s` : `${(num / den).toFixed(1)}s`;
-                  }
-                  if (tag === 0x829D && type === 5) {
-                    const num = get32(valOffset);
-                    const den = get32(valOffset + 4);
-                    if (num && den) parsed.aperture = `f/${(num / den).toFixed(1).replace(/\.0$/, "")}`;
-                  }
-                  if (tag === 0x8827 && type === 3) {
-                    const isoVal = get16(entryOffset + 8);
-                    if (isoVal) parsed.iso = `ISO ${isoVal}`;
-                  }
-                  if (tag === 0x920A && type === 5) {
-                    const num = get32(valOffset);
-                    const den = get32(valOffset + 4);
-                    if (num && den) parsed.focal = `${(num / den).toFixed(2).replace(/\.00$/, "")} mm`;
-                  }
-                }
-              };
-
-              parseIFD(get32(4));
-              exifAutoCache.set(src, parsed);
-              return parsed;
-            }
-            offset += len;
-          } else if ((marker & 0xFF00) !== 0xFF00) {
-            break;
-          } else {
-            offset += view.getUint16(offset);
-          }
-        }
-      } catch (_) {}
-      return null;
-    }
-
-    function getDominantPalette(src, imgElement) {
-      if (paletteCache.has(src)) return paletteCache.get(src);
-      try {
-        const size = 36;
-        sampleCtx.clearRect(0, 0, size, size);
-        sampleCtx.drawImage(imgElement, 0, 0, size, size);
-
-        const data = sampleCtx.getImageData(0, 0, size, size).data;
-        const buckets = new Map();
-        const step = 28;
-        let rSum = 0, gSum = 0, bSum = 0, total = 0;
-
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          rSum += r; gSum += g; bSum += b; total++;
-
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const sat = max === 0 ? 0 : (max - min) / max;
-          const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-          if (lum < 0.08 || lum > 0.90) continue;
-
-          const key = `${(r / step) | 0},${(g / step) | 0},${(b / step) | 0}`;
-          let bucket = buckets.get(key);
-          if (!bucket) {
-            bucket = { r: 0, g: 0, b: 0, count: 0, satSum: 0 };
-            buckets.set(key, bucket);
-          }
-          bucket.r += r;
-          bucket.g += g;
-          bucket.b += b;
-          bucket.count += 1;
-          bucket.satSum += sat;
-        }
-
-        const clusters = Array.from(buckets.values()).map(b => {
-          const avgSat = b.satSum / b.count;
-          return {
-            rgb: [b.r / b.count, b.g / b.count, b.b / b.count],
-            score: b.count * (0.45 + avgSat * 1.15)
-          };
-        });
-
-        clusters.sort((a, b) => b.score - a.score);
-
-        const avg = [rSum / (total || 1), gSum / (total || 1), bSum / (total || 1)];
-        const primary = clusters.length > 0 ? clusters[0].rgb : avg;
-
-        let secondary = null;
-        for (let i = 1; i < clusters.length; i++) {
-          const c = clusters[i].rgb;
-          const dist = Math.abs(c[0] - primary[0]) + Math.abs(c[1] - primary[1]) + Math.abs(c[2] - primary[2]);
-          if (dist > 75) {
-            secondary = c;
-            break;
-          }
-        }
-        if (!secondary) secondary = primary.map(v => v * 0.45);
-
-        const result = {
-          primaryHex: rgbToHex(primary),
-          secondaryHex: rgbToHex(secondary),
-          glowPrimary: rgbToHex(primary.map(v => v * 0.82)),
-          glowSecondary: rgbToHex(secondary.map(v => v * 0.68)),
-          abyssBase: rgbToHex(primary.map(v => v * 0.20)),
-          tint: {
-            r: Math.round(180 + primary[0] * 0.28),
-            g: Math.round(180 + primary[1] * 0.28),
-            b: Math.round(185 + primary[2] * 0.28)
-          }
-        };
-
-        paletteCache.set(src, result);
-        return result;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function rgbToHex([r, g, b]) {
-      return "#" + [r, g, b]
-        .map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0"))
-        .join("");
-    }
-
-    function applyAtmosphere(palette) {
-      if (!palette) return;
-      const { primaryHex, secondaryHex, glowPrimary, glowSecondary, abyssBase, tint } = palette;
-      particleTint = tint;
-
-      document.documentElement.style.setProperty("--aura-primary", primaryHex);
-      document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
-
-      ambientLayer.style.background = `
-        radial-gradient(ellipse 85% 65% at 50% 34%, ${glowPrimary}dc 0%, transparent 72%),
-        radial-gradient(ellipse 95% 78% at 50% 82%, ${glowSecondary}b4 0%, ${abyssBase} 86%, #050507 100%)
-      `;
-
-      swatchPrimaryEl.style.background = primaryHex;
-      swatchSecondaryEl.style.background = secondaryHex;
-      swatchHexEl.textContent = primaryHex.toUpperCase();
-    }
-
-    function layoutScatterItems() {
-      if (isGridMode) return;
-      const containerWidth = scatterCanvas.clientWidth;
-      const containerHeight = scatterCanvas.clientHeight;
-      if (!containerWidth || !containerHeight) return;
-
-      const isMobile = containerWidth < 680;
-      const items = Array.from(scatterCanvas.querySelectorAll(".scatter-item"));
-      if (!items.length) return;
-
-      const mobilePatterns = [
-        { xPct: 0.04, wPct: 0.46, gapY: -12, depth: 0.45 },
-        { xPct: 0.50, wPct: 0.46, gapY: 36,  depth: 0.70 },
-        { xPct: 0.12, wPct: 0.56, gapY: 24,  depth: 0.85 },
-        { xPct: 0.44, wPct: 0.50, gapY: -16, depth: 0.55 },
-        { xPct: 0.04, wPct: 0.45, gapY: 34,  depth: 0.65 },
-        { xPct: 0.48, wPct: 0.48, gapY: 28,  depth: 0.50 }
-      ];
-
-      const desktopPatterns = [
-        { xPct: 0.07, wPct: 0.30, gapY: -24, depth: 0.45 },
-        { xPct: 0.60, wPct: 0.32, gapY: 28,  depth: 0.75 },
-        { xPct: 0.24, wPct: 0.34, gapY: -12, depth: 0.90 },
-        { xPct: 0.48, wPct: 0.31, gapY: -40, depth: 0.60 },
-        { xPct: 0.07, wPct: 0.28, gapY: 24,  depth: 0.50 },
-        { xPct: 0.65, wPct: 0.29, gapY: -30, depth: 0.80 }
-      ];
-
-      const patterns = isMobile ? mobilePatterns : desktopPatterns;
-      let cursorY = isMobile ? 12 : 22;
-      let prevBottom = 0;
-
-      items.forEach((el, idx) => {
-        const pat = patterns[idx % patterns.length];
-        const widthPx = Math.round(containerWidth * pat.wPct);
-        const leftPx = Math.round(containerWidth * pat.xPct);
-
-        el.style.width = `${widthPx}px`;
-        el.style.left = `${leftPx}px`;
-        el.style.setProperty("--depth", pat.depth);
-        el.style.zIndex = Math.round(pat.depth * 10);
-
-        const rectHeight = el.offsetHeight || Math.round(widthPx * 0.68 + 44);
-
-        if (idx === 0) {
-          el.style.top = `${cursorY}px`;
-          prevBottom = cursorY + rectHeight;
-        } else {
-          const prevEl = items[idx - 1];
-          const prevLeft = parseFloat(prevEl.style.left) || 0;
-          const prevWidth = parseFloat(prevEl.style.width) || 0;
-
-          const horizontalOverlap =
-            leftPx < prevLeft + prevWidth + 16 &&
-            leftPx + widthPx + 16 > prevLeft;
-
-          if (horizontalOverlap) {
-            cursorY = prevBottom + Math.max(20, pat.gapY + 24);
-          } else {
-            cursorY = Math.max(
-              prevBottom - rectHeight * 0.42 + pat.gapY,
-              (parseFloat(prevEl.style.top) || 0) + 42
-            );
-          }
-
-          const maxTop = Math.max(12, containerHeight - rectHeight - 12);
-          cursorY = Math.min(cursorY, maxTop);
-
-          el.style.top = `${Math.round(cursorY)}px`;
-          prevBottom = Math.max(prevBottom, cursorY + rectHeight);
-        }
-      });
-    }
-
-    async function populateBackExif(item, imgEl) {
-      const manual = item.exif || {};
-      const auto = manual.camera ? null : await extractImageExif(item.src);
-
-      const camera = manual.camera || (auto?.model ? `${auto.make || ""} ${auto.model}`.trim() : "Apple iPhone 7 Plus");
-      const captured = manual.captured || (auto?.dateTime ? auto.dateTime.replace(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}).*$/, "$3/$2/$1 · $4") : "Archive");
-      const aperture = manual.aperture || auto?.aperture || "f/1.8";
-      const shutter = manual.shutter || auto?.shutter || "1/125s";
-      const focal = manual.focal || auto?.focal || "3.99 mm";
-      const iso = manual.iso || auto?.iso || "ISO 32";
-      const app = manual.app || (auto?.software ? auto.software : "Adobe Lightroom");
-
-      let resText = manual.resolution;
-      if (!resText && imgEl && imgEl.naturalWidth) {
-        const mp = ((imgEl.naturalWidth * imgEl.naturalHeight) / 1000000).toFixed(1);
-        resText = `${imgEl.naturalWidth} × ${imgEl.naturalHeight} (${mp} MP)`;
-      }
-
-      exifCameraEl.textContent = camera;
-      exifCapturedEl.textContent = captured;
-      exifApertureEl.textContent = aperture;
-      exifShutterEl.textContent = shutter;
-      exifFocalEl.textContent = focal;
-      exifIsoEl.textContent = iso;
-      exifAppEl.textContent = app;
-      exifResEl.textContent = resText || "Original";
-      exifFileEl.textContent = item.file || "image.jpg";
-    }
-
-    function openLightboxModal() {
-      clearTimeout(closeModalTimer);
-      isClosingModal = false;
-      window.getSelection()?.removeAllRanges();
-      lightbox.classList.remove("is-closing", "is-open");
-      document.body.classList.add("modal-active");
-      void lightbox.offsetWidth;
-      lightbox.classList.add("is-open");
-      lightboxClose.focus();
-    }
-
-    function closeLightboxModal() {
-      if (!lightbox.classList.contains("is-open") || isClosingModal) return;
-      isClosingModal = true;
-      clearTimeout(holdTimer);
-      flipCard.classList.remove("is-pressing");
-      lightbox.classList.add("is-closing");
-      document.body.classList.remove("modal-active");
-
-      clearTimeout(closeModalTimer);
-      closeModalTimer = setTimeout(() => {
-        lightbox.classList.remove("is-open", "is-closing");
-        flipCard.classList.remove("is-flipped", "is-pressing");
-        flipBtnText.textContent = "Inspect Node / EXIF";
-        isClosingModal = false;
-        if (window.startCanvasLoop) window.startCanvasLoop();
-      }, 260);
-    }
-
-    function selectEntry(index, openModal = false) {
-      if (!entries.length || isClosingModal) return;
-      currentIndex = (index + entries.length) % entries.length;
-      const item = entries[currentIndex];
-
-      const allItems = scatterCanvas.querySelectorAll(".scatter-item");
-      allItems.forEach((el, i) => {
-        el.classList.toggle("is-active", i === currentIndex);
-      });
-
-      const imgEl = allItems[currentIndex]?.querySelector("img");
-      if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
-        const pal = getDominantPalette(item.src, imgEl);
-        if (pal) applyAtmosphere(pal);
-      }
-
-      if (openModal) {
-        flipCard.classList.remove("is-flipped", "is-pressing");
-        flipBtnText.textContent = "Inspect Node / EXIF";
-        lightboxImg.src = item.src;
-        lightboxCaption.textContent = item.caption;
-        populateBackExif(item, imgEl);
-        openLightboxModal();
-      }
-    }
-
-    function renderGallery() {
-      scatterCanvas.innerHTML = "";
-      archiveCountEl.textContent = `${entries.length} frames`;
-
-      entries.forEach((item, idx) => {
-        const card = document.createElement("button");
-        card.type = "button";
-        card.className = "scatter-item";
-        card.setAttribute("aria-label", `Inspect ${item.caption}`);
-        card.style.transitionDelay = `${Math.min(idx * 80, 480)}ms`;
-
-        const frame = document.createElement("div");
-        frame.className = "scatter-frame";
-
-        const img = document.createElement("img");
-        img.src = item.src;
-        img.alt = item.caption;
-        img.decoding = "async";
-        img.draggable = false;
-
-        img.onload = () => {
-          const pal = getDominantPalette(item.src, img);
-          if (pal) {
-            card.style.setProperty("--item-aura", pal.primaryHex);
-            if (idx === currentIndex) applyAtmosphere(pal);
-          }
-          layoutScatterItems();
-          requestAnimationFrame(() => card.classList.add("is-visible"));
-        };
-
-        img.onerror = () => {
-          layoutScatterItems();
-          card.classList.add("is-visible");
-        };
-
-        const chip = document.createElement("span");
-        chip.className = "frame-chip";
-        chip.textContent = `0${idx + 1}`.slice(-2);
-
-        frame.appendChild(img);
-        frame.appendChild(chip);
-
-        const meta = document.createElement("div");
-        meta.className = "scatter-meta";
-
-        const titleWrap = document.createElement("div");
-        titleWrap.className = "scatter-title-wrap";
-
-        const title = document.createElement("div");
-        title.className = "scatter-title";
-        title.textContent = item.caption;
-
-        const sub = document.createElement("div");
-        sub.className = "scatter-sub";
-        sub.textContent = item.sub || "Stillness";
-
-        titleWrap.appendChild(title);
-        titleWrap.appendChild(sub);
-
-        const tag = document.createElement("span");
-        tag.className = "scatter-tag";
-        tag.textContent = item.tag || "grain";
-
-        meta.appendChild(titleWrap);
-        meta.appendChild(tag);
-
-        card.appendChild(frame);
-        card.appendChild(meta);
-
-        card.addEventListener("click", (e) => {
-          if (lightbox.classList.contains("is-open") || isClosingModal) return;
-          e.preventDefault();
-          selectEntry(idx, true);
-        });
-
-        scatterCanvas.appendChild(card);
-      });
-
-      layoutScatterItems();
-    }
-
-    const GITHUB_CACHE_KEY = "ustzyix_github_cache_v4";
-    const GITHUB_CACHE_TTL = 15 * 60 * 1000;
-
-    function applyExtraPhotos(extraPhotos) {
-      if (!extraPhotos || !extraPhotos.length) return;
-      const existingNames = new Set(entries.map(p => p.file));
-      const filtered = extraPhotos.filter(p => !existingNames.has(p.file));
-      if (filtered.length > 0) {
-        entries = [...entries, ...filtered];
-        renderGallery();
-      }
-    }
-
-    async function syncGitHubAssets() {
-      try {
-        const cached = sessionStorage.getItem(GITHUB_CACHE_KEY);
-        if (cached) {
-          try {
-            const data = JSON.parse(cached);
-            if (Date.now() - data.time < GITHUB_CACHE_TTL && Array.isArray(data.items)) {
-              applyExtraPhotos(data.items);
-              return;
-            }
-          } catch (_) {}
-        }
-
-        const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
-        const imgRes = await fetch(imgApi);
-
-        if (imgRes.ok) {
-          const files = await imgRes.json();
-          const validExt = /\.(jpe?g|png|webp|gif|avif)$/i;
-          const existingNames = new Set(entries.map(p => p.file));
-
-          const extraPhotos = files
-            .filter(f => f.type === "file" && validExt.test(f.name) && !existingNames.has(f.name))
-            .map((f, i) => {
-              const title = formatNewCaption(f.name);
-              const num = String(entries.length + i + 1).padStart(2, "0");
-              return {
-                file: f.name,
-                src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
-                caption: title,
-                sub: `Archive · ${num}`,
-                tag: "glass · grain"
-              };
-            });
-
-          try {
-            sessionStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({
-              time: Date.now(),
-              items: extraPhotos
-            }));
-          } catch (_) {}
-
-          if (extraPhotos.length > 0) {
-            applyExtraPhotos(extraPhotos);
-          }
-        }
-      } catch (_) {}
-    }
-
-    let holdTimer = null;
-    let didFlipOnHold = false;
-
-    function toggleCardFlip() {
-      const isFlipped = flipCard.classList.contains("is-flipped");
-      if (!isFlipped) {
-        flipCard.classList.add("is-flipped");
-        flipBtnText.textContent = "View Frame";
-      } else {
-        flipCard.classList.remove("is-flipped");
-        flipBtnText.textContent = "Inspect Node / EXIF";
-      }
-      if (navigator.vibrate) {
-        try { navigator.vibrate(12); } catch (_) {}
-      }
-    }
-
-    flipBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleCardFlip();
-    });
-
-    flipScene.addEventListener("click", () => {
-      if (isClosingModal || didFlipOnHold) {
-        didFlipOnHold = false;
-        return;
-      }
-      toggleCardFlip();
-    });
-
-    flipScene.addEventListener("pointerdown", () => {
-      if (isClosingModal) return;
-      didFlipOnHold = false;
-      flipCard.classList.add("is-pressing");
-      clearTimeout(holdTimer);
-      holdTimer = setTimeout(() => {
-        flipCard.classList.remove("is-pressing");
-        didFlipOnHold = true;
-        toggleCardFlip();
-      }, 340);
-    });
-
-    function clearHold() {
-      clearTimeout(holdTimer);
-      flipCard.classList.remove("is-pressing");
-    }
-
-    flipScene.addEventListener("pointerup", clearHold);
-    flipScene.addEventListener("pointerleave", clearHold);
-    flipScene.addEventListener("pointercancel", clearHold);
-    flipScene.addEventListener("contextmenu", (e) => e.preventDefault());
-
-    flipScene.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleCardFlip();
-      }
-    });
-
-    lightboxClose.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeLightboxModal();
-    });
-
-    lightboxPrev.addEventListener("click", (e) => {
-      e.stopPropagation();
-      selectEntry(currentIndex - 1, true);
-    });
-
-    lightboxNext.addEventListener("click", (e) => {
-      e.stopPropagation();
-      selectEntry(currentIndex + 1, true);
-    });
-
-    let touchStartX = 0, touchStartY = 0;
-    lightbox.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-      }
-    }, { passive: true });
-
-    lightbox.addEventListener("touchend", (e) => {
-      if (e.changedTouches.length === 1) {
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
-          selectEntry(dx < 0 ? currentIndex + 1 : currentIndex - 1, true);
-        }
-      }
-    }, { passive: true });
-
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) closeLightboxModal();
-    });
-
-    window.addEventListener("keydown", (e) => {
-      if (lightbox.classList.contains("is-open")) {
-        if (e.key === "Escape") closeLightboxModal();
-        else if (e.key === "ArrowLeft") selectEntry(currentIndex - 1, true);
-        else if (e.key === "ArrowRight") selectEntry(currentIndex + 1, true);
-      }
-    });
-
-    initFilmGrain();
-    initAtmosphereCanvas();
-    initLookAround();
-    renderGallery();
-
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(syncGitHubAssets, { timeout: 2000 });
-    } else {
-      setTimeout(syncGitHubAssets, 1000);
-    }
-  </script>
+</div>
+
+<script>
+const REPO={owner:"ustzyix",repo:"ustzyix.github.io",folder:"images"};
+const ENTRIES=[
+ {file:"IMG_5755 (2).jpg",src:"./images/IMG_5755%20(2).jpg",caption:"Crimson — 01",sub:"Nocturne · 01",tag:"fluted · grain",
+  exif:{camera:"Apple iPhone 7 Plus",captured:"12 ต.ค. 2025 · 12:16",aperture:"f/1.8",shutter:"1/1500s",focal:"3.99 mm",iso:"ISO 20",app:"Adobe Lightroom",resolution:"2612 × 1470 (3.8 MP)"}},
+ {file:"IMG_5738 (1).jpg",src:"./images/IMG_5738%20(1).jpg",caption:"Magenta — 02",sub:"Stillness · 02",tag:"bloom · grain",
+  exif:{camera:"Apple iPhone 7 Plus",captured:"12 ต.ค. 2025 · 11:59",aperture:"f/1.8",shutter:"1/100s",focal:"3.99 mm",iso:"ISO 32",app:"Adobe Lightroom",resolution:"3024 × 1701 (5.1 MP)"}}
+];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const body=document.body,root=document.documentElement.style;
+let entries=[...ENTRIES],cards=[],cur=0,tint=[225,215,215],modal=false,grid=false;
+const canvas=$("#canvas"),stage=$("#stage"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- tabs with sliding glass thumb ---------- */
+const tabs=$$("[data-look-btn]"),thumb=$("#thumb");
+function moveThumb(){const a=$(".tab.on");if(a)thumb.style.cssText=`width:${a.offsetWidth}px;transform:translateX(${a.offsetLeft}px)`}
+tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.toggle("on",x===b));body.dataset.look=b.dataset.lookBtn;moveThumb()});
+$("#layoutBtn").onclick=()=>{grid=!grid;body.dataset.layout=grid?"grid":"scatter";
+ cards.forEach(c=>{c.style.translate="";if(grid){c.style.zIndex="";}});
+ if(grid)canvas.style.height="";stage.scrollTo({top:0});scheduleLayout()};
+
+/* ---------- grain tile ---------- */
+(()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),d=x.createImageData(128,128);
+ for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255|0;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}
+ x.putImageData(d,0,0);$("#grain").style.backgroundImage=`url(${c.toDataURL()})`})();
+
+/* ---------- floating motes ---------- */
+let fxId=0;
+function startFx(){if(!fxId&&!modal&&!document.hidden)fxId=requestAnimationFrame(fxTick)}
+let fxTick;
+(()=>{const cv=$("#fx"),ctx=cv.getContext("2d");let W,H;
+ const size=()=>{const d=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)};size();
+ const motes=Array.from({length:W<600?26:42},()=>{const d=Math.random();return{x:Math.random()*W,y:Math.random()*H,r:.65+d*1.7,vx:(Math.random()-.5)*(.14+d*.22),vy:-(.12+d*.28),p:Math.random()*6.28,f:.009+Math.random()*.015,a:.08+d*.22}});
+ fxTick=()=>{if(modal||document.hidden){fxId=0;return}
+  ctx.clearRect(0,0,W,H);const[r,g,b]=tint;
+  for(const m of motes){m.p+=m.f;m.x+=m.vx+Math.sin(m.p)*.2;m.y+=m.vy;
+   if(m.y<-14){m.y=H+14;m.x=Math.random()*W}if(m.x<-14)m.x=W+14;if(m.x>W+14)m.x=-14;
+   ctx.beginPath();ctx.arc(m.x,m.y,m.r,0,6.283);ctx.fillStyle=`rgba(${r},${g},${b},${Math.min(m.a*(.65+.35*Math.sin(m.p*1.8)),.5).toFixed(3)})`;ctx.fill()}
+  fxId=requestAnimationFrame(fxTick)};
+ let t;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(size,150)},{passive:true});
+ document.addEventListener("visibilitychange",startFx);startFx()})();
+
+/* ---------- parallax: per-card `translate`, no style cascade, no transition lag ---------- */
+let tx=0,ty=0,cx=0,cy=0,pr=0;
+function par(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;
+ for(const c of cards)c.style.translate=`${(cx*c._d).toFixed(2)}px ${(cy*c._d).toFixed(2)}px`;
+ pr=Math.abs(tx-cx)+Math.abs(ty-cy)>.02?requestAnimationFrame(par):0}
+addEventListener("pointermove",e=>{if(modal||grid)return;tx=(e.clientX/innerWidth*2-1)*12;ty=(e.clientY/innerHeight*2-1)*9;pr||(pr=requestAnimationFrame(par))},{passive:true});
+
+/* ---------- palette ---------- */
+const palCache=new Map(),sc=document.createElement("canvas");sc.width=sc.height=36;
+const sx=sc.getContext("2d",{willReadFrequently:true});
+const hex=a=>"#"+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
+function palette(src,img){
+ if(palCache.has(src))return palCache.get(src);
+ try{sx.clearRect(0,0,36,36);sx.drawImage(img,0,0,36,36);const d=sx.getImageData(0,0,36,36).data,bk=new Map();
+  let R=0,G=0,B=0,n=0;
+  for(let i=0;i<d.length;i+=4){const r=d[i],g=d[i+1],b=d[i+2];R+=r;G+=g;B+=b;n++;
+   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),s=mx?(mx-mn)/mx:0,l=(.299*r+.587*g+.114*b)/255;
+   if(l<.08||l>.9)continue;
+   const k=`${r/28|0},${g/28|0},${b/28|0}`;let o=bk.get(k);if(!o)bk.set(k,o={r:0,g:0,b:0,c:0,s:0});
+   o.r+=r;o.g+=g;o.b+=b;o.c++;o.s+=s}
+  const cl=[...bk.values()].map(o=>({rgb:[o.r/o.c,o.g/o.c,o.b/o.c],sc:o.c*(.45+o.s/o.c*1.15)})).sort((a,b)=>b.sc-a.sc);
+  const p=cl.length?cl[0].rgb:[R/n,G/n,B/n];
+  let s2=null;for(let i=1;i<cl.length;i++){const c=cl[i].rgb;if(Math.abs(c[0]-p[0])+Math.abs(c[1]-p[1])+Math.abs(c[2]-p[2])>75){s2=c;break}}
+  if(!s2)s2=p.map(v=>v*.45);
+  const res={a:hex(p),b:hex(s2),abyss:hex(p.map(v=>v*.2)),tint:[180+p[0]*.28,180+p[1]*.28,185+p[2]*.28].map(Math.round)};
+  palCache.set(src,res);return res}catch(_){return null}}
+function applyAtmosphere(p){if(!p)return;tint=p.tint;root.setProperty("--aura-1",p.a);root.setProperty("--aura-2",p.b);root.setProperty("--abyss",p.abyss);
+ $("#sw1").style.background=p.a;$("#sw2").style.background=p.b;$("#swHex").textContent=p.a.toUpperCase()}
+
+/* ---------- scatter layout (rAF-batched, two-pass: no layout thrash) ---------- */
+const MP=[{x:.04,w:.46,g:-12,d:.45},{x:.5,w:.46,g:36,d:.7},{x:.12,w:.56,g:24,d:.85},{x:.44,w:.5,g:-16,d:.55},{x:.04,w:.45,g:34,d:.65},{x:.48,w:.48,g:28,d:.5}];
+const DP=[{x:.07,w:.3,g:-24,d:.45},{x:.6,w:.32,g:28,d:.75},{x:.24,w:.34,g:-12,d:.9},{x:.48,w:.31,g:-40,d:.6},{x:.07,w:.28,g:24,d:.5},{x:.65,w:.29,g:-30,d:.8}];
+let lt=0;const scheduleLayout=()=>{lt||(lt=requestAnimationFrame(()=>{lt=0;layout();moveThumb()}))};
+function layout(){
+ if(grid||!cards.length)return;
+ const W=canvas.clientWidth;if(!W)return;
+ const P=W<680?MP:DP,minH=Math.max(300,stage.clientHeight-110);
+ cards.forEach((el,i)=>{const p=P[i%P.length],w=Math.round(W*p.w),l=Math.round(W*p.x);
+  el._d=p.d;el._l=l;el._w=w;el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10)});
+ let bottom=0;
+ cards.forEach((el,i)=>{const p=P[i%P.length],h=el.offsetHeight||el._w*.68+44;let top=8;
+  if(i){const q=cards[i-1],ov=el._l<q._l+q._w+16&&el._l+el._w+16>q._l;
+   top=ov?bottom+Math.max(20,p.g+24):Math.max(bottom-h*.42+p.g,q._t+42)}
+  el._t=top;el.style.top=Math.round(top)+"px";bottom=Math.max(bottom,top+h)});
+ canvas.style.height=Math.max(bottom+56,minH)+"px"}
+new ResizeObserver(scheduleLayout).observe(stage);
+
+/* ---------- EXIF ---------- */
+const exifCache=new Map();
+function parseTiff(v,t){
+ const L=v.getUint16(t)===0x4949,g16=o=>v.getUint16(t+o,L),g32=o=>v.getUint32(t+o,L),p={},
+ str=(o,n)=>{let s="";for(let i=0;i<n-1&&v.getUint8(t+o+i);i++)s+=String.fromCharCode(v.getUint8(t+o+i));return s.trim()},
+ rat=o=>[g32(o),g32(o+4)];
+ const ifd=off=>{const n=g16(off);
+  for(let i=0;i<n;i++){const e=off+2+i*12,tag=g16(e),c=g32(e+4),vo=g32(e+8);
+   if(tag===0x10F)p.make=str(vo,c);else if(tag===0x110)p.model=str(vo,c);else if(tag===0x131)p.software=str(vo,c);
+   else if(tag===0x9003||tag===0x132)p.date=p.date||str(vo,c);else if(tag===0x8769)ifd(vo);
+   else if(tag===0x829A){const[a,b]=rat(vo);if(a&&b)p.shutter=a<b?`1/${Math.round(b/a)}s`:`${(a/b).toFixed(1)}s`}
+   else if(tag===0x829D){const[a,b]=rat(vo);if(a&&b)p.aperture="f/"+(a/b).toFixed(1).replace(/\.0$/,"")}
+   else if(tag===0x8827)p.iso="ISO "+g16(e+8);
+   else if(tag===0x920A){const[a,b]=rat(vo);if(a&&b)p.focal=(a/b).toFixed(2).replace(/\.00$/,"")+" mm"}}};
+ ifd(g32(4));return p}
+async function readExif(src){
+ if(exifCache.has(src))return exifCache.get(src);
+ let out=null;
+ try{let r=await fetch(src,{headers:{Range:"bytes=0-65535"}});const v=new DataView(await r.arrayBuffer());
+  if(v.getUint16(0)===0xFFD8){let o=2;
+   while(o<v.byteLength-4){const m=v.getUint16(o),len=v.getUint16(o+2);
+    if(m===0xFFE1&&v.getUint32(o+4)===0x45786966){out=parseTiff(v,o+10);break}
+    if((m&0xFF00)!==0xFF00)break;o+=2+len}}}catch(_){}
+ exifCache.set(src,out);return out}
+async function fillExif(it,img){
+ const m=it.exif||{},a=m.camera?null:await readExif(it.src)||{};
+ const T=(id,v)=>$(id).textContent=v||"—";
+ T("#xCam",m.camera||`${a.make||""} ${a.model||""}`.trim());
+ T("#xDate",m.captured||(a.date||"").replace(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}).*$/,"$3/$2/$1 · $4"));
+ T("#xAp",m.aperture||a?.aperture);T("#xSh",m.shutter||a?.shutter);T("#xFo",m.focal||a?.focal);T("#xIso",m.iso||a?.iso);
+ T("#xApp",m.app||a?.software);T("#xFile",it.file);
+ T("#xRes",m.resolution||(img&&img.naturalWidth?`${img.naturalWidth} × ${img.naturalHeight} (${(img.naturalWidth*img.naturalHeight/1e6).toFixed(1)} MP)`:""))}
+
+/* ---------- lightbox ---------- */
+function openLb(){modal=true;body.classList.add("modal-active");lb.classList.add("open");$("#lbX").focus({preventScroll:true})}
+function closeLb(){if(!modal)return;modal=false;body.classList.remove("modal-active");lb.classList.remove("open");
+ setTimeout(()=>{if(!modal){flip.classList.remove("on");$("#fbtnT").textContent="Camera info"}},380);startFx()}
+function select(i,open){
+ if(!entries.length)return;cur=(i+entries.length)%entries.length;const it=entries[cur],img=cards[cur]?.querySelector("img");
+ if(img&&img.complete&&img.naturalWidth)applyAtmosphere(palette(it.src,img));
+ if(open){flip.classList.remove("on");$("#fbtnT").textContent="Camera info";lbImg.src=it.src;$("#cap").textContent=it.caption;fillExif(it,img);if(!modal)openLb()}}
+function toggleFlip(){const on=flip.classList.toggle("on");$("#fbtnT").textContent=on?"View photo":"Camera info";navigator.vibrate?.(10)}
+$("#fbtn").onclick=e=>{e.stopPropagation();toggleFlip()};
+$("#scene").onclick=toggleFlip;
+$("#scene").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleFlip()}};
+$("#lbX").onclick=e=>{e.stopPropagation();closeLb()};
+$("#lbP").onclick=e=>{e.stopPropagation();select(cur-1,true)};
+$("#lbN").onclick=e=>{e.stopPropagation();select(cur+1,true)};
+lb.onclick=e=>{if(e.target===lb||e.target.classList.contains("lb-in"))closeLb()};
+let sX=0,sY=0;
+lb.addEventListener("touchstart",e=>{sX=e.touches[0].clientX;sY=e.touches[0].clientY},{passive:true});
+lb.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-sX,dy=t.clientY-sY;if(Math.abs(dx)>60&&Math.abs(dy)<50)select(cur+(dx<0?1:-1),true)},{passive:true});
+addEventListener("keydown",e=>{if(!modal)return;if(e.key==="Escape")closeLb();else if(e.key==="ArrowLeft")select(cur-1,true);else if(e.key==="ArrowRight")select(cur+1,true)});
+
+/* ---------- gallery ---------- */
+function addCard(it,i){
+ const el=document.createElement("button");el.type="button";el.className="card glass";el.style.setProperty("--d",Math.min(i*90,540)+"ms");
+ el.setAttribute("aria-label","Inspect "+it.caption);
+ el.innerHTML=`<div class="frame"><img alt="${esc(it.caption)}" decoding="async" draggable="false"></div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div><span class="tag glass">${esc(it.tag||"grain")}</span></div>`;
+ const img=el.querySelector("img");
+ img.onload=()=>{const p=palette(it.src,img);if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}scheduleLayout();el.classList.add("in")};
+ img.onerror=()=>{scheduleLayout();el.classList.add("in")};
+ img.src=it.src;
+ el.onclick=()=>{if(!modal)select(entries.indexOf(it),true)};
+ canvas.append(el);cards.push(el)}
+function updateCount(){$("#count").textContent=`${entries.length} frame${entries.length>1?"s":""}`}
+entries.forEach(addCard);updateCount();
+
+/* ---------- GitHub sync (adds new photos without re-rendering existing cards) ---------- */
+const CK="ustzyix_github_cache_v5",TTL=15*60*1000;
+const capOf=f=>f.replace(/\.[^/.]+$/,"").replace(/\(\d+\)/g,"").replace(/^IMG[-_]?/i,"").replace(/[-_]/g," ").trim()||"Stillness";
+function addExtra(list){
+ const have=new Set(entries.map(p=>p.file)),fresh=list.filter(p=>!have.has(p.file));if(!fresh.length)return;
+ fresh.forEach(p=>{entries.push(p);addCard(p,entries.length-1)});updateCount();scheduleLayout()}
+async function sync(){
+ try{const c=sessionStorage.getItem(CK);
+  if(c){const d=JSON.parse(c);if(Date.now()-d.time<TTL&&Array.isArray(d.items)){addExtra(d.items);return}}
+  const r=await fetch(`https://api.github.com/repos/${REPO.owner}/${REPO.repo}/contents/${REPO.folder}`);if(!r.ok)return;
+  const have=new Set(entries.map(p=>p.file)),ok=/\.(jpe?g|png|webp|gif|avif)$/i;
+  const items=(await r.json()).filter(f=>f.type==="file"&&ok.test(f.name)&&!have.has(f.name)).map((f,i)=>({
+   file:f.name,src:`./${REPO.folder}/${encodeURIComponent(f.name)}`,caption:capOf(f.name),sub:`Archive · ${String(entries.length+i+1).padStart(2,"0")}`,tag:"glass · grain"}));
+  try{sessionStorage.setItem(CK,JSON.stringify({time:Date.now(),items}))}catch(_){}
+  addExtra(items)}catch(_){}}
+"requestIdleCallback"in window?requestIdleCallback(sync,{timeout:2000}):setTimeout(sync,1000);
+requestAnimationFrame(()=>{moveThumb();requestAnimationFrame(()=>thumb.classList.add("ready"))});
+</script>
 </body>
 </html>

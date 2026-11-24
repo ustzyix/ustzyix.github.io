@@ -225,7 +225,7 @@
     body.modal-active main {
       filter: blur(8px) brightness(0.75);
       transform: scale(0.975);
-      pointer-events: none;
+      pointer-events: none !important;
     }
 
     .scatter-canvas {
@@ -516,7 +516,7 @@
     }
 
     /* ============================================================
-       หน้า 2: โหมดขยายดูรูปเดี่ยว (ล็อกหน้า 2 ห้ามเลื่อนและห้ามเลือกเด็ดขาด)
+       หน้า 2: โหมดขยายดูรูปเดี่ยว (ล็อกหน้า 2 ห้ามเลื่อน & แตะออกติด 100%)
        ============================================================ */
     .lightbox {
       position: fixed;
@@ -536,13 +536,22 @@
       overscroll-behavior: none !important;
       touch-action: none !important;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.42s var(--ease-liquid);
+      transition: opacity 0.38s var(--ease-liquid), visibility 0s linear 0.38s;
     }
 
     .lightbox.is-open {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
+      transition: opacity 0.38s var(--ease-liquid), visibility 0s linear 0s;
+    }
+
+    .lightbox.is-closing {
+      opacity: 0;
+      pointer-events: none !important;
+      transition: opacity 0.28s ease-out;
     }
 
     .lightbox-inner {
@@ -553,6 +562,7 @@
       gap: 18px;
       max-width: 92vw;
       touch-action: none !important;
+      pointer-events: none;
     }
 
     /* แอนิเมชัน Motion Blur ตอนกดเปิดรูปเข้า Lightbox และตอนกดปิด */
@@ -561,14 +571,14 @@
     }
 
     .lightbox.is-closing .flip-scene {
-      animation: closeZoomBlur 0.32s cubic-bezier(0.4, 0, 1, 1) forwards;
+      animation: closeZoomBlur 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
     }
 
     @keyframes openZoomBlur {
       0% {
         opacity: 0;
         transform: scale(0.76) translate3d(0, 22px, 0);
-        filter: blur(18px) brightness(1.15);
+        filter: blur(16px) brightness(1.15);
       }
       45% {
         opacity: 0.92;
@@ -591,57 +601,68 @@
       100% {
         opacity: 0;
         transform: scale(0.84) translate3d(0, 14px, 0);
-        filter: blur(14px);
+        filter: blur(12px);
       }
     }
 
     .lightbox.is-open .lightbox-caption {
-      animation: openCaptionBlur 0.68s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+      animation: openCaptionBlur 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.06s both;
     }
 
     .lightbox.is-open .lightbox-hint {
-      animation: openHintBlur 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.14s both;
+      animation: openHintBlur 0.76s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
     }
 
     .lightbox.is-closing .lightbox-caption,
     .lightbox.is-closing .lightbox-hint {
       opacity: 0;
       filter: blur(8px);
-      transition: opacity 0.22s ease, filter 0.22s ease;
+      transition: opacity 0.2s ease, filter 0.2s ease;
     }
 
     @keyframes openCaptionBlur {
       0% {
         opacity: 0;
-        transform: translate3d(0, 10px, 0) scaleX(1.08);
-        filter: url(#text-motion-blur) blur(7px);
+        transform: translate3d(-14px, 8px, 0) scaleX(1.16);
+        filter: blur(8px);
+        text-shadow: -14px 0 10px rgba(230, 230, 234, 0.7), 14px 0 10px rgba(230, 230, 234, 0.7);
+      }
+      55% {
+        opacity: 0.85;
+        transform: translate3d(2px, 0, 0) scaleX(1.03);
+        filter: blur(2.5px);
+        text-shadow: -4px 0 4px rgba(230, 230, 234, 0.35), 4px 0 4px rgba(230, 230, 234, 0.35);
       }
       100% {
         opacity: 0.9;
         transform: translate3d(0, 0, 0) scaleX(1);
         filter: blur(0px);
+        text-shadow: none;
       }
     }
 
     @keyframes openHintBlur {
       0% {
         opacity: 0;
-        transform: translate3d(0, 8px, 0);
-        filter: blur(5px);
+        transform: translate3d(12px, 6px, 0) scaleX(1.12);
+        filter: blur(6px);
+        text-shadow: -10px 0 8px rgba(230, 230, 234, 0.5), 10px 0 8px rgba(230, 230, 234, 0.5);
       }
       100% {
         opacity: 1;
-        transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0) scaleX(1);
         filter: blur(0px);
+        text-shadow: none;
       }
     }
 
-    /* เวที 3D Flip Card */
+    /* เวที 3D Flip Card (เปิดรับสัมผัสเฉพาะตัวการ์ด พื้นที่รอบนอกแตะกลับหน้า 1 ได้ทันที) */
     .flip-scene {
       perspective: 1400px;
       display: grid;
       place-items: center;
       cursor: pointer;
+      pointer-events: auto;
       touch-action: none !important;
       will-change: transform, opacity, filter;
     }
@@ -722,57 +743,61 @@
       pointer-events: none;
     }
 
-    /* เตรียมตัวหนังสือหลังการ์ดให้มี Motion Blur และ Stagger ตามจังหวะพลิก */
+    /* ตัวหนังสือหลังการ์ดพร้อม Motion Blur แนวนอนแบบ Native GPU */
     .flip-back .exif-top,
     .flip-back .exif-metrics,
     .flip-back .exif-row {
       opacity: 0;
-      transform: translate3d(-18px, 0, 0) scaleX(1.06);
-      filter: url(#text-motion-blur) blur(5px);
+      transform: translate3d(-24px, 0, 0) scaleX(1.14);
+      filter: blur(7px);
+      text-shadow: -14px 0 9px rgba(230, 230, 234, 0.65), 14px 0 9px rgba(230, 230, 234, 0.65);
       will-change: transform, opacity, filter;
     }
 
     .flip-card.is-flipped .exif-top {
-      animation: exifTextMotionIn 0.72s cubic-bezier(0.16, 1, 0.3, 1) 0.16s forwards;
+      animation: exifTextMotionIn 0.78s cubic-bezier(0.16, 1, 0.3, 1) 0.14s forwards;
     }
 
     .flip-card.is-flipped .exif-metrics {
-      animation: exifTextMotionIn 0.76s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards;
+      animation: exifTextMotionIn 0.82s cubic-bezier(0.16, 1, 0.3, 1) 0.20s forwards;
     }
 
     .flip-card.is-flipped .exif-row:nth-child(1) {
-      animation: exifTextMotionIn 0.78s cubic-bezier(0.16, 1, 0.3, 1) 0.27s forwards;
+      animation: exifTextMotionIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.26s forwards;
     }
 
     .flip-card.is-flipped .exif-row:nth-child(2) {
-      animation: exifTextMotionIn 0.80s cubic-bezier(0.16, 1, 0.3, 1) 0.31s forwards;
+      animation: exifTextMotionIn 0.88s cubic-bezier(0.16, 1, 0.3, 1) 0.31s forwards;
     }
 
     .flip-card.is-flipped .exif-row:nth-child(3) {
-      animation: exifTextMotionIn 0.82s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards;
+      animation: exifTextMotionIn 0.90s cubic-bezier(0.16, 1, 0.3, 1) 0.36s forwards;
     }
 
     .flip-card.is-flipping-back .exif-top,
     .flip-card.is-flipping-back .exif-metrics,
     .flip-card.is-flipping-back .exif-row {
-      animation: exifTextMotionOut 0.34s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+      animation: exifTextMotionOut 0.36s cubic-bezier(0.4, 0, 1, 1) forwards !important;
     }
 
     @keyframes exifTextMotionIn {
       0% {
         opacity: 0;
-        transform: translate3d(-24px, 0, 0) scaleX(1.12);
-        filter: url(#text-motion-blur) blur(6px);
+        transform: translate3d(-28px, 0, 0) scaleX(1.18);
+        filter: blur(8px);
+        text-shadow: -18px 0 11px rgba(230, 230, 234, 0.75), 18px 0 11px rgba(230, 230, 234, 0.75);
       }
-      45% {
-        opacity: 0.78;
-        transform: translate3d(4px, 0, 0) scaleX(1.02);
+      50% {
+        opacity: 0.82;
+        transform: translate3d(5px, 0, 0) scaleX(1.04);
         filter: blur(2.5px);
+        text-shadow: -6px 0 5px rgba(230, 230, 234, 0.35), 6px 0 5px rgba(230, 230, 234, 0.35);
       }
       100% {
         opacity: 1;
         transform: translate3d(0, 0, 0) scaleX(1);
         filter: blur(0px);
+        text-shadow: none;
       }
     }
 
@@ -781,11 +806,13 @@
         opacity: 1;
         transform: translate3d(0, 0, 0) scaleX(1);
         filter: blur(0px);
+        text-shadow: none;
       }
       100% {
         opacity: 0;
-        transform: translate3d(22px, 0, 0) scaleX(1.12);
-        filter: url(#text-motion-blur) blur(6px);
+        transform: translate3d(26px, 0, 0) scaleX(1.16);
+        filter: blur(7px);
+        text-shadow: -16px 0 10px rgba(230, 230, 234, 0.7), 16px 0 10px rgba(230, 230, 234, 0.7);
       }
     }
 
@@ -911,7 +938,7 @@
     }
 
     .lightbox-caption.is-blur-pulse {
-      animation: captionMotionPulse 0.65s cubic-bezier(0.22, 1, 0.36, 1) !important;
+      animation: captionMotionPulse 0.72s cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
 
     @keyframes captionMotionPulse {
@@ -919,16 +946,19 @@
         opacity: 0.9;
         filter: blur(0px);
         transform: scaleX(1);
+        text-shadow: none;
       }
       38% {
         opacity: 0.42;
-        filter: url(#text-motion-blur) blur(3px);
-        transform: scaleX(1.08);
+        filter: blur(5px);
+        transform: scaleX(1.14);
+        text-shadow: -16px 0 10px rgba(230, 230, 234, 0.75), 16px 0 10px rgba(230, 230, 234, 0.75);
       }
       100% {
         opacity: 0.9;
         filter: blur(0px);
         transform: scaleX(1);
+        text-shadow: none;
       }
     }
 
@@ -946,21 +976,13 @@
 
     .lightbox-hint.is-switching {
       opacity: 0 !important;
-      filter: blur(5px) !important;
-      transform: translateY(3px) scaleX(1.04) !important;
+      filter: blur(6px) !important;
+      transform: translateY(3px) scaleX(1.1) !important;
+      text-shadow: -12px 0 8px rgba(230, 230, 234, 0.6), 12px 0 8px rgba(230, 230, 234, 0.6) !important;
     }
   </style>
 </head>
 <body>
-  <!-- SVG Filter สำหรับ Directional Motion Blur แนวนอนเฉพาะตัวหนังสือตอนพลิกรูป -->
-  <svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
-    <defs>
-      <filter id="text-motion-blur" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="10 0" />
-      </filter>
-    </defs>
-  </svg>
-
   <div id="ambient-layer"></div>
   <div class="mist-far"></div>
   <div class="mist-near"></div>
@@ -1143,6 +1165,7 @@
     let loadedAudioSrc = "";
     let particleTint = { r: 225, g: 215, b: 215 };
     let closeModalTimer = null;
+    let isClosingModal = false;
 
     let audioCtx = null;
     let analyser = null;
@@ -1632,6 +1655,7 @@
 
     function openLightboxModal() {
       clearTimeout(closeModalTimer);
+      isClosingModal = false;
       window.getSelection()?.removeAllRanges();
       window.scrollTo(0, 0);
       lightbox.classList.remove("is-closing", "is-open");
@@ -1641,22 +1665,25 @@
     }
 
     function closeLightboxModal() {
-      if (!lightbox.classList.contains("is-open") || lightbox.classList.contains("is-closing")) return;
+      if (!lightbox.classList.contains("is-open") || isClosingModal) return;
+      isClosingModal = true;
       clearTimeout(holdTimer);
       window.getSelection()?.removeAllRanges();
       flipCard.classList.remove("is-pressing");
       lightbox.classList.add("is-closing");
       document.body.classList.remove("modal-active");
+
       clearTimeout(closeModalTimer);
       closeModalTimer = setTimeout(() => {
         lightbox.classList.remove("is-open", "is-closing");
         flipCard.classList.remove("is-flipped", "is-pressing", "is-flipping-back");
+        isClosingModal = false;
         window.scrollTo(0, 0);
-      }, 320);
+      }, 290);
     }
 
     function selectEntry(index, openModal = false) {
-      if (!entries.length) return;
+      if (!entries.length || isClosingModal) return;
       currentIndex = (index + entries.length) % entries.length;
       const item = entries[currentIndex];
 
@@ -1792,7 +1819,11 @@
         card.appendChild(frame);
         card.appendChild(meta);
 
-        card.addEventListener("click", () => {
+        card.addEventListener("pointerup", (e) => {
+          if (e.button && e.button !== 0) return;
+          if (lightbox.classList.contains("is-open") || isClosingModal) return;
+          e.preventDefault();
+          e.stopPropagation();
           selectEntry(idx, true);
         });
 
@@ -1904,7 +1935,7 @@
       }
     });
 
-    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D พร้อม Motion Blur เฉพาะตัวหนังสือ */
+    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D พร้อม Motion Blur ตัวหนังสือ */
     let holdTimer = null;
     let didFlipOnHold = false;
     let hintSwitchTimer = null;
@@ -1944,6 +1975,7 @@
     }
 
     function startHold(e) {
+      if (isClosingModal) return;
       e.preventDefault();
       e.stopPropagation();
       window.getSelection()?.removeAllRanges();
@@ -1954,7 +1986,19 @@
         flipCard.classList.remove("is-pressing");
         didFlipOnHold = true;
         toggleCardFlip();
-      }, 360);
+      }, 340);
+    }
+
+    function endHold(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      clearTimeout(holdTimer);
+      flipCard.classList.remove("is-pressing");
+      if (!didFlipOnHold && flipCard.classList.contains("is-flipped") && !isClosingModal) {
+        toggleCardFlip();
+      }
     }
 
     function cancelHold(e) {
@@ -1964,22 +2008,29 @@
     }
 
     flipScene.addEventListener("pointerdown", startHold);
-    flipScene.addEventListener("pointerup", cancelHold);
+    flipScene.addEventListener("pointerup", endHold);
     flipScene.addEventListener("pointerleave", cancelHold);
     flipScene.addEventListener("pointercancel", cancelHold);
     flipScene.addEventListener("contextmenu", (e) => e.preventDefault());
-    flipScene.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!didFlipOnHold && flipCard.classList.contains("is-flipped")) {
-        toggleCardFlip();
+
+    /* แตะพื้นที่ว่างรอบนอกในหน้า 2 เพื่อปิดกลับหน้า 1 ทันที */
+    let backdropPointerDown = false;
+    lightbox.addEventListener("pointerdown", (e) => {
+      if (e.target === lightbox) {
+        backdropPointerDown = true;
+      } else {
+        backdropPointerDown = false;
       }
     });
 
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox || e.target.id === "lightbox-inner") {
+    lightbox.addEventListener("pointerup", (e) => {
+      if (backdropPointerDown && e.target === lightbox) {
+        e.preventDefault();
+        e.stopPropagation();
+        backdropPointerDown = false;
         closeLightboxModal();
       }
+      backdropPointerDown = false;
     });
 
     window.addEventListener("keydown", (e) => {

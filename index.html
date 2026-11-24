@@ -8,16 +8,24 @@
   <title>ustzyix</title>
   <style>
     :root {
+      /* Pryzm-inspired design tokens */
       --fg-color: #e6e6ea;
       --fg-muted: rgba(230, 230, 234, 0.62);
       --fg-whisper: rgba(230, 230, 234, 0.38);
-      --aura-primary: #8c1d18;
-      --aura-secondary: #3b1814;
+      --primary: #8c1d18; /* matches existing aura-primary */
+      --secondary: #3b1814; /* matches existing aura-secondary */
+      --accent: #ff00ff; /* magenta accent from Pryzm */
+      --glass-bg: rgba(255, 255, 255, 0.08); /* glassmorphism overlay */
       --px: 0px;
       --py: 0px;
       --bass-boost: 0;
       --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
       --ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Reduce motion for low‑power devices */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
     }
 
     * {
@@ -57,7 +65,7 @@
 
     /* Focus accessibility styling */
     :focus-visible {
-      outline: 2px solid var(--aura-primary);
+      outline: 2px solid var(--primary);
       outline-offset: 3px;
     }
 
@@ -283,7 +291,7 @@
     }
 
     .scatter-item:focus-visible {
-      outline: 2px solid var(--aura-primary);
+      outline: 2px solid var(--primary);
       outline-offset: 6px;
       border-radius: 8px;
       z-index: 15 !important;
@@ -445,7 +453,7 @@
       height: 36px;
       padding: 0 16px;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--primary);
       background: rgba(8, 8, 12, 0.45);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);

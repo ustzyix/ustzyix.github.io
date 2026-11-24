@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="ustzyix — Atmospheric visual and photographic archive with dynamic soundscapes." />
-  <meta name="theme-color" content="#020203" />
-  <title>ustzyix</title>
+  <meta name="description" content="ustzyix — Atmospheric visual and photographic studio archive with dynamic soundscapes." />
+  <meta name="theme-color" content="#050507" />
+  <title>ustzyix — Visual & Sound Studio</title>
   <style>
     :root {
-      /* Pryzm-inspired design tokens */
-      --fg-color: #e6e6ea;
-      --fg-muted: rgba(230, 230, 234, 0.62);
-      --fg-whisper: rgba(230, 230, 234, 0.38);
-      --primary: #8c1d18; /* matches existing aura-primary */
-      --secondary: #3b1814; /* matches existing aura-secondary */
-      --accent: #ff00ff; /* magenta accent from Pryzm */
-      --glass-bg: rgba(255, 255, 255, 0.08); /* glassmorphism overlay */
+      /* Pryzm.design Inspired Studio Tokens */
+      --bg-obsidian: #050507;
+      --fg-color: #f2f2f6;
+      --fg-muted: rgba(242, 242, 246, 0.64);
+      --fg-whisper: rgba(242, 242, 246, 0.36);
+      --aura-primary: #9b221c;
+      --aura-secondary: #481a16;
+      --accent-glow: rgba(155, 34, 28, 0.45);
+      --glass-surface: rgba(14, 14, 19, 0.56);
+      --glass-surface-strong: rgba(12, 12, 17, 0.84);
+      --glass-border: rgba(255, 255, 255, 0.11);
+      --glass-border-bright: rgba(255, 255, 255, 0.24);
+      --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
       --px: 0px;
       --py: 0px;
       --bass-boost: 0;
@@ -23,9 +28,11 @@
       --ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Reduce motion for low‑power devices */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     * {
@@ -41,17 +48,15 @@
       width: 100%;
       height: 100dvh;
       max-height: 100dvh;
-      background-color: #020203;
+      background-color: var(--bg-obsidian);
       color: var(--fg-color);
-      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", "Segoe UI", sans-serif;
       overflow: hidden;
       overscroll-behavior: none;
       -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
     }
 
-    /* Selection & Drag Guard */
-    .scatter-canvas, header, .floating-dock, .lightbox {
+    .scatter-canvas, header, .floating-dock, .lightbox, .look-switcher {
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
@@ -59,59 +64,58 @@
 
     img {
       -webkit-user-drag: none;
-      user-drag: none;
       pointer-events: none;
     }
 
-    /* Focus accessibility styling */
     :focus-visible {
-      outline: 2px solid var(--primary);
+      outline: 2px solid rgba(255, 255, 255, 0.65);
       outline-offset: 3px;
     }
 
-    /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก */
+    /* =========================================================
+       PRYZM ATMOSPHERIC SHADER LAYERS (GRADIENT + FLUTED GLASS + GRAIN)
+       ========================================================= */
     #ambient-layer {
       position: fixed;
       inset: 0;
-      z-index: -7;
+      z-index: -8;
       background:
-        radial-gradient(ellipse 85% 65% at 50% 34%, rgba(155, 34, 28, 0.56) 0%, transparent 72%),
-        radial-gradient(ellipse 90% 70% at 50% 80%, rgba(72, 26, 22, 0.44) 0%, #020203 86%);
-      transition: background 1.2s ease;
+        radial-gradient(ellipse 80% 62% at 50% 32%, rgba(155, 34, 28, 0.58) 0%, transparent 72%),
+        radial-gradient(ellipse 88% 70% at 50% 82%, rgba(72, 26, 22, 0.46) 0%, var(--bg-obsidian) 86%);
+      transition: background 1.2s var(--ease-liquid), filter 0.8s ease;
       pointer-events: none;
-      will-change: background;
     }
 
-    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ (GPU composited) */
+    /* Chromatic Mesh Orbs */
     .mist-far {
       position: fixed;
       inset: -24%;
-      z-index: -6;
+      z-index: -7;
       pointer-events: none;
-      opacity: 0.62;
+      opacity: 0.68;
       background:
-        radial-gradient(ellipse 74% 58% at 24% 34%, var(--aura-primary) 0%, transparent 76%),
-        radial-gradient(ellipse 70% 62% at 76% 68%, var(--aura-secondary) 0%, transparent 78%);
+        radial-gradient(ellipse 68% 54% at 24% 32%, var(--aura-primary) 0%, transparent 74%),
+        radial-gradient(ellipse 64% 58% at 78% 68%, var(--aura-secondary) 0%, transparent 76%);
       will-change: transform;
-      animation: mistSwayA 28s ease-in-out infinite alternate;
+      animation: mistSwayA 26s ease-in-out infinite alternate;
     }
 
     .mist-near {
       position: fixed;
       inset: -18%;
-      z-index: -5;
+      z-index: -6;
       pointer-events: none;
-      opacity: 0.36;
+      opacity: 0.42;
       background:
-        radial-gradient(ellipse 62% 48% at 72% 32%, var(--aura-primary) 0%, transparent 74%),
-        radial-gradient(ellipse 72% 50% at 30% 76%, rgba(205, 210, 225, 0.08) 0%, transparent 78%);
+        radial-gradient(ellipse 58% 46% at 72% 28%, var(--aura-primary) 0%, transparent 72%),
+        radial-gradient(ellipse 68% 48% at 28% 76%, rgba(220, 225, 245, 0.10) 0%, transparent 76%);
       will-change: transform;
-      animation: mistSwayB 20s ease-in-out infinite alternate;
+      animation: mistSwayB 19s ease-in-out infinite alternate;
     }
 
     @keyframes mistSwayA {
       0% { transform: translate3d(-2.5%, -1.2%, 0) scale(1); }
-      100% { transform: translate3d(2.5%, 1.5%, 0) scale(1.05); }
+      100% { transform: translate3d(2.5%, 1.5%, 0) scale(1.06); }
     }
 
     @keyframes mistSwayB {
@@ -119,16 +123,55 @@
       100% { transform: translate3d(-2.4%, -1.3%, 0) scale(0.98); }
     }
 
-    /* ชั้นที่ 3: ลำแสงเฉียงส่องผ่านความมืด */
+    /* Pryzm Fluted Glass Vertical Bars Overlay (เปิดใช้เมื่อเลือกโหมด Fluted) */
+    .fluted-glass-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -5;
+      pointer-events: none;
+      opacity: 0;
+      background-image: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.045) 0px,
+        rgba(255, 255, 255, 0.01) 10px,
+        rgba(0, 0, 0, 0.34) 22px,
+        rgba(255, 255, 255, 0.03) 34px
+      );
+      backdrop-filter: blur(18px) saturate(135%);
+      -webkit-backdrop-filter: blur(18px) saturate(135%);
+      transition: opacity 0.7s var(--ease-liquid);
+    }
+
+    body[data-look="fluted"] .fluted-glass-layer {
+      opacity: 0.92;
+    }
+
+    /* Pryzm Halftone / Pearl Grid Overlay (เปิดใช้เมื่อเลือกโหมด Halftone) */
+    .halftone-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -5;
+      pointer-events: none;
+      opacity: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+      background-size: 16px 16px;
+      transition: opacity 0.7s var(--ease-liquid);
+    }
+
+    body[data-look="halftone"] .halftone-layer {
+      opacity: 0.55;
+    }
+
+    /* Diagonal Light Beam */
     .god-rays {
       position: fixed;
       inset: -20%;
       z-index: -4;
       pointer-events: none;
-      opacity: 0.28;
+      opacity: 0.30;
       background:
-        radial-gradient(ellipse 22% 78% at 36% 24%, var(--aura-primary) 0%, transparent 78%),
-        radial-gradient(ellipse 18% 72% at 54% 28%, rgba(255, 248, 236, 0.14) 0%, transparent 78%);
+        radial-gradient(ellipse 20% 78% at 36% 24%, var(--aura-primary) 0%, transparent 78%),
+        radial-gradient(ellipse 16% 72% at 54% 28%, rgba(255, 248, 240, 0.14) 0%, transparent 78%);
       transform: rotate(-22deg);
       will-change: transform, opacity;
       animation: raySweep 17s ease-in-out infinite alternate;
@@ -136,25 +179,23 @@
 
     @keyframes raySweep {
       0% { transform: translate3d(-3%, -1%, 0) rotate(-24deg); opacity: 0.18; }
-      50% { opacity: 0.32; }
+      50% { opacity: 0.34; }
       100% { transform: translate3d(3%, 1.5%, 0) rotate(-19deg); opacity: 0.22; }
     }
 
-    /* ชั้นที่ 4: ความมืดรอบขอบจอ */
     .void-vignette {
       position: fixed;
       inset: 0;
       z-index: -2;
       pointer-events: none;
       background: radial-gradient(
-        circle at 50% 45%,
-        transparent 42%,
-        rgba(2, 2, 3, 0.56) 84%,
-        rgba(0, 0, 1, 0.92) 100%
+        circle at 50% 46%,
+        transparent 38%,
+        rgba(5, 5, 7, 0.58) 82%,
+        rgba(2, 2, 3, 0.94) 100%
       );
     }
 
-    /* ชั้นที่ 5: Canvas ละอองฝุ่นลอยในอากาศ */
     #atmosphere-canvas {
       position: fixed;
       inset: 0;
@@ -164,7 +205,6 @@
       pointer-events: none;
     }
 
-    /* ชั้นที่ 6: เกรนฟิล์มอนาล็อกบางเบา (GPU transform - ประหยัดพลังงาน 100% ไร้ CPU Repaint) */
     .film-grain {
       position: fixed;
       inset: -40px;
@@ -172,7 +212,7 @@
       height: calc(100% + 80px);
       z-index: 5;
       pointer-events: none;
-      opacity: 0.035;
+      opacity: 0.04;
       background-repeat: repeat;
       will-change: transform;
       animation: grainShift 0.4s steps(3) infinite;
@@ -185,7 +225,6 @@
       100% { transform: translate3d(12px, 10px, 0); }
     }
 
-    /* หยุดแอนิเมชันพื้นหลังเมื่อเปิดโมดอล เพื่อเซฟแบตเตอรี่และทรัพยากร GPU */
     body.modal-active .mist-far,
     body.modal-active .mist-near,
     body.modal-active .god-rays,
@@ -193,7 +232,9 @@
       animation-play-state: paused !important;
     }
 
-    /* แถบหัวเว็บลอยโปร่งแสงด้านบน */
+    /* =========================================================
+       PRYZM STUDIO TOP NAVIGATION BAR
+       ========================================================= */
     header {
       position: fixed;
       top: 0;
@@ -202,61 +243,148 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: max(18px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) 14px max(26px, env(safe-area-inset-left));
-      font-size: 12px;
-      z-index: 20;
-      background: linear-gradient(to bottom, rgba(2, 2, 3, 0.72) 0%, transparent 100%);
+      gap: 12px;
+      padding: max(14px, env(safe-area-inset-top)) max(22px, env(safe-area-inset-right)) 12px max(22px, env(safe-area-inset-left));
+      z-index: 25;
       pointer-events: none;
     }
 
+    .header-pill {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-highlight), 0 8px 24px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand-mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: conic-gradient(from 140deg, var(--aura-primary), #f472b6, #818cf8, var(--aura-primary));
+      box-shadow: 0 0 12px var(--aura-primary);
+      transition: background 0.8s ease, box-shadow 0.8s ease;
+    }
+
     .brand {
-      font-weight: 500;
-      letter-spacing: 0.28em;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
       text-transform: lowercase;
-      color: var(--fg-muted);
+      color: var(--fg-color);
+    }
+
+    .brand-divider {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.12);
     }
 
     .presence-status {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 10px;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: var(--fg-whisper);
+      color: var(--fg-muted);
     }
 
     .pulse-dot {
-      width: 4px;
-      height: 4px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
-      background: var(--fg-muted);
-      animation: solitaryPulse 4.2s ease-in-out infinite;
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+      animation: solitaryPulse 3.6s ease-in-out infinite;
     }
 
     @keyframes solitaryPulse {
-      0%, 100% { opacity: 0.2; transform: scale(0.85); }
-      50% { opacity: 0.85; transform: scale(1.25); }
+      0%, 100% { opacity: 0.45; transform: scale(0.88); }
+      50% { opacity: 1; transform: scale(1.2); }
     }
 
-    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ */
+    /* Pryzm Look & Layout Segmented Bar (Center / Right) */
+    .studio-controls {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 34px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-highlight), 0 8px 24px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .studio-tab {
+      height: 26px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--fg-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-liquid);
+      white-space: nowrap;
+    }
+
+    .studio-tab:hover {
+      color: var(--fg-color);
+    }
+
+    .studio-tab.is-active {
+      background: rgba(255, 255, 255, 0.13);
+      color: var(--fg-color);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    @media (max-width: 640px) {
+      .hide-mobile {
+        display: none;
+      }
+      header {
+        padding: max(12px, env(safe-area-inset-top)) 14px 10px 14px;
+      }
+      .studio-tab {
+        padding: 0 9px;
+        font-size: 9.5px;
+      }
+    }
+
+    /* =========================================================
+       MAIN CANVAS (SCATTER & STUDIO GRID MODES)
+       ========================================================= */
     main {
       position: fixed;
       inset: 0;
       width: 100%;
-      max-width: 1180px;
+      max-width: 1240px;
       height: 100dvh;
       margin: 0 auto;
-      padding: 76px 16px 96px;
+      padding: 72px 20px 96px;
       z-index: 2;
       overflow: hidden;
-      overscroll-behavior: none;
-      transition: filter 0.45s var(--ease-liquid), transform 0.5s var(--ease-drift), opacity 0.45s ease;
+      transition: filter 0.45s var(--ease-liquid), transform 0.5s var(--ease-drift);
     }
 
     body.modal-active main {
-      filter: blur(8px) brightness(0.75);
+      filter: blur(12px) brightness(0.68);
       transform: scale(0.975);
       pointer-events: none;
     }
@@ -269,32 +397,53 @@
       touch-action: pan-y;
     }
 
-    /* การ์ดรูปภาพแต่ละใบ */
+    /* Studio Grid Mode (สลับได้จากแถบด้านบน) */
+    .scatter-canvas.is-grid-mode {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+      align-content: center;
+      gap: 24px;
+      padding: 12px 8px;
+      overflow-y: auto;
+    }
+
+    .scatter-canvas.is-grid-mode .scatter-item {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      width: 100% !important;
+      transform: none !important;
+    }
+
+    /* =========================================================
+       PRYZM GLASS SPECIMEN CARDS
+       ========================================================= */
     .scatter-item {
       position: absolute;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      gap: 9px;
+      gap: 10px;
+      padding: 9px;
+      border-radius: 16px;
+      background: linear-gradient(155deg, rgba(255, 255, 255, 0.065) 0%, rgba(12, 12, 16, 0.52) 100%);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        var(--glass-highlight),
+        0 24px 60px -14px rgba(0, 0, 0, 0.85),
+        0 0 55px -16px var(--item-aura, var(--aura-primary));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       cursor: pointer;
       touch-action: manipulation;
       opacity: 0;
-      transform: translate3d(0, 18px, 0);
+      transform: translate3d(0, 20px, 0);
       transition:
-        opacity 0.85s var(--ease-liquid),
-        transform 0.85s var(--ease-drift);
+        opacity 0.8s var(--ease-liquid),
+        transform 0.8s var(--ease-drift),
+        border-color 0.35s ease,
+        box-shadow 0.45s ease;
       will-change: transform, opacity;
-      border: none;
-      background: transparent;
-      padding: 0;
       text-align: left;
-    }
-
-    .scatter-item:focus-visible {
-      outline: 2px solid var(--primary);
-      outline-offset: 6px;
-      border-radius: 8px;
-      z-index: 15 !important;
     }
 
     .scatter-item.is-visible {
@@ -306,46 +455,34 @@
       );
     }
 
-    .item-aura-glow {
-      position: absolute;
-      inset: -48px;
-      z-index: -1;
-      pointer-events: none;
-      background: radial-gradient(
-        ellipse 68% 64% at 50% 48%,
-        var(--item-aura, var(--aura-primary)) 0%,
-        transparent 74%
-      );
-      opacity: 0.58;
-      transition: opacity 0.45s ease, transform 0.55s var(--ease-drift);
-    }
-
-    .scatter-item.is-active-song .item-aura-glow {
-      opacity: 0.78;
-      transform: scale(1.08);
+    .scatter-item.is-active-song {
+      border-color: var(--glass-border-bright);
+      box-shadow:
+        var(--glass-highlight),
+        0 28px 70px -12px rgba(0, 0, 0, 0.92),
+        0 0 70px -10px var(--item-aura, var(--aura-primary));
     }
 
     @media (hover: hover) {
       .scatter-item:hover {
-        z-index: 12 !important;
-      }
-      .scatter-item:hover .item-aura-glow {
-        opacity: 0.85;
-        transform: scale(1.12);
-      }
-      .scatter-item:hover .scatter-frame {
-        transform: scale(1.035);
+        z-index: 15 !important;
+        border-color: rgba(255, 255, 255, 0.30);
         box-shadow:
-          0 28px 75px -10px rgba(0, 0, 0, 0.94),
-          0 0 75px -6px var(--item-aura, var(--aura-primary));
+          var(--glass-highlight),
+          0 32px 80px -10px rgba(0, 0, 0, 0.95),
+          0 0 80px -6px var(--item-aura, var(--aura-primary));
       }
-      .scatter-item:hover .scatter-title {
-        color: var(--fg-color);
+      .scatter-item:hover .scatter-frame img {
+        transform: scale(1.045);
       }
     }
 
-    .scatter-item:active .scatter-frame {
-      transform: scale(0.96);
+    .scatter-item:active {
+      transform: translate3d(
+        calc(var(--px) * var(--depth, 0.5)),
+        calc(var(--py) * var(--depth, 0.5)),
+        0
+      ) scale(0.975);
     }
 
     .scatter-frame {
@@ -353,13 +490,9 @@
       width: 100%;
       aspect-ratio: 16 / 9;
       overflow: hidden;
-      border-radius: 6px;
-      border: none;
-      background-color: #050507;
-      box-shadow:
-        0 20px 55px -12px rgba(0, 0, 0, 0.88),
-        0 0 65px -8px var(--item-aura, var(--aura-primary));
-      transition: transform 0.55s var(--ease-drift), box-shadow 0.55s ease;
+      border-radius: 10px;
+      background-color: #07070a;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .scatter-frame img {
@@ -367,8 +500,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scale(1.015);
-      transition: transform 8s ease-out;
+      transform: scale(1.01);
+      transition: transform 0.75s var(--ease-drift);
     }
 
     .scatter-item.is-active-song .scatter-frame img {
@@ -376,38 +509,53 @@
     }
 
     @keyframes subtleFloatBreath {
-      0% { transform: scale(1.015) translate3d(-0.4%, -0.3%, 0); }
+      0% { transform: scale(1.01) translate3d(-0.4%, -0.3%, 0); }
       100% { transform: scale(1.045) translate3d(0.4%, 0.4%, 0); }
     }
 
-    .edge-dissolve {
+    /* Pryzm Top-Right Look Badge inside Frame */
+    .frame-chip {
       position: absolute;
-      inset: 0;
+      top: 8px;
+      right: 8px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(8, 8, 12, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.86);
       pointer-events: none;
-      box-shadow:
-        inset 0 0 18px 4px rgba(2, 2, 3, 0.58),
-        inset 0 0 36px 1px rgba(2, 2, 3, 0.24);
     }
 
     .scatter-meta {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding-left: 2px;
-      max-width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 4px 2px;
       pointer-events: none;
     }
 
+    .scatter-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
     .scatter-title {
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 500;
-      letter-spacing: 0.04em;
-      color: rgba(235, 235, 240, 0.90);
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+      letter-spacing: 0.02em;
+      color: var(--fg-color);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      transition: color 0.25s ease;
     }
 
     .scatter-sub {
@@ -415,60 +563,73 @@
       font-size: 10px;
       letter-spacing: 0.06em;
       color: var(--fg-muted);
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .scatter-item.is-active-song .scatter-title::before {
-      content: "● ";
-      font-size: 7px;
-      vertical-align: middle;
-      color: var(--fg-color);
-      opacity: 0.88;
+    .scatter-tag {
+      flex-shrink: 0;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: lowercase;
+      color: var(--fg-muted);
     }
 
-    /* แถบเพลงลอยด้านล่างแบบไร้กรอบปุ่ม */
+    .scatter-item.is-active-song .scatter-tag {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.24);
+      color: var(--fg-color);
+    }
+
+    /* =========================================================
+       PRYZM FLOATING STUDIO AUDIO DOCK
+       ========================================================= */
     .floating-dock {
       position: fixed;
-      bottom: max(22px, env(safe-area-inset-bottom));
+      bottom: max(20px, env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       z-index: 25;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      width: max-content;
-      max-width: 90vw;
+      gap: 8px;
+      max-width: 92vw;
     }
 
     .music-pill {
       position: relative;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      max-width: min(88vw, 360px);
-      height: 36px;
+      justify-content: space-between;
+      gap: 12px;
+      min-width: min(84vw, 310px);
+      max-width: min(88vw, 380px);
+      height: 40px;
       padding: 0 16px;
       border-radius: 999px;
-      border: 1px solid var(--primary);
-      background: rgba(8, 8, 12, 0.45);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-strong);
+      box-shadow: var(--glass-highlight), 0 14px 36px rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       color: var(--fg-muted);
-      font-size: 11.5px;
-      letter-spacing: 0.08em;
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+      font-size: 12px;
+      letter-spacing: 0.04em;
       cursor: pointer;
       touch-action: manipulation;
-      transition: color 0.35s ease, transform 0.25s ease, opacity 0.35s ease, border-color 0.35s ease;
+      transition: all 0.3s var(--ease-liquid);
     }
 
     .music-pill:hover {
       color: var(--fg-color);
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: var(--glass-border-bright);
+      transform: translateY(-1px);
     }
 
     .music-pill:active {
@@ -476,24 +637,33 @@
     }
 
     .music-pill.playing {
-      color: rgba(236, 236, 240, 0.96);
-      border-color: rgba(255, 255, 255, 0.14);
+      color: var(--fg-color);
+      border-color: rgba(255, 255, 255, 0.24);
+      box-shadow: var(--glass-highlight), 0 14px 38px rgba(0, 0, 0, 0.8), 0 0 28px -6px var(--aura-primary);
+    }
+
+    .music-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
     }
 
     .eq-bars {
       display: inline-flex;
       align-items: flex-end;
       gap: 2px;
-      height: 10px;
-      width: 10px;
+      height: 11px;
+      width: 11px;
       flex-shrink: 0;
-      opacity: 0.85;
+      color: var(--fg-color);
     }
 
     .eq-bars i {
       display: block;
-      width: 1.5px;
-      height: 9px;
+      width: 2px;
+      height: 10px;
+      border-radius: 2px;
       background-color: currentColor;
       transform-origin: bottom;
       transform: scaleY(0.35);
@@ -504,10 +674,10 @@
     .eq-bars i:nth-child(3) { transform: scaleY(0.55); }
 
     .music-pill.playing .eq-bars i {
-      animation: eqBounce 0.9s ease-in-out infinite alternate;
+      animation: eqBounce 0.85s ease-in-out infinite alternate;
     }
-    .music-pill.playing .eq-bars i:nth-child(2) { animation-delay: 0.25s; }
-    .music-pill.playing .eq-bars i:nth-child(3) { animation-delay: 0.5s; }
+    .music-pill.playing .eq-bars i:nth-child(2) { animation-delay: 0.22s; }
+    .music-pill.playing .eq-bars i:nth-child(3) { animation-delay: 0.46s; }
 
     @keyframes eqBounce {
       0% { transform: scaleY(0.25); }
@@ -515,36 +685,44 @@
     }
 
     .music-title {
+      font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .music-state {
-      min-width: 38px;
-      text-align: right;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9px;
-      letter-spacing: 0.16em;
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      opacity: 0.6;
+      color: var(--fg-color);
       flex-shrink: 0;
+    }
+
+    .music-pill.playing .music-state {
+      background: rgba(255, 255, 255, 0.16);
     }
 
     .music-progress {
       position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 3px;
-      height: 1.5px;
-      background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
-      opacity: 0.45;
+      left: 18px;
+      right: 18px;
+      bottom: 2px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--aura-primary), #ffffff);
+      opacity: 0.75;
       transform: scaleX(0);
       transform-origin: left;
-      border-radius: 1px;
+      border-radius: 2px;
     }
 
-    /* Lightbox Modal */
+    /* =========================================================
+       PRYZM STUDIO INSPECTOR LIGHTBOX & 3D FLOW GRAPH CARD
+       ========================================================= */
     .lightbox {
       position: fixed;
       inset: 0;
@@ -555,12 +733,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 20px 84px;
-      background: rgba(2, 2, 3, 0.92);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      padding: 24px 20px 80px;
+      background: rgba(5, 5, 8, 0.86);
+      backdrop-filter: blur(26px) saturate(140%);
+      -webkit-backdrop-filter: blur(26px) saturate(140%);
       overflow: hidden;
-      overscroll-behavior: none;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -580,88 +757,59 @@
       transition: opacity 0.25s ease-out;
     }
 
-    /* ปุ่มปิด Lightbox */
-    .lightbox-close {
+    .lightbox-close,
+    .lightbox-nav {
       position: absolute;
-      top: max(18px, env(safe-area-inset-top));
-      right: max(20px, env(safe-area-inset-right));
       z-index: 55;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(14, 14, 18, 0.72);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-strong);
+      box-shadow: var(--glass-highlight), 0 10px 28px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       color: var(--fg-color);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      opacity: 0.85;
-      transition: opacity 0.25s, transform 0.25s, background 0.25s;
+      transition: all 0.25s var(--ease-liquid);
       touch-action: manipulation;
     }
 
-    .lightbox-close:hover {
-      opacity: 1;
-      transform: scale(1.08);
-      background: rgba(25, 25, 32, 0.95);
+    .lightbox-close {
+      top: max(18px, env(safe-area-inset-top));
+      right: max(20px, env(safe-area-inset-right));
     }
 
-    .lightbox-close svg {
+    .lightbox-close:hover {
+      transform: scale(1.06);
+      border-color: var(--glass-border-bright);
+    }
+
+    .lightbox-nav {
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .lightbox-nav:hover {
+      transform: translateY(-50%) scale(1.06);
+      border-color: var(--glass-border-bright);
+    }
+
+    .lightbox-nav.prev { left: max(18px, env(safe-area-inset-left)); }
+    .lightbox-nav.next { right: max(18px, env(safe-area-inset-right)); }
+
+    .lightbox-close svg,
+    .lightbox-nav svg {
       width: 18px;
       height: 18px;
       stroke-width: 2;
     }
 
-    /* ปุ่มเปลี่ยนรูปซ้าย-ขวา */
-    .lightbox-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 48;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(12, 12, 16, 0.6);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      color: var(--fg-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.25s, transform 0.25s, background 0.25s;
-      touch-action: manipulation;
-    }
-
-    .lightbox-nav:hover {
-      opacity: 1;
-      transform: translateY(-50%) scale(1.08);
-      background: rgba(24, 24, 32, 0.9);
-    }
-
-    .lightbox-nav.prev {
-      left: max(16px, env(safe-area-inset-left));
-    }
-
-    .lightbox-nav.next {
-      right: max(16px, env(safe-area-inset-right));
-    }
-
-    .lightbox-nav svg {
-      width: 20px;
-      height: 20px;
-      stroke-width: 2;
-    }
-
     @media (max-width: 680px) {
-      .lightbox-nav {
-        display: none;
-      }
+      .lightbox-nav { display: none; }
     }
 
     .lightbox-inner {
@@ -675,44 +823,30 @@
     }
 
     .lightbox.is-open .flip-scene {
-      animation: openZoomBlur 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: openZoomBlur 0.5s var(--ease-drift) forwards;
     }
 
     .lightbox.is-closing .flip-scene {
-      animation: closeZoomBlur 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+      animation: closeZoomBlur 0.24s ease-in forwards;
     }
 
     @keyframes openZoomBlur {
-      0% {
-        opacity: 0;
-        transform: scale(0.82) translate3d(0, 18px, 0);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) translate3d(0, 0, 0);
-      }
+      0% { opacity: 0; transform: scale(0.88) translate3d(0, 16px, 0); }
+      100% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
     }
 
     @keyframes closeZoomBlur {
-      0% {
-        opacity: 1;
-        transform: scale(1) translate3d(0, 0, 0);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(0.86) translate3d(0, 12px, 0);
-      }
+      0% { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+      100% { opacity: 0; transform: scale(0.90) translate3d(0, 10px, 0); }
     }
 
-    /* 3D Flip Card Scene */
     .flip-scene {
-      perspective: 1400px;
+      perspective: 1500px;
       display: grid;
       place-items: center;
       cursor: pointer;
       pointer-events: auto;
       touch-action: manipulation;
-      will-change: transform, opacity;
     }
 
     .flip-card {
@@ -721,12 +855,12 @@
       place-items: center;
       transform-style: preserve-3d;
       -webkit-transform-style: preserve-3d;
-      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.72s var(--ease-liquid);
     }
 
     .flip-card.is-pressing {
       transform: scale(0.975);
-      transition: transform 0.2s ease-out;
+      transition: transform 0.18s ease-out;
     }
 
     .flip-card.is-flipped {
@@ -737,38 +871,41 @@
       transform: rotateY(180deg) scale(0.975);
     }
 
-    /* ด้านหน้ารูป */
+    /* Front: Pryzm Framed Specimen */
     .flip-front {
       grid-area: 1 / 1;
       position: relative;
-      border-radius: 4px;
-      overflow: hidden;
+      padding: 10px;
+      border-radius: 16px;
+      background: linear-gradient(155deg, rgba(255, 255, 255, 0.08) 0%, rgba(12, 12, 16, 0.65) 100%);
+      border: 1px solid var(--glass-border-bright);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
       pointer-events: none;
       box-shadow:
-        0 30px 90px rgba(0, 0, 0, 0.96),
-        0 0 80px -10px var(--aura-primary);
+        var(--glass-highlight),
+        0 34px 95px rgba(0, 0, 0, 0.96),
+        0 0 85px -10px var(--aura-primary);
     }
 
     .flip-front img {
       display: block;
-      max-width: min(90vw, 760px);
-      max-height: 58dvh;
+      max-width: min(88vw, 760px);
+      max-height: 55dvh;
       width: auto;
       height: auto;
+      border-radius: 10px;
       object-fit: contain;
-      pointer-events: none;
     }
 
-    /* ด้านหลัง: ข้อมูล EXIF & กล้อง */
+    /* Back: Pryzm Flow Node Inspector (EXIF + Palette Swatches) */
     .flip-back {
       grid-area: 1 / 1;
       width: 100%;
       height: 100%;
-      min-width: min(86vw, 360px);
-      min-height: 270px;
-      border-radius: 6px;
+      min-width: min(88vw, 390px);
+      min-height: 295px;
+      border-radius: 16px;
       padding: 22px 24px;
       display: flex;
       flex-direction: column;
@@ -776,16 +913,16 @@
       gap: 14px;
       text-align: left;
       background:
-        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.045) 0%, transparent 65%),
-        rgba(9, 9, 13, 0.96);
+        radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.07) 0%, transparent 60%),
+        rgba(11, 11, 16, 0.94);
+      border: 1px solid var(--glass-border-bright);
       box-shadow:
-        0 30px 90px rgba(0, 0, 0, 0.96),
-        0 0 70px -16px var(--aura-primary),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        var(--glass-highlight),
+        0 34px 95px rgba(0, 0, 0, 0.96),
+        0 0 75px -14px var(--aura-primary);
       transform: rotateY(180deg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      overflow: hidden;
       pointer-events: none;
     }
 
@@ -794,8 +931,8 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     }
 
     .exif-device {
@@ -804,54 +941,49 @@
       gap: 8px;
       font-size: 13px;
       font-weight: 500;
-      letter-spacing: 0.03em;
       color: var(--fg-color);
     }
 
     .exif-device svg {
       width: 15px;
       height: 15px;
-      opacity: 0.75;
-      flex-shrink: 0;
+      opacity: 0.8;
     }
 
     .exif-date {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 10px;
-      letter-spacing: 0.06em;
       color: var(--fg-muted);
-      white-space: nowrap;
     }
 
     .exif-metrics {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      padding: 10px 8px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      text-align: center;
+      gap: 8px;
     }
 
     .metric-cell {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
+      padding: 10px 6px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      text-align: center;
     }
 
     .metric-val {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--fg-color);
-      letter-spacing: 0.02em;
     }
 
     .metric-lbl {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 8px;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--fg-whisper);
     }
@@ -859,13 +991,13 @@
     .exif-rows {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 9px;
     }
 
     .exif-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 12px;
       font-size: 11.5px;
     }
@@ -876,120 +1008,135 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--fg-whisper);
-      flex-shrink: 0;
     }
 
     .exif-val {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
-      color: rgba(235, 235, 240, 0.88);
+      color: var(--fg-color);
       text-align: right;
-      word-break: break-word;
     }
 
     .exif-badge {
-      display: inline-block;
-      padding: 2px 9px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--fg-color);
       font-size: 10px;
-      letter-spacing: 0.04em;
+    }
+
+    .swatch-pair {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: var(--aura-primary);
+    }
+
+    .lightbox-caption-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
     }
 
     .lightbox-caption {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 16px;
-      letter-spacing: 0.20em;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
       color: var(--fg-color);
-      opacity: 0.92;
-      text-align: center;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
     }
 
     .lightbox-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       pointer-events: auto;
     }
 
-    /* ปุ่มพลิกดูข้อมูล EXIF */
     .flip-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 7px 16px;
+      gap: 7px;
+      height: 34px;
+      padding: 0 16px;
       border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(14, 14, 18, 0.65);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      color: var(--fg-muted);
-      font-size: 11px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-strong);
+      box-shadow: var(--glass-highlight);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--fg-color);
+      font-size: 10.5px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       cursor: pointer;
-      touch-action: manipulation;
       transition: all 0.25s ease;
     }
 
     .flip-btn:hover {
-      color: var(--fg-color);
-      background: rgba(26, 26, 34, 0.9);
-      border-color: rgba(255, 255, 255, 0.22);
+      border-color: var(--glass-border-bright);
+      background: rgba(28, 28, 38, 0.92);
     }
 
     .flip-btn svg {
       width: 13px;
       height: 13px;
-      stroke-width: 1.8;
-      transition: transform 0.4s ease;
-    }
-
-    .flip-card.is-flipped ~ .lightbox-controls .flip-btn svg {
-      transform: rotate(180deg);
+      stroke-width: 1.9;
     }
 
     .lightbox-hint {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 9.5px;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--fg-whisper);
       text-align: center;
-      line-height: 1.5;
-      pointer-events: none;
-    }
-
-    /* Reduced Motion Accessibility */
-    @media (prefers-reduced-motion: reduce) {
-      .mist-far, .mist-near, .god-rays, .film-grain,
-      .pulse-dot, .scatter-frame img, .music-pill.playing .eq-bars i {
-        animation: none !important;
-      }
-      .scatter-item, .flip-card, .lightbox, main {
-        transition-duration: 0.05s !important;
-      }
     }
   </style>
 </head>
-<body>
+<body data-look="fluted">
+  <!-- Pryzm Multi-Layer Atmospheric Background -->
   <div id="ambient-layer"></div>
   <div class="mist-far" aria-hidden="true"></div>
   <div class="mist-near" aria-hidden="true"></div>
+  <div class="fluted-glass-layer" aria-hidden="true"></div>
+  <div class="halftone-layer" aria-hidden="true"></div>
   <div class="god-rays" aria-hidden="true"></div>
   <div class="void-vignette" aria-hidden="true"></div>
   <canvas id="atmosphere-canvas" aria-hidden="true"></canvas>
   <div class="film-grain" id="film-grain" aria-hidden="true"></div>
 
+  <!-- Pryzm Studio Top Bar -->
   <header role="banner">
-    <div class="brand">ustzyix</div>
-    <div class="presence-status">
-      <span class="pulse-dot" aria-hidden="true"></span>
-      <span id="archive-count">stillness</span>
+    <div class="header-pill">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand">ustzyix</span>
+      <span class="brand-divider hide-mobile" aria-hidden="true"></span>
+      <span class="presence-status hide-mobile">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span id="archive-count">2 frames</span>
+      </span>
+    </div>
+
+    <!-- Look Shader & Layout Switcher (Pryzm Style) -->
+    <div class="studio-controls" role="toolbar" aria-label="Atmosphere and layout controls">
+      <button class="studio-tab is-active" type="button" data-look-btn="fluted">Fluted</button>
+      <button class="studio-tab" type="button" data-look-btn="mist">Mist</button>
+      <button class="studio-tab" type="button" data-look-btn="halftone">Halftone</button>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <button class="studio-tab" type="button" id="layout-toggle-btn" title="Switch Scatter / Grid">Scatter</button>
     </div>
   </header>
 
@@ -997,10 +1144,13 @@
     <div class="scatter-canvas" id="scatter-canvas"></div>
   </main>
 
+  <!-- Pryzm Floating Sound Dock -->
   <div class="floating-dock">
     <button class="music-pill" id="music-pill" type="button" aria-label="Toggle audio playback">
-      <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
+      <span class="music-left">
+        <span class="eq-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="music-title" id="music-title">TV Girl · Loving Machine</span>
+      </span>
       <span class="music-state" id="music-state">play</span>
       <span class="music-progress" id="music-progress"></span>
     </button>
@@ -1030,13 +1180,12 @@
     <div class="lightbox-inner" id="lightbox-inner">
       <div class="flip-scene" id="flip-scene" role="button" tabindex="0" aria-label="Flip card for EXIF camera information">
         <div class="flip-card" id="flip-card">
-          <!-- ด้านหน้ารูป -->
+          <!-- Front -->
           <div class="flip-front">
             <img id="lightbox-img" alt="" draggable="false" />
-            <div class="edge-dissolve" aria-hidden="true"></div>
           </div>
 
-          <!-- ด้านหลัง: ข้อมูล EXIF กล้อง -->
+          <!-- Back: Node Graph EXIF & Color Specimen -->
           <div class="flip-back">
             <div class="exif-top">
               <div class="exif-device">
@@ -1051,7 +1200,7 @@
                 </svg>
                 <span id="exif-camera">Apple iPhone 7 Plus</span>
               </div>
-              <span class="exif-date" id="exif-captured">12 Oct 2025 · 12:16</span>
+              <span class="exif-date" id="exif-captured">12 ต.ค. 2025 · 12:16</span>
             </div>
 
             <div class="exif-metrics">
@@ -1075,15 +1224,23 @@
 
             <div class="exif-rows">
               <div class="exif-row">
+                <span class="exif-key">Aura Palette</span>
+                <span class="swatch-pair">
+                  <span class="swatch-dot" id="swatch-primary"></span>
+                  <span class="swatch-dot" id="swatch-secondary"></span>
+                  <span class="exif-val" id="swatch-hex">#9B221C</span>
+                </span>
+              </div>
+              <div class="exif-row">
                 <span class="exif-key">Color Grade</span>
                 <span class="exif-badge" id="exif-app">Adobe Lightroom</span>
               </div>
               <div class="exif-row">
                 <span class="exif-key">Resolution</span>
-                <span class="exif-val" id="exif-res">2612 × 1470 · 3.8 MP</span>
+                <span class="exif-val" id="exif-res">2612 × 1470 (3.8 MP)</span>
               </div>
               <div class="exif-row">
-                <span class="exif-key">File</span>
+                <span class="exif-key">Asset File</span>
                 <span class="exif-val" id="exif-file">IMG_5755 (2).jpg</span>
               </div>
             </div>
@@ -1091,7 +1248,9 @@
         </div>
       </div>
 
-      <div class="lightbox-caption" id="lightbox-caption"></div>
+      <div class="lightbox-caption-bar">
+        <div class="lightbox-caption" id="lightbox-caption"></div>
+      </div>
 
       <div class="lightbox-controls">
         <button class="flip-btn" id="flip-btn" type="button" aria-label="Toggle camera information">
@@ -1100,11 +1259,11 @@
             <polyline points="1 20 1 14 7 14"></polyline>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          <span id="flip-btn-text">Camera Info</span>
+          <span id="flip-btn-text">Inspect Node / EXIF</span>
         </button>
       </div>
 
-      <div class="lightbox-hint" id="lightbox-hint">tap photo or button to flip · tap outside or press esc to return</div>
+      <div class="lightbox-hint">tap frame to flip node · swipe or arrows to navigate · esc to close</div>
     </div>
   </div>
 
@@ -1121,13 +1280,13 @@
     const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
     const DEFAULT_SONG = "TV Girl · Loving Machine";
 
-    /* ข้อมูลเทคนิคการถ่ายและแต่งสี (Fallback Base Entries) */
     const ENTRIES = [
       {
         file: "IMG_5755 (2).jpg",
         src: "./images/IMG_5755%20(2).jpg",
         caption: "Crimson — 01",
         sub: "Nocturne · 01",
+        tag: "fluted · grain",
         exif: {
           camera: "Apple iPhone 7 Plus",
           captured: "12 ต.ค. 2025 · 12:16",
@@ -1146,6 +1305,7 @@
         src: "./images/IMG_5738%20(1).jpg",
         caption: "Magenta — 02",
         sub: "Stillness · 02",
+        tag: "bloom · grain",
         exif: {
           camera: "Apple iPhone 7 Plus",
           captured: "12 ต.ค. 2025 · 11:59",
@@ -1168,6 +1328,7 @@
     let particleTint = { r: 225, g: 215, b: 215 };
     let closeModalTimer = null;
     let isClosingModal = false;
+    let isGridMode = false;
 
     let audioCtx = null;
     let analyser = null;
@@ -1184,6 +1345,7 @@
     const ambientLayer = document.getElementById("ambient-layer");
     const archiveCountEl = document.getElementById("archive-count");
     const filmGrainEl = document.getElementById("film-grain");
+    const layoutToggleBtn = document.getElementById("layout-toggle-btn");
 
     const bgAudio = document.getElementById("bg-audio");
     const musicPill = document.getElementById("music-pill");
@@ -1201,7 +1363,6 @@
     const flipBtnText = document.getElementById("flip-btn-text");
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxCaption = document.getElementById("lightbox-caption");
-    const lightboxHint = document.getElementById("lightbox-hint");
 
     const exifCameraEl = document.getElementById("exif-camera");
     const exifCapturedEl = document.getElementById("exif-captured");
@@ -1212,8 +1373,28 @@
     const exifAppEl = document.getElementById("exif-app");
     const exifResEl = document.getElementById("exif-res");
     const exifFileEl = document.getElementById("exif-file");
+    const swatchPrimaryEl = document.getElementById("swatch-primary");
+    const swatchSecondaryEl = document.getElementById("swatch-secondary");
+    const swatchHexEl = document.getElementById("swatch-hex");
 
-    /* 1. Film Grain Canvas Texture */
+    /* Pryzm Look Switcher (Fluted / Mist / Halftone) & Layout Mode */
+    document.querySelectorAll("[data-look-btn]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-look-btn]").forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        document.body.setAttribute("data-look", btn.dataset.lookBtn);
+      });
+    });
+
+    layoutToggleBtn.addEventListener("click", () => {
+      isGridMode = !isGridMode;
+      scatterCanvas.classList.toggle("is-grid-mode", isGridMode);
+      layoutToggleBtn.textContent = isGridMode ? "Grid" : "Scatter";
+      layoutToggleBtn.classList.toggle("is-active", isGridMode);
+      if (!isGridMode) layoutScatterItems();
+    });
+
+    /* 1. Film Grain Texture */
     function initFilmGrain() {
       const c = document.createElement("canvas");
       c.width = 96;
@@ -1232,7 +1413,7 @@
       filmGrainEl.style.backgroundImage = `url(${c.toDataURL("image/png")})`;
     }
 
-    /* 2. Atmosphere Particle Canvas (ประหยัดพลังงาน: หยุดทำงานเมื่อแท็บซ่อนหรือเปิดโมดอล) */
+    /* 2. Atmosphere Particle Canvas */
     let isCanvasRunning = true;
     let canvasAnimId = null;
     let lastBassLevel = 0;
@@ -1258,19 +1439,19 @@
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
           resize();
-          layoutScatterItems();
+          if (!isGridMode) layoutScatterItems();
         }, 120);
       }, { passive: true });
 
-      const count = width < 600 ? 30 : 48;
+      const count = width < 600 ? 28 : 44;
       const motes = Array.from({ length: count }, () => {
         const depth = Math.random();
         return {
           x: Math.random() * width,
           y: Math.random() * height,
-          r: 0.65 + depth * 1.8,
-          vx: (Math.random() - 0.5) * (0.14 + depth * 0.24),
-          vy: -(0.12 + depth * 0.30),
+          r: 0.65 + depth * 1.7,
+          vx: (Math.random() - 0.5) * (0.14 + depth * 0.22),
+          vy: -(0.12 + depth * 0.28),
           phase: Math.random() * Math.PI * 2,
           freq: 0.009 + Math.random() * 0.015,
           alpha: 0.08 + depth * 0.22,
@@ -1305,15 +1486,12 @@
           m.x += m.vx + Math.sin(m.phase) * 0.20;
           m.y += m.vy - bass * 0.22 * m.depth;
 
-          if (m.y < -14) {
-            m.y = height + 14;
-            m.x = Math.random() * width;
-          }
+          if (m.y < -14) { m.y = height + 14; m.x = Math.random() * width; }
           if (m.x < -14) m.x = width + 14;
           if (m.x > width + 14) m.x = -14;
 
           const twinkle = 0.65 + 0.35 * Math.sin(m.phase * 1.8);
-          const finalAlpha = Math.min(m.alpha * twinkle + bass * 0.06, 0.52);
+          const finalAlpha = Math.min(m.alpha * twinkle + bass * 0.06, 0.5);
 
           ctx.beginPath();
           ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
@@ -1342,18 +1520,13 @@
       });
     }
 
-    /* 3. Parallax Look-Around (ประหยัดพลังงาน: อัปเดตเฉพาะเมื่อขยับ และหยุดลูปเมื่อค่านิ่ง) */
+    /* 3. Spatial Parallax Look-Around */
     function initLookAround() {
-      let targetX = 0;
-      let targetY = 0;
-      let curX = 0;
-      let curY = 0;
-      let isParallaxActive = false;
+      let targetX = 0, targetY = 0, curX = 0, curY = 0, isParallaxActive = false;
 
       function stepParallax() {
         const dx = targetX - curX;
         const dy = targetY - curY;
-
         if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
           curX = targetX;
           curY = targetY;
@@ -1362,12 +1535,10 @@
           isParallaxActive = false;
           return;
         }
-
         curX += dx * 0.06;
         curY += dy * 0.06;
         document.documentElement.style.setProperty("--px", `${curX.toFixed(2)}px`);
         document.documentElement.style.setProperty("--py", `${curY.toFixed(2)}px`);
-
         requestAnimationFrame(stepParallax);
       }
 
@@ -1379,26 +1550,14 @@
       }
 
       window.addEventListener("pointermove", (e) => {
-        if (document.body.classList.contains("modal-active")) return;
-        const nx = (e.clientX / window.innerWidth) * 2 - 1;
-        const ny = (e.clientY / window.innerHeight) * 2 - 1;
-        targetX = nx * 10;
-        targetY = ny * 8;
-        wakeParallax();
-      }, { passive: true });
-
-      window.addEventListener("deviceorientation", (e) => {
-        if (document.body.classList.contains("modal-active")) return;
-        if (e.gamma === null || e.beta === null) return;
-        const gx = Math.max(-25, Math.min(25, e.gamma)) / 25;
-        const gy = Math.max(-25, Math.min(25, e.beta - 45)) / 25;
-        targetX = gx * 10;
-        targetY = gy * 8;
+        if (document.body.classList.contains("modal-active") || isGridMode) return;
+        targetX = ((e.clientX / window.innerWidth) * 2 - 1) * 10;
+        targetY = ((e.clientY / window.innerHeight) * 2 - 1) * 8;
         wakeParallax();
       }, { passive: true });
     }
 
-    /* 4. Audio Analyser (ปลอดภัย ไม่กระทบระบบเสียงของเบราว์เซอร์) */
+    /* 4. Web Audio Analyser */
     function initAudioAnalyser() {
       if (audioCtx) return;
       try {
@@ -1425,7 +1584,7 @@
         .trim() || "Stillness";
     }
 
-    /* 5. Safe & Efficient EXIF Extraction (อ่านเฉพาะ 64KB แรกของไฟล์ ไม่โหลดภาพเต็ม) */
+    /* 5. EXIF Binary Reader */
     async function extractImageExif(src) {
       if (exifAutoCache.has(src)) return exifAutoCache.get(src);
       try {
@@ -1524,7 +1683,7 @@
       return null;
     }
 
-    /* 6. Extract Dominant Color Palette */
+    /* 6. Dominant Color Extractor */
     function getDominantPalette(src, imgElement) {
       if (paletteCache.has(src)) return paletteCache.get(src);
       try {
@@ -1588,9 +1747,9 @@
         const result = {
           primaryHex: rgbToHex(primary),
           secondaryHex: rgbToHex(secondary),
-          glowPrimary: rgbToHex(primary.map(v => v * 0.78)),
-          glowSecondary: rgbToHex(secondary.map(v => v * 0.64)),
-          abyssBase: rgbToHex(primary.map(v => v * 0.18)),
+          glowPrimary: rgbToHex(primary.map(v => v * 0.82)),
+          glowSecondary: rgbToHex(secondary.map(v => v * 0.68)),
+          abyssBase: rgbToHex(primary.map(v => v * 0.20)),
           tint: {
             r: Math.round(180 + primary[0] * 0.28),
             g: Math.round(180 + primary[1] * 0.28),
@@ -1620,13 +1779,18 @@
       document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
 
       ambientLayer.style.background = `
-        radial-gradient(ellipse 85% 65% at 50% 34%, ${glowPrimary}dc 0%, transparent 72%),
-        radial-gradient(ellipse 90% 70% at 50% 80%, ${glowSecondary}b4 0%, ${abyssBase} 84%, #020203 100%)
+        radial-gradient(ellipse 85% 65% at 50% 32%, ${glowPrimary}dc 0%, transparent 72%),
+        radial-gradient(ellipse 90% 70% at 50% 82%, ${glowSecondary}b4 0%, ${abyssBase} 84%, #050507 100%)
       `;
+
+      swatchPrimaryEl.style.background = primaryHex;
+      swatchSecondaryEl.style.background = secondaryHex;
+      swatchHexEl.textContent = primaryHex.toUpperCase();
     }
 
-    /* 7. Scatter Layout Engine */
+    /* 7. Spatial Scatter Layout */
     function layoutScatterItems() {
+      if (isGridMode) return;
       const containerWidth = scatterCanvas.clientWidth;
       const containerHeight = scatterCanvas.clientHeight;
       if (!containerWidth || !containerHeight) return;
@@ -1636,25 +1800,25 @@
       if (!items.length) return;
 
       const mobilePatterns = [
-        { xPct: 0.05, wPct: 0.44, gapY: -20, depth: 0.45 },
-        { xPct: 0.52, wPct: 0.43, gapY: 36,  depth: 0.70 },
-        { xPct: 0.14, wPct: 0.52, gapY: 24,  depth: 0.85 },
-        { xPct: 0.46, wPct: 0.48, gapY: -22, depth: 0.55 },
-        { xPct: 0.05, wPct: 0.42, gapY: 36,  depth: 0.65 },
-        { xPct: 0.50, wPct: 0.46, gapY: 30,  depth: 0.50 }
+        { xPct: 0.04, wPct: 0.46, gapY: -12, depth: 0.45 },
+        { xPct: 0.50, wPct: 0.46, gapY: 36,  depth: 0.70 },
+        { xPct: 0.12, wPct: 0.56, gapY: 24,  depth: 0.85 },
+        { xPct: 0.44, wPct: 0.50, gapY: -16, depth: 0.55 },
+        { xPct: 0.04, wPct: 0.45, gapY: 34,  depth: 0.65 },
+        { xPct: 0.48, wPct: 0.48, gapY: 28,  depth: 0.50 }
       ];
 
       const desktopPatterns = [
-        { xPct: 0.08, wPct: 0.28, gapY: -30, depth: 0.45 },
-        { xPct: 0.62, wPct: 0.30, gapY: 28,  depth: 0.75 },
-        { xPct: 0.25, wPct: 0.32, gapY: -15, depth: 0.90 },
-        { xPct: 0.48, wPct: 0.29, gapY: -45, depth: 0.60 },
-        { xPct: 0.08, wPct: 0.26, gapY: 24,  depth: 0.50 },
-        { xPct: 0.68, wPct: 0.27, gapY: -35, depth: 0.80 }
+        { xPct: 0.07, wPct: 0.30, gapY: -24, depth: 0.45 },
+        { xPct: 0.60, wPct: 0.32, gapY: 28,  depth: 0.75 },
+        { xPct: 0.24, wPct: 0.34, gapY: -12, depth: 0.90 },
+        { xPct: 0.48, wPct: 0.31, gapY: -40, depth: 0.60 },
+        { xPct: 0.07, wPct: 0.28, gapY: 24,  depth: 0.50 },
+        { xPct: 0.65, wPct: 0.29, gapY: -30, depth: 0.80 }
       ];
 
       const patterns = isMobile ? mobilePatterns : desktopPatterns;
-      let cursorY = isMobile ? 12 : 24;
+      let cursorY = isMobile ? 12 : 22;
       let prevBottom = 0;
 
       items.forEach((el, idx) => {
@@ -1667,7 +1831,7 @@
         el.style.setProperty("--depth", pat.depth);
         el.style.zIndex = Math.round(pat.depth * 10);
 
-        const rectHeight = el.offsetHeight || Math.round(widthPx * 0.65 + 32);
+        const rectHeight = el.offsetHeight || Math.round(widthPx * 0.68 + 44);
 
         if (idx === 0) {
           el.style.top = `${cursorY}px`;
@@ -1685,8 +1849,8 @@
             cursorY = prevBottom + Math.max(20, pat.gapY + 24);
           } else {
             cursorY = Math.max(
-              prevBottom - rectHeight * 0.45 + pat.gapY,
-              (parseFloat(prevEl.style.top) || 0) + 40
+              prevBottom - rectHeight * 0.42 + pat.gapY,
+              (parseFloat(prevEl.style.top) || 0) + 42
             );
           }
 
@@ -1729,7 +1893,7 @@
       exifFileEl.textContent = item.file || "image.jpg";
     }
 
-    /* 9. Lightbox Modal Lifecycle */
+    /* 9. Lightbox Lifecycle */
     function openLightboxModal() {
       clearTimeout(closeModalTimer);
       isClosingModal = false;
@@ -1745,7 +1909,6 @@
       if (!lightbox.classList.contains("is-open") || isClosingModal) return;
       isClosingModal = true;
       clearTimeout(holdTimer);
-      window.getSelection()?.removeAllRanges();
       flipCard.classList.remove("is-pressing");
       lightbox.classList.add("is-closing");
       document.body.classList.remove("modal-active");
@@ -1754,7 +1917,7 @@
       closeModalTimer = setTimeout(() => {
         lightbox.classList.remove("is-open", "is-closing");
         flipCard.classList.remove("is-flipped", "is-pressing");
-        flipBtnText.textContent = "Camera Info";
+        flipBtnText.textContent = "Inspect Node / EXIF";
         isClosingModal = false;
         if (window.startCanvasLoop) window.startCanvasLoop();
       }, 260);
@@ -1780,7 +1943,7 @@
 
       if (openModal) {
         flipCard.classList.remove("is-flipped", "is-pressing");
-        flipBtnText.textContent = "Camera Info";
+        flipBtnText.textContent = "Inspect Node / EXIF";
         lightboxImg.src = item.src;
         lightboxCaption.textContent = item.caption;
         populateBackExif(item, imgEl);
@@ -1835,7 +1998,7 @@
       }
     }
 
-    /* 10. Render Gallery Cards */
+    /* 10. Render Pryzm Specimen Cards */
     function renderGallery() {
       scatterCanvas.innerHTML = "";
       archiveCountEl.textContent = `${entries.length} frames`;
@@ -1844,12 +2007,8 @@
         const card = document.createElement("button");
         card.type = "button";
         card.className = "scatter-item" + (idx === currentIndex ? " is-active-song" : "");
-        card.setAttribute("aria-label", `View ${item.caption}`);
+        card.setAttribute("aria-label", `Inspect ${item.caption}`);
         card.style.transitionDelay = `${Math.min(idx * 80, 480)}ms`;
-
-        const auraGlow = document.createElement("div");
-        auraGlow.className = "item-aura-glow";
-        auraGlow.setAttribute("aria-hidden", "true");
 
         const frame = document.createElement("div");
         frame.className = "scatter-frame";
@@ -1875,15 +2034,18 @@
           card.classList.add("is-visible");
         };
 
-        const dissolve = document.createElement("div");
-        dissolve.className = "edge-dissolve";
-        dissolve.setAttribute("aria-hidden", "true");
+        const chip = document.createElement("span");
+        chip.className = "frame-chip";
+        chip.textContent = `0${idx + 1}`.slice(-2);
 
         frame.appendChild(img);
-        frame.appendChild(dissolve);
+        frame.appendChild(chip);
 
         const meta = document.createElement("div");
         meta.className = "scatter-meta";
+
+        const titleWrap = document.createElement("div");
+        titleWrap.className = "scatter-title-wrap";
 
         const title = document.createElement("div");
         title.className = "scatter-title";
@@ -1893,10 +2055,16 @@
         sub.className = "scatter-sub";
         sub.textContent = item.sub || item.song || "Stillness";
 
-        meta.appendChild(title);
-        meta.appendChild(sub);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(sub);
 
-        card.appendChild(auraGlow);
+        const tag = document.createElement("span");
+        tag.className = "scatter-tag";
+        tag.textContent = item.tag || "grain";
+
+        meta.appendChild(titleWrap);
+        meta.appendChild(tag);
+
         card.appendChild(frame);
         card.appendChild(meta);
 
@@ -1912,9 +2080,9 @@
       layoutScatterItems();
     }
 
-    /* 11. GitHub Asset Sync with Smart Session Caching (ลด API call และป้องกัน 403 Rate Limit) */
-    const GITHUB_CACHE_KEY = "ustzyix_github_cache_v2";
-    const GITHUB_CACHE_TTL = 15 * 60 * 1000; // 15 นาที
+    /* 11. GitHub Repo Auto-Sync */
+    const GITHUB_CACHE_KEY = "ustzyix_github_cache_v3";
+    const GITHUB_CACHE_TTL = 15 * 60 * 1000;
 
     function applyExtraPhotos(extraPhotos) {
       if (!extraPhotos || !extraPhotos.length) return;
@@ -1975,6 +2143,7 @@
                 src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
                 caption: title,
                 sub: `Archive · ${num}`,
+                tag: "glass · grain",
                 song: audioMap.has(baseName) ? title : DEFAULT_SONG,
                 audio: audioMap.get(baseName) || DEFAULT_AUDIO
               };
@@ -2046,7 +2215,7 @@
       }
     });
 
-    /* 13. Lightbox 3D Card Flip (รองรับทั้งคลิก/แตะ, ปุ่มเฉพาะ และกดค้าง) */
+    /* 13. 3D Flip Interaction */
     let holdTimer = null;
     let didFlipOnHold = false;
 
@@ -2054,14 +2223,11 @@
       const isFlipped = flipCard.classList.contains("is-flipped");
       if (!isFlipped) {
         flipCard.classList.add("is-flipped");
-        flipBtnText.textContent = "View Photo";
-        flipScene.setAttribute("aria-label", "Flip card to view photo");
+        flipBtnText.textContent = "View Frame";
       } else {
         flipCard.classList.remove("is-flipped");
-        flipBtnText.textContent = "Camera Info";
-        flipScene.setAttribute("aria-label", "Flip card for EXIF camera information");
+        flipBtnText.textContent = "Inspect Node / EXIF";
       }
-
       if (navigator.vibrate) {
         try { navigator.vibrate(12); } catch (_) {}
       }
@@ -2072,8 +2238,7 @@
       toggleCardFlip();
     });
 
-    /* Click or Hold on Card */
-    flipScene.addEventListener("click", (e) => {
+    flipScene.addEventListener("click", () => {
       if (isClosingModal || didFlipOnHold) {
         didFlipOnHold = false;
         return;
@@ -2081,7 +2246,7 @@
       toggleCardFlip();
     });
 
-    flipScene.addEventListener("pointerdown", (e) => {
+    flipScene.addEventListener("pointerdown", () => {
       if (isClosingModal) return;
       didFlipOnHold = false;
       flipCard.classList.add("is-pressing");
@@ -2110,7 +2275,6 @@
       }
     });
 
-    /* Lightbox Navigation */
     lightboxClose.addEventListener("click", (e) => {
       e.stopPropagation();
       closeLightboxModal();
@@ -2126,9 +2290,7 @@
       selectEntry(currentIndex + 1, true);
     });
 
-    /* Touch Swipe Navigation on Lightbox */
-    let touchStartX = 0;
-    let touchStartY = 0;
+    let touchStartX = 0, touchStartY = 0;
     lightbox.addEventListener("touchstart", (e) => {
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
@@ -2141,48 +2303,33 @@
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(dx) > 60 && Math.abs(dy) < 50) {
-          if (dx < 0) {
-            selectEntry(currentIndex + 1, true); // Swipe left -> Next
-          } else {
-            selectEntry(currentIndex - 1, true); // Swipe right -> Prev
-          }
+          selectEntry(dx < 0 ? currentIndex + 1 : currentIndex - 1, true);
         }
       }
     }, { passive: true });
 
-    /* Backdrop Click to Close */
     lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) {
-        closeLightboxModal();
-      }
+      if (e.target === lightbox) closeLightboxModal();
     });
 
-    /* Keyboard Shortcuts */
     window.addEventListener("keydown", (e) => {
       if (lightbox.classList.contains("is-open")) {
-        if (e.key === "Escape") {
-          closeLightboxModal();
-        } else if (e.key === "ArrowLeft") {
-          selectEntry(currentIndex - 1, true);
-        } else if (e.key === "ArrowRight") {
-          selectEntry(currentIndex + 1, true);
-        }
-      } else {
-        if (e.key === " ") {
-          e.preventDefault();
-          musicPill.click();
-        }
+        if (e.key === "Escape") closeLightboxModal();
+        else if (e.key === "ArrowLeft") selectEntry(currentIndex - 1, true);
+        else if (e.key === "ArrowRight") selectEntry(currentIndex + 1, true);
+      } else if (e.key === " ") {
+        e.preventDefault();
+        musicPill.click();
       }
     });
 
-    /* Initialization */
+    /* Init */
     initFilmGrain();
     initAtmosphereCanvas();
     initLookAround();
     renderGallery();
     syncAudio(entries[0], false);
-    
-    // Defer GitHub API sync slightly to accelerate initial First Contentful Paint
+
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(syncGitHubAssets, { timeout: 2000 });
     } else {

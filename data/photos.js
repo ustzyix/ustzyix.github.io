@@ -45,29 +45,29 @@ window.GALLERY = {
       }
     },
     {
-      file: "IMG_0018.jpg",[span_0](start_span)[span_0](end_span)
+      file: "IMG_0018.jpg",
       title: "Obsidian — 04",
       sub: "Nocturne · 04",
       tag: "fluted · grain",
       exif: {
-        camera: "Apple iPhone 15", captured: "28 มี.ค. 2024 · 20:50",[span_1](start_span)[span_1](end_span)
-        aperture: "f/1.6", shutter: "1/17s", focal: "5.96 mm", iso: "ISO 1000",[span_2](start_span)[span_2](end_span)
-        app: "Adobe Lightroom", resolution: "2478 × 1395 (3.5 MP)[span_3](start_span)"[span_3](end_span)
+        camera: "Apple iPhone 15", captured: "28 มี.ค. 2024 · 20:50",
+        aperture: "f/1.6", shutter: "1/17s", focal: "5.96 mm", iso: "ISO 1000",
+        app: "Adobe Lightroom", resolution: "2478 × 1395 (3.5 MP)"
       }
     },
     {
-      file: "IMG_1328 (2).jpg",[span_4](start_span)[span_4](end_span)
+      file: "IMG_1328 (2).jpg",
       title: "Gilt — 05",
       sub: "Night · 05",
       tag: "bloom · grain",
       exif: {
-        camera: "Apple iPhone 15 Pro Max", captured: "18 ก.ย. 2025 · 21:25",[span_5](start_span)[span_5](end_span)
-        aperture: "f/1.8", shutter: "1/25s", focal: "6.76 mm", iso: "ISO 500",[span_6](start_span)[span_6](end_span)
-        app: "Adobe Lightroom", resolution: "2746 × 1545 (4.2 MP)[span_7](start_span)"[span_7](end_span)
+        camera: "Apple iPhone 15 Pro Max", captured: "18 ก.ย. 2025 · 21:25",
+        aperture: "f/1.8", shutter: "1/25s", focal: "6.76 mm", iso: "ISO 500",
+        app: "Adobe Lightroom", resolution: "2746 × 1545 (4.2 MP)"
       }
-    },
+    }
 
     // Copy this line for each new photo:
-    // { file: "IMG_6001.jpg", title: "Ember", sub: "Dusk · 03", tag: "warm" },
+    // { file: "IMG_6001.jpg", title: "Ember", sub: "Dusk · 06", tag: "warm" },
   ]
 };

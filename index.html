@@ -40,28 +40,28 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ชั้นที่ 1: บรรยากาศสีหลักที่ปรับตามรูปที่กำลังโฟกัส */
+    /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก (เพิ่มความกว้างและความชัดของสี) */
     #ambient-layer {
       position: fixed;
       inset: 0;
       z-index: -7;
       background:
-        radial-gradient(circle at 50% 35%, rgba(140, 29, 24, 0.36) 0%, transparent 62%),
-        radial-gradient(circle at 50% 82%, rgba(59, 24, 20, 0.28) 0%, #020203 78%);
+        radial-gradient(ellipse 85% 65% at 50% 34%, rgba(155, 34, 28, 0.56) 0%, transparent 72%),
+        radial-gradient(ellipse 90% 70% at 50% 80%, rgba(72, 26, 22, 0.44) 0%, #020203 86%);
       transition: background 1.2s ease;
       pointer-events: none;
     }
 
-    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ */
+    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ (เพิ่มความชัดให้สอดรับกับสีพื้นหลัง) */
     .mist-far {
       position: fixed;
       inset: -24%;
       z-index: -6;
       pointer-events: none;
-      opacity: 0.42;
+      opacity: 0.62;
       background:
-        radial-gradient(ellipse 62% 46% at 24% 35%, var(--aura-primary) 0%, transparent 72%),
-        radial-gradient(ellipse 58% 50% at 76% 68%, var(--aura-secondary) 0%, transparent 74%);
+        radial-gradient(ellipse 74% 58% at 24% 34%, var(--aura-primary) 0%, transparent 76%),
+        radial-gradient(ellipse 70% 62% at 76% 68%, var(--aura-secondary) 0%, transparent 78%);
       animation: mistSwayA 28s ease-in-out infinite alternate;
     }
 
@@ -70,10 +70,10 @@
       inset: -18%;
       z-index: -5;
       pointer-events: none;
-      opacity: 0.24;
+      opacity: 0.36;
       background:
-        radial-gradient(ellipse 50% 38% at 72% 32%, var(--aura-primary) 0%, transparent 70%),
-        radial-gradient(ellipse 66% 42% at 30% 76%, rgba(205, 210, 225, 0.06) 0%, transparent 75%);
+        radial-gradient(ellipse 62% 48% at 72% 32%, var(--aura-primary) 0%, transparent 74%),
+        radial-gradient(ellipse 72% 50% at 30% 76%, rgba(205, 210, 225, 0.08) 0%, transparent 78%);
       animation: mistSwayB 20s ease-in-out infinite alternate;
     }
 
@@ -93,21 +93,21 @@
       inset: -20%;
       z-index: -4;
       pointer-events: none;
-      opacity: 0.22;
+      opacity: 0.28;
       background:
-        radial-gradient(ellipse 18% 72% at 36% 24%, var(--aura-primary) 0%, transparent 75%),
-        radial-gradient(ellipse 14% 68% at 54% 28%, rgba(255, 248, 236, 0.12) 0%, transparent 75%);
+        radial-gradient(ellipse 22% 78% at 36% 24%, var(--aura-primary) 0%, transparent 78%),
+        radial-gradient(ellipse 18% 72% at 54% 28%, rgba(255, 248, 236, 0.14) 0%, transparent 78%);
       transform: rotate(-22deg);
       animation: raySweep 17s ease-in-out infinite alternate;
     }
 
     @keyframes raySweep {
-      0% { transform: translate3d(-3%, -1%, 0) rotate(-24deg); opacity: 0.14; }
-      50% { opacity: 0.25; }
-      100% { transform: translate3d(3%, 1.5%, 0) rotate(-19deg); opacity: 0.18; }
+      0% { transform: translate3d(-3%, -1%, 0) rotate(-24deg); opacity: 0.18; }
+      50% { opacity: 0.32; }
+      100% { transform: translate3d(3%, 1.5%, 0) rotate(-19deg); opacity: 0.22; }
     }
 
-    /* ชั้นที่ 4: ความมืดรอบขอบจอ */
+    /* ชั้นที่ 4: ความมืดรอบขอบจอ (เปิดพื้นที่ตรงกลางกว้างขึ้นให้สีพื้นหลังโชว์ชัด) */
     .void-vignette {
       position: fixed;
       inset: 0;
@@ -115,9 +115,9 @@
       pointer-events: none;
       background: radial-gradient(
         circle at 50% 45%,
-        transparent 30%,
-        rgba(2, 2, 3, 0.68) 80%,
-        rgba(0, 0, 1, 0.96) 100%
+        transparent 42%,
+        rgba(2, 2, 3, 0.56) 84%,
+        rgba(0, 0, 1, 0.92) 100%
       );
     }
 
@@ -161,7 +161,7 @@
       padding: max(18px, env(safe-area-inset-top)) 26px 14px;
       font-size: 12px;
       z-index: 20;
-      background: linear-gradient(to bottom, rgba(2, 2, 3, 0.85) 0%, transparent 100%);
+      background: linear-gradient(to bottom, rgba(2, 2, 3, 0.72) 0%, transparent 100%);
       pointer-events: none;
     }
 
@@ -239,15 +239,39 @@
       );
     }
 
+    /* วงแสงสีพื้นหลังเฉพาะตัวของรูปแต่ละใบ ให้แผ่กว้างและชัดขึ้น */
+    .item-aura-glow {
+      position: absolute;
+      inset: -48px;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 68% 64% at 50% 48%,
+        var(--item-aura, var(--aura-primary)) 0%,
+        transparent 74%
+      );
+      opacity: 0.58;
+      transition: opacity 0.45s ease, transform 0.55s var(--ease-drift);
+    }
+
+    .scatter-item.is-active-song .item-aura-glow {
+      opacity: 0.78;
+      transform: scale(1.08);
+    }
+
     @media (hover: hover) {
       .scatter-item:hover {
         z-index: 12 !important;
       }
+      .scatter-item:hover .item-aura-glow {
+        opacity: 0.85;
+        transform: scale(1.12);
+      }
       .scatter-item:hover .scatter-frame {
         transform: scale(1.035);
         box-shadow:
-          0 28px 75px -10px rgba(0, 0, 0, 0.96),
-          0 0 60px -10px var(--item-aura, var(--aura-primary));
+          0 28px 75px -10px rgba(0, 0, 0, 0.94),
+          0 0 75px -6px var(--item-aura, var(--aura-primary));
       }
       .scatter-item:hover .scatter-title {
         color: var(--fg-color);
@@ -258,7 +282,7 @@
       transform: scale(0.98);
     }
 
-    /* กรอบสี่เหลี่ยมไร้เส้นขอบ ละลายขอบเนียนเข้ากับความมืด */
+    /* กรอบสี่เหลี่ยมไร้เส้นขอบ ละลายขอบเนียนเข้ากับสีรอบรูป */
     .scatter-frame {
       position: relative;
       width: 100%;
@@ -267,8 +291,8 @@
       border: none;
       background-color: #050507;
       box-shadow:
-        0 20px 55px -12px rgba(0, 0, 0, 0.92),
-        0 0 48px -16px var(--item-aura, var(--aura-primary));
+        0 20px 55px -12px rgba(0, 0, 0, 0.88),
+        0 0 65px -8px var(--item-aura, var(--aura-primary));
       transition: transform 0.55s var(--ease-drift), box-shadow 0.55s ease;
     }
 
@@ -296,11 +320,11 @@
       inset: 0;
       pointer-events: none;
       box-shadow:
-        inset 0 0 18px 4px rgba(2, 2, 3, 0.62),
-        inset 0 0 36px 1px rgba(2, 2, 3, 0.28);
+        inset 0 0 18px 4px rgba(2, 2, 3, 0.58),
+        inset 0 0 36px 1px rgba(2, 2, 3, 0.24);
     }
 
-    /* ป้ายชื่อเล็กๆ ใต้รูปแต่ละใบตามสไตล์ pryzm.design */
+    /* ป้ายชื่อเล็กๆ ใต้รูปแต่ละใบ */
     .scatter-meta {
       display: flex;
       flex-direction: column;
@@ -314,7 +338,8 @@
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.04em;
-      color: rgba(230, 230, 234, 0.78);
+      color: rgba(230, 230, 234, 0.84);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -325,7 +350,8 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 9.5px;
       letter-spacing: 0.06em;
-      color: var(--fg-whisper);
+      color: rgba(230, 230, 234, 0.42);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -336,7 +362,7 @@
       font-size: 7px;
       vertical-align: middle;
       color: var(--fg-color);
-      opacity: 0.85;
+      opacity: 0.88;
     }
 
     /* แถบเพลงลอยด้านล่างไร้เส้นขอบ */
@@ -449,7 +475,9 @@
       transform-origin: left;
     }
 
-    /* โหมดขยายดูรูปเดี่ยวเต็มตาเมื่อแตะที่รูป (Lightbox) */
+    /* ============================================================
+       หน้า 2: โหมดขยายดูรูปเดี่ยว (คงความมืดเดิม + กดค้างพลิกการ์ด 3D)
+       ============================================================ */
     .lightbox {
       position: fixed;
       inset: 0;
@@ -459,9 +487,9 @@
       align-items: center;
       justify-content: center;
       padding: 24px 20px 84px;
-      background: rgba(2, 2, 3, 0.88);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      background: rgba(2, 2, 3, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.4s var(--ease-liquid);
@@ -487,22 +515,145 @@
       transform: scale(1);
     }
 
-    .lightbox-frame {
+    /* เวที 3D Flip Card */
+    .flip-scene {
+      perspective: 1400px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .flip-card {
+      position: relative;
+      display: grid;
+      place-items: center;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .flip-card.is-pressing {
+      transform: scale(0.975);
+      transition: transform 0.25s ease-out;
+    }
+
+    .flip-card.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flip-card.is-flipped.is-pressing {
+      transform: rotateY(180deg) scale(0.975);
+    }
+
+    /* ด้านหน้า: รูปภาพคมชัด */
+    .flip-front {
+      grid-area: 1 / 1;
       position: relative;
       border-radius: 4px;
       overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
       box-shadow:
         0 30px 90px rgba(0, 0, 0, 0.96),
         0 0 80px -10px var(--aura-primary);
     }
 
-    .lightbox-frame img {
+    .flip-front img {
       display: block;
       max-width: min(90vw, 760px);
-      max-height: 64dvh;
+      max-height: 60dvh;
       width: auto;
       height: auto;
       object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* ด้านหลัง: แผ่นบันทึกรายละเอียดของรูปนั้นๆ */
+    .flip-back {
+      grid-area: 1 / 1;
+      width: 100%;
+      height: 100%;
+      min-width: min(82vw, 320px);
+      min-height: 250px;
+      border-radius: 6px;
+      padding: 26px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: left;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.045) 0%, transparent 65%),
+        rgba(10, 10, 14, 0.94);
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.96),
+        0 0 70px -16px var(--aura-primary),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      transform: rotateY(180deg);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow-y: auto;
+    }
+
+    .back-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .back-index {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fg-whisper);
+    }
+
+    .back-date {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.12em;
+      color: var(--fg-muted);
+    }
+
+    .back-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 0;
+    }
+
+    .back-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 17px;
+      letter-spacing: 0.14em;
+      color: var(--fg-color);
+    }
+
+    .back-note {
+      font-size: 12.5px;
+      line-height: 1.72;
+      letter-spacing: 0.02em;
+      color: rgba(230, 230, 234, 0.74);
+      white-space: pre-line;
+    }
+
+    .back-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      color: var(--fg-whisper);
     }
 
     .lightbox-caption {
@@ -517,9 +668,11 @@
     .lightbox-hint {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 9.5px;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--fg-whisper);
+      text-align: center;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -553,15 +706,37 @@
     </button>
   </div>
 
-  <!-- Lightbox เมื่อกดเลือกรูปใดรูปหนึ่ง -->
+  <!-- หน้า 2: Lightbox ดูรูปเดี่ยว + กดค้างเพื่อพลิกด้านหลังใส่รายละเอียด -->
   <div class="lightbox" id="lightbox">
-    <div class="lightbox-inner">
-      <div class="lightbox-frame">
-        <img id="lightbox-img" alt="" />
-        <div class="edge-dissolve"></div>
+    <div class="lightbox-inner" id="lightbox-inner">
+      <div class="flip-scene" id="flip-scene">
+        <div class="flip-card" id="flip-card">
+          <!-- ด้านหน้ารูป -->
+          <div class="flip-front">
+            <img id="lightbox-img" alt="" />
+            <div class="edge-dissolve"></div>
+          </div>
+
+          <!-- ด้านหลังรายละเอียดรูป -->
+          <div class="flip-back">
+            <div class="back-header">
+              <span class="back-index" id="back-index">FRAME — 01</span>
+              <span class="back-date" id="back-date">2026</span>
+            </div>
+            <div class="back-body">
+              <div class="back-title" id="back-title">Crimson — 01</div>
+              <div class="back-note" id="back-note">บันทึกเรื่องราว ความทรงจำ หรือรายละเอียดของภาพนี้...</div>
+            </div>
+            <div class="back-footer">
+              <span id="back-location">Bangkok, TH</span>
+              <span id="back-camera">35mm / Digital</span>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div class="lightbox-caption" id="lightbox-caption"></div>
-      <div class="lightbox-hint">tap anywhere to return</div>
+      <div class="lightbox-hint" id="lightbox-hint">hold photo to flip · tap outside to return</div>
     </div>
   </div>
 
@@ -578,12 +753,17 @@
     const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
     const DEFAULT_SONG = "TV Girl · Loving Machine";
 
+    /* แก้ไขรายละเอียดหลังการ์ดของแต่ละรูปได้ตรงนี้ */
     const ENTRIES = [
       {
         file: "IMG_5755 (2).jpg",
         src: "./images/IMG_5755%20(2).jpg",
         caption: "Crimson — 01",
         sub: "Nocturne · 01",
+        date: "2026 · 01",
+        location: "Night Street",
+        camera: "Stillness Archive",
+        note: "แสงไฟสีแดงยามค่ำคืนกับความเงียบงันท่ามกลางผู้คน\n(กดค้างที่รูปอีกครั้งเพื่อพลิกกลับ)",
         song: DEFAULT_SONG,
         audio: DEFAULT_AUDIO
       },
@@ -592,6 +772,10 @@
         src: "./images/IMG_5738%20(1).jpg",
         caption: "Magenta — 02",
         sub: "Stillness · 02",
+        date: "2026 · 02",
+        location: "Late Hours",
+        camera: "Stillness Archive",
+        note: "เงาสะท้อนสีชมพูม่วงในความมืด\n(สามารถแก้ไขข้อความตรงนี้ในโค้ดได้เลย)",
         song: DEFAULT_SONG,
         audio: DEFAULT_AUDIO
       }
@@ -625,10 +809,19 @@
     const musicProgressEl = document.getElementById("music-progress");
 
     const lightbox = document.getElementById("lightbox");
+    const flipScene = document.getElementById("flip-scene");
+    const flipCard = document.getElementById("flip-card");
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxCaption = document.getElementById("lightbox-caption");
+    const lightboxHint = document.getElementById("lightbox-hint");
 
-    /* เกรนฟิล์มอนาล็อกบางเบา */
+    const backIndexEl = document.getElementById("back-index");
+    const backDateEl = document.getElementById("back-date");
+    const backTitleEl = document.getElementById("back-title");
+    const backNoteEl = document.getElementById("back-note");
+    const backLocationEl = document.getElementById("back-location");
+    const backCameraEl = document.getElementById("back-camera");
+
     function initFilmGrain() {
       const c = document.createElement("canvas");
       c.width = 96;
@@ -647,7 +840,6 @@
       filmGrainEl.style.backgroundImage = `url(${c.toDataURL("image/png")})`;
     }
 
-    /* ละอองฝุ่นลอยในอากาศ */
     function initAtmosphereCanvas() {
       const canvas = document.getElementById("atmosphere-canvas");
       const ctx = canvas.getContext("2d");
@@ -723,7 +915,6 @@
       requestAnimationFrame(tick);
     }
 
-    /* Parallax เบาๆ ตามการขยับเมาส์หรือเอียงมือถือ */
     function initLookAround() {
       let targetX = 0;
       let targetY = 0;
@@ -781,7 +972,6 @@
         .trim() || "Stillness";
     }
 
-    /* ดูดโทนสีจากภาพแต่ละใบมาสร้างออร่าให้กลืนกับพื้นหลัง */
     function getDominantPalette(src, imgElement) {
       if (paletteCache.has(src)) return paletteCache.get(src);
 
@@ -846,9 +1036,9 @@
         const result = {
           primaryHex: rgbToHex(primary),
           secondaryHex: rgbToHex(secondary),
-          glowPrimary: rgbToHex(primary.map(v => v * 0.58)),
-          glowSecondary: rgbToHex(secondary.map(v => v * 0.46)),
-          abyssBase: rgbToHex(primary.map(v => v * 0.12)),
+          glowPrimary: rgbToHex(primary.map(v => v * 0.78)),
+          glowSecondary: rgbToHex(secondary.map(v => v * 0.64)),
+          abyssBase: rgbToHex(primary.map(v => v * 0.18)),
           tint: {
             r: Math.round(180 + primary[0] * 0.28),
             g: Math.round(180 + primary[1] * 0.28),
@@ -869,6 +1059,7 @@
         .join("");
     }
 
+    /* ปรับสีพื้นหลังหน้าแรกให้กว้างและชัดขึ้นตามภาพที่เลือก */
     function applyAtmosphere(palette) {
       if (!palette) return;
       const { primaryHex, secondaryHex, glowPrimary, glowSecondary, abyssBase, tint } = palette;
@@ -878,12 +1069,11 @@
       document.documentElement.style.setProperty("--aura-secondary", secondaryHex);
 
       ambientLayer.style.background = `
-        radial-gradient(circle at 50% 35%, ${glowPrimary}c8 0%, transparent 62%),
-        radial-gradient(circle at 50% 82%, ${glowSecondary}90 0%, ${abyssBase} 76%, #020203 100%)
+        radial-gradient(ellipse 85% 65% at 50% 34%, ${glowPrimary}dc 0%, transparent 72%),
+        radial-gradient(ellipse 90% 70% at 50% 80%, ${glowSecondary}b4 0%, ${abyssBase} 84%, #020203 100%)
       `;
     }
 
-    /* อัลกอริทึมจัดวางรูปกระจายตัวอิสระแบบ Editorial Scatter ไม่ทับกันและเพิ่มรูปได้ไม่จำกัด */
     function layoutScatterItems() {
       const containerWidth = scatterCanvas.clientWidth;
       if (!containerWidth) return;
@@ -974,8 +1164,19 @@
       syncAudio(item, openModal);
 
       if (openModal) {
+        flipCard.classList.remove("is-flipped", "is-pressing");
         lightboxImg.src = item.src;
         lightboxCaption.textContent = item.caption;
+        lightboxHint.textContent = "hold photo to flip · tap outside to return";
+
+        const num = String(currentIndex + 1).padStart(2, "0");
+        backIndexEl.textContent = `FRAME — ${num}`;
+        backDateEl.textContent = item.date || "2026";
+        backTitleEl.textContent = item.caption;
+        backNoteEl.textContent = item.note || item.sub || "Stillness archive.";
+        backLocationEl.textContent = item.location || "Archive";
+        backCameraEl.textContent = item.camera || "ustzyix";
+
         lightbox.classList.add("is-open");
       }
     }
@@ -1036,6 +1237,9 @@
         card.className = "scatter-item" + (idx === currentIndex ? " is-active-song" : "");
         card.style.transitionDelay = `${Math.min(idx * 90, 540)}ms`;
 
+        const auraGlow = document.createElement("div");
+        auraGlow.className = "item-aura-glow";
+
         const frame = document.createElement("div");
         frame.className = "scatter-frame";
 
@@ -1079,6 +1283,7 @@
         meta.appendChild(title);
         meta.appendChild(sub);
 
+        card.appendChild(auraGlow);
         card.appendChild(frame);
         card.appendChild(meta);
 
@@ -1092,7 +1297,6 @@
       layoutScatterItems();
     }
 
-    /* ดึงรูปและเพลงใหม่จาก GitHub อัตโนมัติ */
     async function syncGitHubAssets() {
       try {
         const imgApi = `https://api.github.com/repos/${REPO_CONFIG.owner}/${REPO_CONFIG.repo}/contents/${REPO_CONFIG.folder}`;
@@ -1131,6 +1335,10 @@
                 src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
                 caption: title,
                 sub: `Archive · ${num}`,
+                date: "2026",
+                location: "Archive",
+                camera: "ustzyix",
+                note: `${title} — Stillness archive.`,
                 song: audioMap.has(baseName) ? title : DEFAULT_SONG,
                 audio: audioMap.get(baseName) || DEFAULT_AUDIO
               };
@@ -1195,8 +1403,56 @@
       }
     });
 
-    lightbox.addEventListener("click", () => {
-      lightbox.classList.remove("is-open");
+    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D ในหน้าดูรูปเดี่ยว */
+    let holdTimer = null;
+    let didFlipOnHold = false;
+
+    function toggleCardFlip() {
+      const isFlipped = flipCard.classList.toggle("is-flipped");
+      lightboxHint.textContent = isFlipped
+        ? "hold again to flip back · tap outside to return"
+        : "hold photo to flip · tap outside to return";
+      if (navigator.vibrate) {
+        try { navigator.vibrate(14); } catch (_) {}
+      }
+    }
+
+    function startHold(e) {
+      e.stopPropagation();
+      didFlipOnHold = false;
+      flipCard.classList.add("is-pressing");
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        flipCard.classList.remove("is-pressing");
+        didFlipOnHold = true;
+        toggleCardFlip();
+      }, 360);
+    }
+
+    function cancelHold(e) {
+      if (e) e.stopPropagation();
+      clearTimeout(holdTimer);
+      flipCard.classList.remove("is-pressing");
+    }
+
+    flipScene.addEventListener("pointerdown", startHold);
+    flipScene.addEventListener("pointerup", (e) => {
+      cancelHold(e);
+    });
+    flipScene.addEventListener("pointerleave", cancelHold);
+    flipScene.addEventListener("pointercancel", cancelHold);
+    flipScene.addEventListener("contextmenu", (e) => e.preventDefault());
+    flipScene.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!didFlipOnHold && flipCard.classList.contains("is-flipped")) {
+        toggleCardFlip();
+      }
+    });
+
+    lightbox.addEventListener("click", (e) => {
+      if (e.target === lightbox || e.target.id === "lightbox-inner") {
+        lightbox.classList.remove("is-open");
+      }
     });
 
     window.addEventListener("keydown", (e) => {

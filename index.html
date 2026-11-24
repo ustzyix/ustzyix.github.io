@@ -83,6 +83,8 @@ main::-webkit-scrollbar{display:none}
 [data-layout=grid] .canvas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px;margin-top:84px;padding-bottom:48px;height:auto!important}
 [data-layout=grid] .card{position:relative!important;left:auto!important;top:auto!important;width:auto!important;translate:none!important}
 
+.canvas[data-empty]::after{content:"No photos found. Check data/photos.js and the images folder.";position:absolute;left:0;right:0;top:48px;text-align:center;font-size:13px;color:var(--fg2)}
+
 /* ---------- cards ---------- */
 .card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;
  box-shadow:0 22px 50px -22px rgba(0,0,0,.8),0 0 70px -26px var(--item-aura,var(--aura-1));
@@ -200,17 +202,19 @@ body.modal-active main,body.modal-active header{opacity:0;visibility:hidden;tran
   </div>
 </div>
 
+<script src="data/photos.js"></script>
 <script>
-const REPO={owner:"ustzyix",repo:"ustzyix.github.io",folder:"images"};
-const ENTRIES=[
- {file:"IMG_5755 (2).jpg",src:"./images/IMG_5755%20(2).jpg",caption:"Crimson — 01",sub:"Nocturne · 01",tag:"fluted · grain",
-  exif:{camera:"Apple iPhone 7 Plus",captured:"12 ต.ค. 2025 · 12:16",aperture:"f/1.8",shutter:"1/1500s",focal:"3.99 mm",iso:"ISO 20",app:"Adobe Lightroom",resolution:"2612 × 1470 (3.8 MP)"}},
- {file:"IMG_5738 (1).jpg",src:"./images/IMG_5738%20(1).jpg",caption:"Magenta — 02",sub:"Stillness · 02",tag:"bloom · grain",
-  exif:{camera:"Apple iPhone 7 Plus",captured:"12 ต.ค. 2025 · 11:59",aperture:"f/1.8",shutter:"1/100s",focal:"3.99 mm",iso:"ISO 32",app:"Adobe Lightroom",resolution:"3024 × 1701 (5.1 MP)"}}
-];
+const G=window.GALLERY||{};
+const FOLDER=String(G.folder||"images").replace(/^\.?\/+|\/+$/g,"");
+const IMG_OK=/\.(jpe?g|png|webp|gif|avif)$/i,pad=n=>String(n).padStart(2,"0");
+const capOf=f=>f.replace(/\.[^/.]+$/,"").replace(/\(\d+\)/g,"").replace(/^IMG[-_]?/i,"").replace(/[-_]+/g," ").trim()||"Untitled";
+function toEntry(p,i){
+ if(typeof p==="string")p={file:p};
+ const file=p.file||String(p.src).split("/").pop();
+ return{file,src:p.src||`./${FOLDER}/${encodeURIComponent(file)}`,caption:p.title||capOf(file),sub:p.sub||`Archive · ${pad(i+1)}`,tag:p.tag||"",exif:p.exif||null,auto:!!p.auto}}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const body=document.body,root=document.documentElement.style;
-let entries=[...ENTRIES],cards=[],cur=0,tint=[225,215,215],modal=false,grid=false;
+let entries=(G.photos||[]).filter(p=>p&&(typeof p==='string'||p.file||p.src)).map(toEntry),cards=[],cur=0,tint=[225,215,215],modal=false,grid=false;
 const canvas=$("#canvas"),stage=$("#stage"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -335,7 +339,7 @@ function closeLb(){if(!modal)return;modal=false;body.classList.remove("modal-act
 const decoded=new Map();
 function predecode(src){let im=decoded.get(src);
  if(!im){im=new Image();im.decoding="async";im.src=src;decoded.set(src,im);if(decoded.size>8)decoded.delete(decoded.keys().next().value)}
- return im.decode?im.decode().catch(()=>{}):Promise.resolve()}
+ return Promise.race([im.decode?im.decode().catch(()=>{}):0,new Promise(r=>setTimeout(r,900))])}
 let selTok=0;
 async function select(i,open){
  if(!entries.length)return;cur=(i+entries.length)%entries.length;const it=entries[cur],img=cards[cur]?.querySelector("img"),tok=++selTok;
@@ -359,33 +363,35 @@ addEventListener("keydown",e=>{if(!modal)return;if(e.key==="Escape")closeLb();el
 function addCard(it,i){
  const el=document.createElement("button");el.type="button";el.className="card glass";el.style.setProperty("--d",Math.min(i*90,540)+"ms");
  el.setAttribute("aria-label","Inspect "+it.caption);
- el.innerHTML=`<div class="frame"><img alt="${esc(it.caption)}" decoding="async" draggable="false"></div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div><span class="tag glass">${esc(it.tag||"grain")}</span></div>`;
+ el.innerHTML=`<div class="frame"><img alt="${esc(it.caption)}" decoding="async" draggable="false"></div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div>${it.tag?`<span class="tag glass">${esc(it.tag)}</span>`:""}</div>`;
  const img=el.querySelector("img");
- img.onload=async()=>{try{await img.decode()}catch(_){}scheduleLayout();el.classList.add("in");
+ img.onload=async()=>{scheduleLayout();el.classList.add("in");
   const p=await palette(it.src,img);if(p){el.style.setProperty("--item-aura",p.a);if(entries[cur]===it)applyAtmosphere(p)}};
- img.onerror=()=>{scheduleLayout();el.classList.add("in")};
- img.src=it.src;
+ img.onerror=()=>{if(it.auto){const k=entries.indexOf(it);if(k>-1){entries.splice(k,1);cards.splice(k,1)}el.remove();updateCount();scheduleLayout();return}scheduleLayout();el.classList.add("in")};
+ img.src=it.src;setTimeout(()=>el.classList.add("in"),6000);
  el.onclick=()=>{if(!modal)select(entries.indexOf(it),true)};
  canvas.append(el);cards.push(el)}
-function updateCount(){$("#count").textContent=`${entries.length} frame${entries.length>1?"s":""}`}
+function updateCount(){$("#count").textContent=`${entries.length} frame${entries.length==1?"":"s"}`;canvas.toggleAttribute("data-empty",!entries.length)}
 entries.forEach(addCard);updateCount();
 
-/* ---------- GitHub sync (adds new photos without re-rendering existing cards) ---------- */
-const CK="ustzyix_github_cache_v5",TTL=15*60*1000;
-const capOf=f=>f.replace(/\.[^/.]+$/,"").replace(/\(\d+\)/g,"").replace(/^IMG[-_]?/i,"").replace(/[-_]/g," ").trim()||"Stillness";
-function addExtra(list){
- const have=new Set(entries.map(p=>p.file)),fresh=list.filter(p=>!have.has(p.file));if(!fresh.length)return;
- fresh.forEach(p=>{entries.push(p);addCard(p,entries.length-1)});updateCount();scheduleLayout()}
-async function sync(){
- try{const c=sessionStorage.getItem(CK);
-  if(c){const d=JSON.parse(c);if(Date.now()-d.time<TTL&&Array.isArray(d.items)){addExtra(d.items);return}}
-  const r=await fetch(`https://api.github.com/repos/${REPO.owner}/${REPO.repo}/contents/${REPO.folder}`);if(!r.ok)return;
-  const have=new Set(entries.map(p=>p.file)),ok=/\.(jpe?g|png|webp|gif|avif)$/i;
-  const items=(await r.json()).filter(f=>f.type==="file"&&ok.test(f.name)&&!have.has(f.name)).map((f,i)=>({
-   file:f.name,src:`./${REPO.folder}/${encodeURIComponent(f.name)}`,caption:capOf(f.name),sub:`Archive · ${String(entries.length+i+1).padStart(2,"0")}`,tag:"glass · grain"}));
-  try{sessionStorage.setItem(CK,JSON.stringify({time:Date.now(),items}))}catch(_){}
-  addExtra(items)}catch(_){}}
-"requestIdleCallback"in window?requestIdleCallback(sync,{timeout:2000}):setTimeout(sync,1000);
+/* ---------- discovery: photos in the folder that data/photos.js does not list ---------- */
+const DK="gallery_dir_v2",DTTL=3*60*1000;
+function repoInfo(){
+ if(G.repo){const[o,r]=G.repo.split("/");return{o,r}}
+ const h=location.hostname,seg=location.pathname.split("/")[1];
+ return h.endsWith(".github.io")?{o:h.split(".")[0],r:seg&&!/\./.test(seg)?seg:h}:null}
+function addExtra(files){
+ const have=new Set(entries.map(p=>p.file));
+ files.filter(f=>!have.has(f)).forEach(f=>{const e=toEntry({file:f,auto:true},entries.length);entries.push(e);addCard(e,entries.length-1)});
+ updateCount();scheduleLayout()}
+async function discover(){
+ if(G.discover===false)return;const r=repoInfo();if(!r)return;
+ try{const c=JSON.parse(localStorage.getItem(DK)||"null");if(c&&Date.now()-c.t<DTTL){addExtra(c.files);return}}catch(_){}
+ try{const res=await fetch(`https://api.github.com/repos/${r.o}/${r.r}/contents/${FOLDER}`);if(!res.ok)return;
+  const files=(await res.json()).filter(f=>f.type==="file"&&IMG_OK.test(f.name)).map(f=>f.name).sort();
+  try{localStorage.setItem(DK,JSON.stringify({t:Date.now(),files}))}catch(_){}
+  addExtra(files)}catch(_){}}
+"requestIdleCallback"in window?requestIdleCallback(discover,{timeout:2000}):setTimeout(discover,1000);
 requestAnimationFrame(()=>{moveThumb();requestAnimationFrame(()=>thumb.classList.add("ready"))});
 </script>
 </body>

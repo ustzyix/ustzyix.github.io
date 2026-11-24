@@ -40,7 +40,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก (เพิ่มความกว้างและความชัดของสี) */
+    /* ชั้นที่ 1: บรรยากาศสีหลักหน้าแรก */
     #ambient-layer {
       position: fixed;
       inset: 0;
@@ -52,7 +52,7 @@
       pointer-events: none;
     }
 
-    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ (เพิ่มความชัดให้สอดรับกับสีพื้นหลัง) */
+    /* ชั้นที่ 2: หมอกลึกเคลื่อนตัวช้าๆ */
     .mist-far {
       position: fixed;
       inset: -24%;
@@ -107,7 +107,7 @@
       100% { transform: translate3d(3%, 1.5%, 0) rotate(-19deg); opacity: 0.22; }
     }
 
-    /* ชั้นที่ 4: ความมืดรอบขอบจอ (เปิดพื้นที่ตรงกลางกว้างขึ้นให้สีพื้นหลังโชว์ชัด) */
+    /* ชั้นที่ 4: ความมืดรอบขอบจอ */
     .void-vignette {
       position: fixed;
       inset: 0;
@@ -197,7 +197,7 @@
       50% { opacity: 0.85; transform: scale(1.25); }
     }
 
-    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ (Scattered Canvas) */
+    /* ผืนผ้าใบวางรูปกระจายตัวอิสระ */
     main {
       position: relative;
       width: 100%;
@@ -213,7 +213,7 @@
       min-height: 82dvh;
     }
 
-    /* การ์ดรูปภาพแต่ละใบที่ลอยกระจายบนพื้นที่มืด */
+    /* การ์ดรูปภาพแต่ละใบ */
     .scatter-item {
       position: absolute;
       display: flex;
@@ -239,7 +239,6 @@
       );
     }
 
-    /* วงแสงสีพื้นหลังเฉพาะตัวของรูปแต่ละใบ ให้แผ่กว้างและชัดขึ้น */
     .item-aura-glow {
       position: absolute;
       inset: -48px;
@@ -282,7 +281,6 @@
       transform: scale(0.98);
     }
 
-    /* กรอบสี่เหลี่ยมไร้เส้นขอบ ละลายขอบเนียนเข้ากับสีรอบรูป */
     .scatter-frame {
       position: relative;
       width: 100%;
@@ -314,7 +312,6 @@
       100% { transform: scale(1.045) translate3d(0.4%, 0.4%, 0); }
     }
 
-    /* เงาละลายขอบสี่เหลี่ยม 4 ด้านให้ภาพกลืนกับฉากหลัง */
     .edge-dissolve {
       position: absolute;
       inset: 0;
@@ -324,7 +321,6 @@
         inset 0 0 36px 1px rgba(2, 2, 3, 0.24);
     }
 
-    /* ป้ายชื่อเล็กๆ ใต้รูปแต่ละใบ */
     .scatter-meta {
       display: flex;
       flex-direction: column;
@@ -365,44 +361,62 @@
       opacity: 0.88;
     }
 
-    /* แถบเพลงลอยด้านล่างไร้เส้นขอบ */
+    /* ============================================================
+       แถบเพลงลอยด้านล่างแบบไร้กรอบปุ่ม (Soft Atmospheric Mist Text)
+       ============================================================ */
     .floating-dock {
       position: fixed;
-      bottom: max(20px, env(safe-area-inset-bottom));
+      bottom: max(22px, env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       z-index: 25;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
       width: max-content;
       max-width: 90vw;
     }
 
     .music-pill {
       position: relative;
-      overflow: hidden;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      max-width: min(88vw, 330px);
-      height: 34px;
-      padding: 0 18px;
-      border-radius: 999px;
+      max-width: min(88vw, 340px);
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 0;
       border: none;
       outline: none;
-      background: rgba(12, 12, 16, 0.78);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.72);
+      background: transparent;
+      box-shadow: none;
       color: var(--fg-muted);
       font-size: 11px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
       cursor: pointer;
       touch-action: manipulation;
-      transition: background-color 0.22s ease, color 0.22s ease, transform 0.2s ease;
+      transition: color 0.35s ease, transform 0.25s ease, opacity 0.35s ease;
+    }
+
+    /* ออร่าเบลอฟุ้งด้านหลังตัวหนังสือ ไม่เป็นกรอบปุ่มแข็งๆ */
+    .music-pill::before {
+      content: "";
+      position: absolute;
+      inset: -14px -26px;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 60% 55% at 50% 50%,
+        rgba(6, 6, 9, 0.72) 0%,
+        rgba(6, 6, 9, 0.28) 54%,
+        transparent 80%
+      );
+      filter: blur(8px);
+      -webkit-filter: blur(8px);
+      opacity: 0.85;
+      transition: opacity 0.4s ease;
     }
 
     .music-pill:active {
@@ -410,8 +424,7 @@
     }
 
     .music-pill.playing {
-      color: var(--fg-color);
-      background: rgba(22, 22, 28, 0.84);
+      color: rgba(236, 236, 240, 0.92);
     }
 
     .eq-bars {
@@ -421,6 +434,7 @@
       height: 10px;
       width: 10px;
       flex-shrink: 0;
+      opacity: 0.78;
     }
 
     .eq-bars i {
@@ -453,30 +467,32 @@
     }
 
     .music-state {
-      min-width: 42px;
+      min-width: 38px;
       text-align: right;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
-      letter-spacing: 0.12em;
+      font-size: 9px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      opacity: 0.68;
+      opacity: 0.55;
       flex-shrink: 0;
     }
 
+    /* เส้นเวลาเล่นเพลงบางเบากลางอากาศใต้ชื่อเพลง */
     .music-progress {
       position: absolute;
-      left: 0;
-      bottom: 0;
-      height: 1.5px;
-      width: 100%;
-      background: currentColor;
-      opacity: 0.45;
+      left: 14px;
+      right: 14px;
+      bottom: 2px;
+      height: 1px;
+      width: auto;
+      background: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+      opacity: 0.35;
       transform: scaleX(0);
       transform-origin: left;
     }
 
     /* ============================================================
-       หน้า 2: โหมดขยายดูรูปเดี่ยว (คงความมืดเดิม + กดค้างพลิกการ์ด 3D)
+       หน้า 2: โหมดขยายดูรูปเดี่ยว (คงความมืดเดิม + กดค้างพลิกการ์ด EXIF)
        ============================================================ */
     .lightbox {
       position: fixed;
@@ -569,91 +585,141 @@
       pointer-events: none;
     }
 
-    /* ด้านหลัง: แผ่นบันทึกรายละเอียดของรูปนั้นๆ */
+    /* ด้านหลัง: ข้อมูลเทคนิคภาพถ่าย & การแต่งสี (Camera EXIF & Color Grading) */
     .flip-back {
       grid-area: 1 / 1;
       width: 100%;
       height: 100%;
-      min-width: min(82vw, 320px);
-      min-height: 250px;
+      min-width: min(86vw, 340px);
+      min-height: 256px;
       border-radius: 6px;
-      padding: 26px 24px;
+      padding: 20px 22px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      gap: 12px;
       text-align: left;
       background:
-        radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.045) 0%, transparent 65%),
-        rgba(10, 10, 14, 0.94);
+        radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.045) 0%, transparent 65%),
+        rgba(9, 9, 13, 0.96);
       box-shadow:
         0 30px 90px rgba(0, 0, 0, 0.96),
         0 0 70px -16px var(--aura-primary),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        inset 0 0 0 1px rgba(255, 255, 255, 0.07);
       transform: rotateY(180deg);
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
       overflow-y: auto;
     }
 
-    .back-header {
+    .exif-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
 
-    .back-index {
+    .exif-device {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: var(--fg-color);
+    }
+
+    .exif-device svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.72;
+      flex-shrink: 0;
+    }
+
+    .exif-date {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 9.5px;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.06em;
+      color: var(--fg-muted);
+      white-space: nowrap;
+    }
+
+    /* แถบค่ากล้อง 4 ช่อง: รูรับแสง / ชัตเตอร์ / ระยะเลนส์ / ISO */
+    .exif-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      padding: 10px 8px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: center;
+    }
+
+    .metric-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .metric-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--fg-color);
+      letter-spacing: 0.02em;
+    }
+
+    .metric-lbl {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 8px;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--fg-whisper);
     }
 
-    .back-date {
+    /* รายละเอียดไฟล์และแอปแต่งสี */
+    .exif-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .exif-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      font-size: 11px;
+    }
+
+    .exif-key {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 9.5px;
       letter-spacing: 0.12em;
-      color: var(--fg-muted);
-    }
-
-    .back-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 12px;
-      padding: 16px 0;
-    }
-
-    .back-title {
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 17px;
-      letter-spacing: 0.14em;
-      color: var(--fg-color);
-    }
-
-    .back-note {
-      font-size: 12.5px;
-      line-height: 1.72;
-      letter-spacing: 0.02em;
-      color: rgba(230, 230, 234, 0.74);
-      white-space: pre-line;
-    }
-
-    .back-footer {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 8px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9.5px;
-      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--fg-whisper);
+      flex-shrink: 0;
+    }
+
+    .exif-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      color: rgba(230, 230, 234, 0.85);
+      text-align: right;
+      word-break: break-word;
+    }
+
+    .exif-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--fg-color);
+      font-size: 10px;
+      letter-spacing: 0.04em;
     }
 
     .lightbox-caption {
@@ -706,7 +772,7 @@
     </button>
   </div>
 
-  <!-- หน้า 2: Lightbox ดูรูปเดี่ยว + กดค้างเพื่อพลิกด้านหลังใส่รายละเอียด -->
+  <!-- หน้า 2: Lightbox ดูรูปเดี่ยว + กดค้างเพื่อพลิกดูสเปกกล้องและแอปแต่งสี -->
   <div class="lightbox" id="lightbox">
     <div class="lightbox-inner" id="lightbox-inner">
       <div class="flip-scene" id="flip-scene">
@@ -717,26 +783,63 @@
             <div class="edge-dissolve"></div>
           </div>
 
-          <!-- ด้านหลังรายละเอียดรูป -->
+          <!-- ด้านหลัง: ข้อมูลเทคนิคการถ่ายและแต่งสี (EXIF) -->
           <div class="flip-back">
-            <div class="back-header">
-              <span class="back-index" id="back-index">FRAME — 01</span>
-              <span class="back-date" id="back-date">2026</span>
+            <div class="exif-top">
+              <div class="exif-device">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+                  <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+                  <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+                  <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+                  <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+                  <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+                </svg>
+                <span id="exif-camera">Apple iPhone 7 Plus</span>
+              </div>
+              <span class="exif-date" id="exif-captured">12 Oct 2025 · 12:16</span>
             </div>
-            <div class="back-body">
-              <div class="back-title" id="back-title">Crimson — 01</div>
-              <div class="back-note" id="back-note">บันทึกเรื่องราว ความทรงจำ หรือรายละเอียดของภาพนี้...</div>
+
+            <div class="exif-metrics">
+              <div class="metric-cell">
+                <span class="metric-val" id="exif-aperture">f/1.8</span>
+                <span class="metric-lbl">Aperture</span>
+              </div>
+              <div class="metric-cell">
+                <span class="metric-val" id="exif-shutter">1/1500s</span>
+                <span class="metric-lbl">Shutter</span>
+              </div>
+              <div class="metric-cell">
+                <span class="metric-val" id="exif-focal">3.99 mm</span>
+                <span class="metric-lbl">Focal</span>
+              </div>
+              <div class="metric-cell">
+                <span class="metric-val" id="exif-iso">ISO 20</span>
+                <span class="metric-lbl">ISO</span>
+              </div>
             </div>
-            <div class="back-footer">
-              <span id="back-location">Bangkok, TH</span>
-              <span id="back-camera">35mm / Digital</span>
+
+            <div class="exif-rows">
+              <div class="exif-row">
+                <span class="exif-key">Color Grade</span>
+                <span class="exif-badge" id="exif-app">Adobe Lightroom</span>
+              </div>
+              <div class="exif-row">
+                <span class="exif-key">Resolution</span>
+                <span class="exif-val" id="exif-res">2612 × 1470 · 3.8 MP</span>
+              </div>
+              <div class="exif-row">
+                <span class="exif-key">File</span>
+                <span class="exif-val" id="exif-file">IMG_5755 (2).jpg</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="lightbox-caption" id="lightbox-caption"></div>
-      <div class="lightbox-hint" id="lightbox-hint">hold photo to flip · tap outside to return</div>
+      <div class="lightbox-hint" id="lightbox-hint">hold photo for camera & color info · tap outside to return</div>
     </div>
   </div>
 
@@ -753,17 +856,23 @@
     const DEFAULT_AUDIO = "./audio/Loving%20Machine.mp3";
     const DEFAULT_SONG = "TV Girl · Loving Machine";
 
-    /* แก้ไขรายละเอียดหลังการ์ดของแต่ละรูปได้ตรงนี้ */
+    /* ข้อมูลเทคนิคการถ่ายและแต่งสีของแต่ละรูป */
     const ENTRIES = [
       {
         file: "IMG_5755 (2).jpg",
         src: "./images/IMG_5755%20(2).jpg",
         caption: "Crimson — 01",
         sub: "Nocturne · 01",
-        date: "2026 · 01",
-        location: "Night Street",
-        camera: "Stillness Archive",
-        note: "แสงไฟสีแดงยามค่ำคืนกับความเงียบงันท่ามกลางผู้คน\n(กดค้างที่รูปอีกครั้งเพื่อพลิกกลับ)",
+        exif: {
+          camera: "Apple iPhone 7 Plus",
+          captured: "12 ต.ค. 2025 · 12:16",
+          aperture: "f/1.8",
+          shutter: "1/1500s",
+          focal: "3.99 mm",
+          iso: "ISO 20",
+          app: "Adobe Lightroom",
+          resolution: "2612 × 1470 (3.8 MP)"
+        },
         song: DEFAULT_SONG,
         audio: DEFAULT_AUDIO
       },
@@ -772,10 +881,16 @@
         src: "./images/IMG_5738%20(1).jpg",
         caption: "Magenta — 02",
         sub: "Stillness · 02",
-        date: "2026 · 02",
-        location: "Late Hours",
-        camera: "Stillness Archive",
-        note: "เงาสะท้อนสีชมพูม่วงในความมืด\n(สามารถแก้ไขข้อความตรงนี้ในโค้ดได้เลย)",
+        exif: {
+          camera: "Apple iPhone 7 Plus",
+          captured: "12 ต.ค. 2025 · 11:59",
+          aperture: "f/1.8",
+          shutter: "1/100s",
+          focal: "3.99 mm",
+          iso: "ISO 32",
+          app: "Adobe Lightroom",
+          resolution: "3024 × 1701 (5.1 MP)"
+        },
         song: DEFAULT_SONG,
         audio: DEFAULT_AUDIO
       }
@@ -792,6 +907,7 @@
     let freqData = null;
 
     const paletteCache = new Map();
+    const exifAutoCache = new Map();
     const sampleCanvas = document.createElement("canvas");
     sampleCanvas.width = 36;
     sampleCanvas.height = 36;
@@ -815,12 +931,15 @@
     const lightboxCaption = document.getElementById("lightbox-caption");
     const lightboxHint = document.getElementById("lightbox-hint");
 
-    const backIndexEl = document.getElementById("back-index");
-    const backDateEl = document.getElementById("back-date");
-    const backTitleEl = document.getElementById("back-title");
-    const backNoteEl = document.getElementById("back-note");
-    const backLocationEl = document.getElementById("back-location");
-    const backCameraEl = document.getElementById("back-camera");
+    const exifCameraEl = document.getElementById("exif-camera");
+    const exifCapturedEl = document.getElementById("exif-captured");
+    const exifApertureEl = document.getElementById("exif-aperture");
+    const exifShutterEl = document.getElementById("exif-shutter");
+    const exifFocalEl = document.getElementById("exif-focal");
+    const exifIsoEl = document.getElementById("exif-iso");
+    const exifAppEl = document.getElementById("exif-app");
+    const exifResEl = document.getElementById("exif-res");
+    const exifFileEl = document.getElementById("exif-file");
 
     function initFilmGrain() {
       const c = document.createElement("canvas");
@@ -970,6 +1089,99 @@
         .replace(/^IMG[-_]?/i, "")
         .replace(/[-_]/g, " ")
         .trim() || "Stillness";
+    }
+
+    /* อ่าน EXIF Metadata จากไฟล์ JPEG อัตโนมัติสำหรับรูปใหม่ที่อัปโหลดเพิ่ม */
+    async function extractImageExif(src) {
+      if (exifAutoCache.has(src)) return exifAutoCache.get(src);
+      try {
+        const res = await fetch(src);
+        const buf = await res.arrayBuffer();
+        const view = new DataView(buf);
+        if (view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return null;
+
+        let offset = 2;
+        while (offset < view.byteLength - 4) {
+          const marker = view.getUint16(offset);
+          offset += 2;
+          if (marker === 0xFFE1) {
+            const len = view.getUint16(offset);
+            const header = String.fromCharCode(
+              view.getUint8(offset + 2),
+              view.getUint8(offset + 3),
+              view.getUint8(offset + 4),
+              view.getUint8(offset + 5)
+            );
+            if (header === "Exif") {
+              const tiffStart = offset + 8;
+              const little = view.getUint16(tiffStart) === 0x4949;
+              const get16 = (o) => view.getUint16(o, little);
+              const get32 = (o) => view.getUint32(o, little);
+              const readStr = (o, count) => {
+                let s = "";
+                for (let i = 0; i < count - 1; i++) {
+                  const ch = view.getUint8(o + i);
+                  if (ch === 0) break;
+                  s += String.fromCharCode(ch);
+                }
+                return s.trim();
+              };
+
+              const parsed = {};
+              const parseIFD = (ifdOffset) => {
+                if (!ifdOffset || tiffStart + ifdOffset >= view.byteLength - 2) return;
+                const entriesCount = get16(tiffStart + ifdOffset);
+                for (let i = 0; i < entriesCount; i++) {
+                  const entryOffset = tiffStart + ifdOffset + 2 + i * 12;
+                  if (entryOffset + 12 > view.byteLength) break;
+                  const tag = get16(entryOffset);
+                  const type = get16(entryOffset + 2);
+                  const count = get32(entryOffset + 4);
+                  const valOffset = get32(entryOffset + 8);
+
+                  if (tag === 0x010F && type === 2) parsed.make = readStr(tiffStart + valOffset, count);
+                  if (tag === 0x0110 && type === 2) parsed.model = readStr(tiffStart + valOffset, count);
+                  if (tag === 0x0131 && type === 2) parsed.software = readStr(tiffStart + valOffset, count);
+                  if (tag === 0x0132 && type === 2) parsed.dateTime = readStr(tiffStart + valOffset, count);
+                  if (tag === 0x8769) parseIFD(valOffset);
+
+                  if (tag === 0x829A && type === 5) {
+                    const num = get32(tiffStart + valOffset);
+                    const den = get32(tiffStart + valOffset + 4);
+                    if (num && den) {
+                      parsed.shutter = num < den ? `1/${Math.round(den / num)}s` : `${(num / den).toFixed(1)}s`;
+                    }
+                  }
+                  if (tag === 0x829D && type === 5) {
+                    const num = get32(tiffStart + valOffset);
+                    const den = get32(tiffStart + valOffset + 4);
+                    if (num && den) parsed.aperture = `f/${(num / den).toFixed(1).replace(/\.0$/, "")}`;
+                  }
+                  if (tag === 0x8827 && type === 3) {
+                    const isoVal = little ? view.getUint16(entryOffset + 8, true) : view.getUint16(entryOffset + 8, false);
+                    if (isoVal) parsed.iso = `ISO ${isoVal}`;
+                  }
+                  if (tag === 0x920A && type === 5) {
+                    const num = get32(tiffStart + valOffset);
+                    const den = get32(tiffStart + valOffset + 4);
+                    if (num && den) parsed.focal = `${(num / den).toFixed(2).replace(/\.00$/, "")} mm`;
+                  }
+                }
+              };
+
+              parseIFD(get32(tiffStart + 4));
+              exifAutoCache.set(src, parsed);
+              return parsed;
+            }
+            offset += len;
+          } else if ((marker & 0xFF00) !== 0xFF00) {
+            break;
+          } else {
+            offset += view.getUint16(offset);
+          }
+        }
+      } catch (_) {}
+      return null;
     }
 
     function getDominantPalette(src, imgElement) {
@@ -1145,6 +1357,35 @@
       scatterCanvas.style.height = `${Math.round(prevBottom + 60)}px`;
     }
 
+    async function populateBackExif(item, imgEl) {
+      const manual = item.exif || {};
+      const auto = manual.camera ? null : await extractImageExif(item.src);
+
+      const camera = manual.camera || (auto?.model ? `${auto.make || ""} ${auto.model}`.trim() : "Apple iPhone 7 Plus");
+      const captured = manual.captured || (auto?.dateTime ? auto.dateTime.replace(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}).*$/, "$3/$2/$1 · $4") : "Archive");
+      const aperture = manual.aperture || auto?.aperture || "f/1.8";
+      const shutter = manual.shutter || auto?.shutter || "1/125s";
+      const focal = manual.focal || auto?.focal || "3.99 mm";
+      const iso = manual.iso || auto?.iso || "ISO 32";
+      const app = manual.app || (auto?.software ? auto.software : "Adobe Lightroom");
+
+      let resText = manual.resolution;
+      if (!resText && imgEl && imgEl.naturalWidth) {
+        const mp = ((imgEl.naturalWidth * imgEl.naturalHeight) / 1000000).toFixed(1);
+        resText = `${imgEl.naturalWidth} × ${imgEl.naturalHeight} (${mp} MP)`;
+      }
+
+      exifCameraEl.textContent = camera;
+      exifCapturedEl.textContent = captured;
+      exifApertureEl.textContent = aperture;
+      exifShutterEl.textContent = shutter;
+      exifFocalEl.textContent = focal;
+      exifIsoEl.textContent = iso;
+      exifAppEl.textContent = app;
+      exifResEl.textContent = resText || "Original";
+      exifFileEl.textContent = item.file || "image.jpg";
+    }
+
     function selectEntry(index, openModal = false) {
       if (!entries.length) return;
       currentIndex = (index + entries.length) % entries.length;
@@ -1167,16 +1408,8 @@
         flipCard.classList.remove("is-flipped", "is-pressing");
         lightboxImg.src = item.src;
         lightboxCaption.textContent = item.caption;
-        lightboxHint.textContent = "hold photo to flip · tap outside to return";
-
-        const num = String(currentIndex + 1).padStart(2, "0");
-        backIndexEl.textContent = `FRAME — ${num}`;
-        backDateEl.textContent = item.date || "2026";
-        backTitleEl.textContent = item.caption;
-        backNoteEl.textContent = item.note || item.sub || "Stillness archive.";
-        backLocationEl.textContent = item.location || "Archive";
-        backCameraEl.textContent = item.camera || "ustzyix";
-
+        lightboxHint.textContent = "hold photo for camera & color info · tap outside to return";
+        populateBackExif(item, imgEl);
         lightbox.classList.add("is-open");
       }
     }
@@ -1335,10 +1568,6 @@
                 src: `./${REPO_CONFIG.folder}/${encodeURIComponent(f.name)}`,
                 caption: title,
                 sub: `Archive · ${num}`,
-                date: "2026",
-                location: "Archive",
-                camera: "ustzyix",
-                note: `${title} — Stillness archive.`,
                 song: audioMap.has(baseName) ? title : DEFAULT_SONG,
                 audio: audioMap.get(baseName) || DEFAULT_AUDIO
               };
@@ -1403,7 +1632,7 @@
       }
     });
 
-    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D ในหน้าดูรูปเดี่ยว */
+    /* ระบบกดค้าง (Long Press) เพื่อพลิกการ์ด 3D ดู EXIF ในหน้าดูรูปเดี่ยว */
     let holdTimer = null;
     let didFlipOnHold = false;
 
@@ -1411,7 +1640,7 @@
       const isFlipped = flipCard.classList.toggle("is-flipped");
       lightboxHint.textContent = isFlipped
         ? "hold again to flip back · tap outside to return"
-        : "hold photo to flip · tap outside to return";
+        : "hold photo for camera & color info · tap outside to return";
       if (navigator.vibrate) {
         try { navigator.vibrate(14); } catch (_) {}
       }

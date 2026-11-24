@@ -1,3 +1,6 @@
+/* ==========================================================
+   ustzyix — Still Archive
+   ========================================================== */
 window.setProjectData("archive-01", {
   folder: "images",
   discover: true,
@@ -9,7 +12,7 @@ window.setProjectData("archive-01", {
       sub: "Nocturne · 01",
       tag: "fluted · grain",
       exif: {
-        camera: "Apple iPhone 7 Plus", captured: "12 ต.ค. 2025 · 12:16",
+        camera: "Apple iPhone 7 Plus", captured: "12 Oct 2025 · 12:16",
         aperture: "f/1.8", shutter: "1/1500s", focal: "3.99 mm", iso: "ISO 20",
         app: "Adobe Lightroom", resolution: "2612 × 1470 (3.8 MP)"
       }
@@ -20,7 +23,7 @@ window.setProjectData("archive-01", {
       sub: "Stillness · 02",
       tag: "bloom · grain",
       exif: {
-        camera: "Apple iPhone 7 Plus", captured: "12 ต.ค. 2025 · 11:59",
+        camera: "Apple iPhone 7 Plus", captured: "12 Oct 2025 · 11:59",
         aperture: "f/1.8", shutter: "1/100s", focal: "3.99 mm", iso: "ISO 32",
         app: "Adobe Lightroom", resolution: "3024 × 1701 (5.1 MP)"
       }
@@ -31,7 +34,7 @@ window.setProjectData("archive-01", {
       sub: "Morning · 03",
       tag: "mist · grain",
       exif: {
-        camera: "Apple iPhone 7 Plus", captured: "16 ม.ค. 2026 · 09:45",
+        camera: "Apple iPhone 7 Plus", captured: "16 Jan 2026 · 09:45",
         aperture: "f/2.8", shutter: "1/100s", focal: "6.60 mm", iso: "ISO 25",
         app: "Adobe Lightroom", resolution: "2938 × 3917 (11.5 MP)"
       }
@@ -42,7 +45,7 @@ window.setProjectData("archive-01", {
       sub: "Nocturne · 04",
       tag: "fluted · grain",
       exif: {
-        camera: "Apple iPhone 15", captured: "28 มี.ค. 2024 · 20:50",
+        camera: "Apple iPhone 15", captured: "28 Mar 2024 · 20:50",
         aperture: "f/1.6", shutter: "1/17s", focal: "5.96 mm", iso: "ISO 1000",
         app: "Adobe Lightroom", resolution: "2478 × 1395 (3.5 MP)"
       }
@@ -53,7 +56,7 @@ window.setProjectData("archive-01", {
       sub: "Night · 05",
       tag: "bloom · grain",
       exif: {
-        camera: "Apple iPhone 15 Pro Max", captured: "18 ก.ย. 2025 · 21:25",
+        camera: "Apple iPhone 15 Pro Max", captured: "18 Sep 2025 · 21:25",
         aperture: "f/1.8", shutter: "1/25s", focal: "6.76 mm", iso: "ISO 500",
         app: "Adobe Lightroom", resolution: "2746 × 1545 (4.2 MP)"
       }

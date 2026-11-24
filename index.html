@@ -89,11 +89,13 @@ main::-webkit-scrollbar{display:none}
 .canvas[data-empty]::after{content:"No photos found. Check data/photos.js and the images folder.";position:absolute;left:0;right:0;top:48px;text-align:center;font-size:13px;color:var(--fg2)}
 
 /* ---------- cards + instant shimmer placeholder ---------- */
-.card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;will-change:transform;
+.card{position:absolute;display:flex;flex-direction:column;gap:10px;padding:8px;border:0;border-radius:28px;text-align:left;cursor:pointer;opacity:0;touch-action:manipulation;
  box-shadow:0 22px 50px -22px rgba(0,0,0,.8),0 0 70px -26px var(--item-aura,var(--aura-1));
  transition:transform .55s var(--ease),box-shadow .55s var(--ease)}
 .card.in{opacity:1;animation:rise .85s var(--ease) var(--d,0ms) backwards}
 .card.settled{opacity:1;animation:none}
+.card.flipping{will-change:transform;transition:none;box-shadow:0 14px 32px -14px rgba(0,0,0,.75),inset 0 0 0 1px rgba(255,255,255,.22)}
+.card.flipping::before,.card.flipping .frame::after{content:none}
 @keyframes rise{from{opacity:0;transform:translate3d(0,22px,0) scale(.97)}}
 .card:active{transform:scale(.975)}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-4px);box-shadow:0 30px 70px -20px rgba(0,0,0,.9),0 0 90px -16px var(--item-aura,var(--aura-1))}.card:hover img{transform:scale(1.04)}}
@@ -228,44 +230,48 @@ let entries=(G.photos||[]).filter(p=>p&&(typeof p==='string'||p.file||p.src)).ma
 const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),flip=$("#flip"),lbImg=$("#lbImg");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
-function easeVal(t){if(t<=0)return 0;if(t>=1)return 1;let u=t;for(let i=0;i<6;i++){const m=1-u,x=3*m*m*u*.22+3*m*u*u*.36+u*u*u-t,dx=3*m*m*.22+6*m*u*.14+3*u*u*.64;if(Math.abs(x)<1e-5)break;u=Math.max(0,Math.min(1,u-x/dx))}return 3*u*(1-u)+u*u*u}
 
 /* ---------- tabs with sliding glass thumb ---------- */
 const tabs=$$("[data-look-btn]"),thumb=$("#thumb");
 function moveThumb(){const a=$(".tab.on");if(a)thumb.style.cssText=`width:${a.offsetWidth}px;transform:translateX(${a.offsetLeft}px)`}
 tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.toggle("on",x===b));body.dataset.look=b.dataset.lookBtn;moveThumb()});
 
-/* ---------- FLIP layout switch with scale-compensated smooth border-radius ---------- */
+/* ---------- FLIP layout switch with fast scale-compensated corner radius ---------- */
+let flipTok=0;
 $("#layoutBtn").onclick=()=>{
+ const tok=++flipTok,vh=innerHeight;
  const first=cards.map(c=>c.getBoundingClientRect());
- cards.forEach(c=>{c.getAnimations?.().forEach(a=>a.cancel());c.querySelector(".frame")?.getAnimations?.().forEach(a=>a.cancel())});
+ cards.forEach(c=>{
+  c.getAnimations?.().forEach(a=>a.cancel());
+  c.querySelector(".frame")?.getAnimations?.().forEach(a=>a.cancel());
+  c.classList.remove("flipping");
+  c.style.transformOrigin="";
+ });
  grid=!grid;tx=ty=cx=cy=0;
  body.dataset.layout=grid?"grid":"scatter";
  cards.forEach(c=>{c.classList.add("settled");c.style.translate="";if(grid)c.style.zIndex=""});
  if(grid)canvas.style.height="";else layout();
  if(stage.scrollTop)stage.scrollTop=0;
- void canvas.offsetWidth;
  const last=cards.map(c=>c.getBoundingClientRect());
  if(!reduceMotion()){
-  const STEPS=16;
+  const opts={duration:520,easing:"cubic-bezier(.22,1,.36,1)",fill:"backwards"};
   cards.forEach((c,i)=>{
    const f=first[i],l=last[i];if(!f||!l||!f.width||!l.width)return;
+   if((f.bottom<-160&&l.bottom<-160)||(f.top>vh+160&&l.top>vh+160))return;
    const dx=f.left-l.left,dy=f.top-l.top,sw=f.width/l.width,sh=f.height/l.height;
    if(Math.abs(dx)<.5&&Math.abs(dy)<.5&&Math.abs(sw-1)<.002&&Math.abs(sh-1)<.002)return;
-   const frame=c.querySelector(".frame"),cardKf=[],frameKf=[];
-   for(let k=0;k<=STEPS;k++){
-    const e=easeVal(k/STEPS),inv=1-e,csx=sw+(1-sw)*e,csy=sh+(1-sh)*e;
-    cardKf.push({
-     transform:`translate3d(${(dx*inv).toFixed(2)}px,${(dy*inv).toFixed(2)}px,0) scale(${csx.toFixed(4)},${csy.toFixed(4)})`,
-     borderRadius:`${(28/csx).toFixed(2)}px / ${(28/csy).toFixed(2)}px`
-    });
-    frameKf.push({borderRadius:`${(20/csx).toFixed(2)}px / ${(20/csy).toFixed(2)}px`});
-   }
-   const opts={duration:620,delay:Math.min(i*28,220),easing:"linear",fill:"backwards"};
+   const cardOpts={...opts,delay:Math.min(i*22,150)};
+   c.classList.add("flipping");
    c.style.transformOrigin="0 0";
-   const anim=c.animate(cardKf,opts);
-   frame?.animate(frameKf,opts);
-   anim.onfinish=()=>{c.style.transformOrigin=""};
+   const anim=c.animate([
+    {transform:`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(${sw.toFixed(4)},${sh.toFixed(4)})`,borderRadius:`${(28/sw).toFixed(1)}px / ${(28/sh).toFixed(1)}px`},
+    {transform:"translate3d(0,0,0) scale(1,1)",borderRadius:"28px / 28px"}
+   ],cardOpts);
+   c.querySelector(".frame")?.animate([
+    {borderRadius:`${(20/sw).toFixed(1)}px / ${(20/sh).toFixed(1)}px`},
+    {borderRadius:"20px / 20px"}
+   ],cardOpts);
+   anim.onfinish=()=>{if(tok===flipTok){c.style.transformOrigin="";c.classList.remove("flipping")}};
   });
  }
  moveThumb();

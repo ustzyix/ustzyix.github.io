@@ -1,89 +1,42 @@
-# ustzyix — Visual Studio Archive
+# System Architecture
 
-`ustzyix.github.io` is a static portfolio and media archive for visual work. The site is designed to run directly on GitHub Pages without a build step, backend server, framework, or runtime dependency.
+This repository is a static, client-side media application. The browser loads one HTML entry point, reads project definitions from JavaScript data files, and renders the selected project without a backend service or server-side rendering.
 
-The current interface focuses on a dark, minimal visual archive with image, video, interactive, and audio project modes. Dynamic atmosphere backgrounds, image-based background color extraction, palette analysis, canvas particles, and realtime video color analysis are intentionally not part of the current runtime.
-
-## Architecture overview
+## System model
 
 ```text
-GitHub Pages
-    |
-    v
+Browser
+  |
+  v
 index.html
-    |-- loads data/projects.js       -> project registry
-    |-- loads data/thumbs.js         -> generated image thumbnail manifest
-    |-- lazy-loads data/*.js         -> project-specific metadata
-    |-- reads images/, thumbs/, videos/
-    |-- renders Gallery / Interactive / Playlist modes
-    |
-    +--> GitHub API (optional discovery when discover: true)
+  |-- data/projects.js     project registry
+  |-- data/thumbs.js       generated thumbnail manifest
+  |-- data/<project>.js    lazy project data
+  |-- images/              original image media
+  |-- thumbs/              optimized image previews
+  |-- videos/              video media
+  |
+  +-- Gallery renderer
+  +-- Interactive renderer
+  +-- Playlist renderer
+  +-- Lightbox and media metadata
 
 GitHub Actions
-    |
-    +--> images/* -> resized WebP thumbnails -> thumbs/* + data/thumbs.js
+  |
+  +-- images/ -> thumbs/ + data/thumbs.js
 ```
 
-The application is a single-page interface. `index.html` contains the HTML shell, CSS system, and the client-side JavaScript runtime. Project metadata is separated into small JavaScript files so the initial page can load quickly and each project can be fetched only when needed.
+## Core principles
 
-## Runtime flow
+- The application has a single runtime entry point: `index.html`.
+- Static project summaries are loaded first; detailed project data is loaded only when needed.
+- Media metadata is separated from media files.
+- Rendering is selected by the project `type`.
+- Original media and preview media have separate responsibilities.
+- Browser APIs handle lazy loading, media decoding, navigation, and fullscreen behavior.
+- Generated files are kept separate from manually maintained source files.
 
-1. The browser loads `index.html`.
-2. `data/projects.js` registers the available projects in `window.GALLERY.projects`.
-3. `data/thumbs.js` provides the generated thumbnail map in `window.THUMBS_MAP`.
-4. The inline runtime reads the URL hash. For example, `#archive-01` opens the Archive project.
-5. `loadProject()` loads the selected project metadata from its `data` file when required.
-6. The project `type` selects the renderer:
-   - `gallery` uses image and video cards.
-   - `interactive` embeds an external interactive work in an iframe.
-   - `playlist` creates an audio player and track list.
-7. Gallery media is rendered progressively. A thumbnail is shown first when available, and the original file is decoded when the Lightbox opens.
-8. Additional files can be discovered from the configured folder through the GitHub Contents API when `discover: true`.
-
-## Main runtime components
-
-### Gallery
-
-Gallery projects are converted into normalized entries by `toEntry()`. Each entry contains its source path, thumbnail candidates, caption, metadata, and media type.
-
-The gallery supports:
-
-- Scatter and grid layouts.
-- Responsive card positioning.
-- Lazy image loading.
-- Lazy video source loading with `IntersectionObserver`.
-- Video poster capture from the first available frame.
-- Project switching with cached views.
-- URL hash navigation.
-
-### Lightbox
-
-The Lightbox opens the selected image or video and provides:
-
-- Previous and next navigation.
-- Touch swipe navigation.
-- Keyboard navigation with Arrow keys and Escape.
-- Progressive thumbnail-to-full-resolution loading.
-- A flip panel for media information.
-- EXIF reading for images when metadata is not supplied manually.
-
-### Interactive mode
-
-`mountInteractive()` creates an iframe-based interactive project with a fullscreen control. This mode is retained for future projects and is not required by the current Archive and Motion entries.
-
-### Playlist mode
-
-`mountPlaylist()` creates an audio player with:
-
-- Previous, play/pause, and next controls.
-- Progress bar and time labels.
-- Track list rendering.
-- Optional cover images.
-- Optional folder discovery for audio files.
-
-This mode is retained for future use.
-
-## File structure
+## Repository structure
 
 ```text
 .
@@ -94,212 +47,249 @@ This mode is retained for future use.
 │   ├── videos-01.js
 │   └── thumbs.js
 ├── images/
-│   ├── .gitkeep
-│   └── original image files
 ├── thumbs/
-│   ├── .gitkeep
-│   └── generated WebP thumbnails
 ├── videos/
-│   ├── .gitkeep
-│   └── video files
 ├── .github/workflows/
 │   └── make-thumbs.yml
 └── README.md
 ```
 
+## File responsibilities
+
 ### `index.html`
 
-The main application file. It contains:
+The application runtime and presentation layer. It contains:
 
-- The page shell and accessibility attributes.
-- The header and project switcher.
-- The gallery canvas.
-- The Lightbox and media information panel.
-- The responsive CSS design system.
-- Project loading and view caching.
-- Thumbnail resolution and fallback logic.
-- Lazy loading for images and videos.
-- EXIF parsing and media metadata rendering.
+- HTML structure for the application shell.
+- CSS for layout, responsive behavior, controls, cards, and dialogs.
+- Project loading and routing logic.
 - Gallery, Interactive, and Playlist renderers.
-- Hash-based project navigation.
+- Lightbox navigation and media information.
+- Thumbnail selection and fallback handling.
+- Lazy loading for images and videos.
+- EXIF parsing for image metadata.
+- Project view caching.
 
-The file intentionally does not contain the removed atmosphere, palette-analysis, canvas-particle, or realtime color-analysis systems.
+The runtime is organized as a set of browser-side modules inside the page rather than separate bundled files.
 
 ### `data/projects.js`
 
-The project registry. It is loaded during the initial page load and should contain only lightweight project summaries.
-
-Example:
+The project registry. It contains lightweight summaries used to build the project switcher and locate each project’s detailed data file.
 
 ```js
-{
-  id: "archive-01",
-  type: "gallery",
-  code: "AR",
-  title: "Archive",
-  sub: "Color Grading",
-  year: "2024 — 2026",
-  data: "data/archive-01.js"
-}
-```
-
-Supported `type` values are `gallery`, `interactive`, and `playlist`.
-
-### `data/archive-01.js`
-
-Contains the detailed metadata for the still-image Archive project:
-
-- `folder`: source media directory.
-- `discover`: whether additional files may be discovered remotely.
-- `photos`: image entries and their captions, tags, application names, and EXIF metadata.
-
-The `exif` object can provide metadata directly. If some values are missing, the runtime attempts to read image metadata in the browser.
-
-### `data/videos-01.js`
-
-Contains the detailed metadata for the Motion project. The current project uses the same `photos` collection schema because the runtime detects video files from their extension or an explicit `type: "video"` field.
-
-Supported video extensions include `.mp4`, `.webm`, `.mov`, and `.m4v`.
-
-### `data/thumbs.js`
-
-An automatically generated manifest that maps original image filenames to optimized WebP thumbnails.
-
-```js
-window.THUMBS_MAP = {
-  "IMG_0018.jpg": "thumbs/IMG_0018.webp"
+window.GALLERY = {
+  projects: [
+    {
+      id: "project-id",
+      type: "gallery",
+      title: "Project title",
+      sub: "Project description",
+      data: "data/project-id.js"
+    }
+  ]
 };
 ```
 
-Do not edit this file manually. It is regenerated by GitHub Actions.
+Supported `type` values:
 
-### `images/`
+- `gallery`: image and video cards.
+- `interactive`: an embedded interactive document.
+- `playlist`: an audio player and track list.
 
-Stores original still images. These files are used for full-resolution Lightbox viewing and as the source for thumbnail generation.
+### `data/<project>.js`
 
-### `thumbs/`
-
-Stores generated WebP thumbnails. Thumbnails reduce the amount of data required during the initial gallery render while preserving the original files for full-resolution viewing.
-
-### `videos/`
-
-Stores video media used by Motion projects. Videos are not loaded until their cards become visible, and they are not downloaded for hidden cards.
-
-### `.github/workflows/make-thumbs.yml`
-
-Runs on pushes to `main` that modify `images/`, or when manually started from GitHub Actions.
-
-The workflow:
-
-1. Installs Python and Pillow.
-2. Reads supported image files from `images/`.
-3. Corrects EXIF orientation.
-4. Resizes images to a maximum width of 800 pixels.
-5. Encodes thumbnails as WebP with quality 80.
-6. Removes thumbnails whose source images no longer exist.
-7. Rebuilds `data/thumbs.js`.
-8. Commits and pushes changed thumbnails back to the repository.
-
-## Adding a new gallery project
-
-1. Add a project summary to `data/projects.js`.
-2. Create a detail file such as `data/new-project.js`.
-3. Register the detail file with `window.setProjectData("project-id", {...})`.
-4. Put the media files in the configured folder.
-5. Set `type: "gallery"`.
-6. Add `exif`, `title`, `sub`, and `tag` values when custom metadata is desired.
-7. Open the site with `#project-id` to test the project directly.
-
-Example detail file:
+The detailed data source for one project. A detail file registers data through `window.setProjectData()`.
 
 ```js
-window.setProjectData("new-project", {
+window.setProjectData("project-id", {
   folder: "images",
   discover: true,
   photos: [
     {
       file: "example.jpg",
-      title: "Example — 01",
-      sub: "Study · 01",
-      tag: "still"
+      title: "Example",
+      sub: "Description",
+      tag: "Category",
+      exif: {
+        camera: "Camera name",
+        captured: "Capture date"
+      }
     }
   ]
 });
 ```
 
-## Adding future Interactive or Playlist projects
+The current repository includes `data/archive-01.js` and `data/videos-01.js` as project-specific data files. Their role is the same as any future `data/<project>.js` file.
 
-Interactive project:
+### `data/thumbs.js`
 
-```js
-{
-  id: "interactive-01",
-  type: "interactive",
-  title: "Interactive Work",
-  sub: "Web Experiment",
-  src: "https://example.com/interactive"
-}
-```
-
-Playlist project:
+The generated thumbnail manifest. It maps original filenames to preview files.
 
 ```js
-{
-  id: "audio-01",
-  type: "playlist",
-  title: "Audio Archive",
-  sub: "Selected Works",
-  folder: "audio",
-  tracks: [
-    {
-      file: "track-01.mp3",
-      title: "Track 01",
-      artist: "ustzyix"
-    }
-  ]
-}
+window.THUMBS_MAP = {
+  "example.jpg": "thumbs/example.webp"
+};
 ```
 
-The corresponding detail object can be placed in a lazy-loaded `data/*.js` file, just like gallery projects.
+This file is an output of the thumbnail pipeline and should not be treated as the primary media index.
 
-## Local development
+### `images/`
 
-Because the application loads local files and project data dynamically, use a local HTTP server instead of opening `index.html` directly with `file://`.
+Stores original image files. These files are used for full-resolution viewing and thumbnail generation.
 
-```bash
-python3 -m http.server 8000
-```
+### `thumbs/`
 
-Then open:
+Stores generated preview images. The runtime uses these files for the initial gallery view when a matching entry exists in `data/thumbs.js`.
+
+### `videos/`
+
+Stores video files. A media entry is recognized as a video when its `type` is `video` or its filename has a supported video extension.
+
+### `.github/workflows/make-thumbs.yml`
+
+The media preprocessing pipeline. It reads supported files from `images/`, creates preview images, removes stale previews, and regenerates `data/thumbs.js`.
+
+The workflow is independent from the browser runtime: the website only consumes the generated files.
+
+## Runtime lifecycle
+
+### 1. Bootstrap
+
+The page creates the application shell and initializes the global data containers:
+
+- `window.GALLERY` stores the project registry.
+- `window.PROJECT_STORE` stores loaded project details.
+- `window.THUMBS_MAP` stores preview paths.
+
+### 2. Project selection
+
+The initial project is selected from the URL hash. The project switcher can select another registered project and update the hash without a full page reload.
+
+### 3. Detail loading
+
+`fetchProjectDetail()` loads the project’s `data` file only once. Loaded files are tracked in a map so the same script is not requested repeatedly.
+
+### 4. Mode dispatch
+
+`loadProject()` checks the project `type` and calls one renderer:
 
 ```text
-http://localhost:8000/
+type === "gallery"      -> create media cards
+type === "interactive"  -> mount an iframe view
+type === "playlist"     -> mount an audio view
 ```
 
-There is currently no `package.json`, build command, or dependency installation step.
+### 5. Gallery normalization
 
-## Performance principles
+`toEntry()` converts different input forms into one internal media-entry shape. It resolves:
 
-- Use generated thumbnails for the initial gallery view.
-- Load original media only when it is needed.
-- Use `IntersectionObserver` for video source loading.
-- Avoid autoplay for hidden media.
-- Cache loaded project views and decoded images.
-- Keep project summaries small and lazy-load detailed metadata.
-- Keep dynamic visual effects out of the main rendering path.
-- Preserve the original files for high-resolution Lightbox viewing.
+- Original source path.
+- Preview candidates.
+- Media type.
+- Caption and labels.
+- Optional metadata.
 
-## Deployment
+This normalized shape allows images and videos to use the same card, navigation, and Lightbox logic.
 
-The repository is compatible with GitHub Pages. The site is served from the repository root, so changes to `index.html`, `data/`, `images/`, `thumbs/`, and `videos/` become available after GitHub Pages finishes deploying.
+### 6. Media rendering
 
-The thumbnail workflow may create a follow-up commit after an image is added or changed. Wait for the `Generate Thumbnails` workflow to finish before checking the generated thumbnail map.
+`addCard()` creates a card and attaches the appropriate media element. Images use preview candidates first. Videos use a deferred `data-src` value so the original video source is not assigned before the card is visible.
 
-## Important maintenance notes
+### 7. Visibility management
 
-- Keep filenames URL-safe when possible. The runtime encodes path segments, but simple filenames are easier to maintain.
-- Do not manually edit `data/thumbs.js` unless repairing a generated file.
-- When adding a new media format, update the corresponding extension matcher in `index.html`.
-- `discover: true` uses the GitHub Contents API and can be affected by API rate limits.
-- External Interactive projects must allow iframe embedding through their server headers.
-- The current runtime intentionally has no image palette extraction or background color synchronization.
+`IntersectionObserver` tracks video cards in the viewport. Visible videos may load their source; videos that leave the viewport are paused and their source is released.
+
+### 8. Lightbox loading
+
+The Lightbox opens the selected media item. When a preview is available, it can display immediately while the original image is decoded asynchronously. The original source replaces the preview after decoding completes.
+
+### 9. View caching
+
+Project views can be kept in an in-memory cache. Returning to a cached project restores its view state instead of rebuilding the entire project from the beginning.
+
+## Gallery data contract
+
+### Project-level fields
+
+| Field | Purpose |
+| --- | --- |
+| `folder` | Source directory for media files. |
+| `discover` | Enables optional directory discovery through the GitHub Contents API. |
+| `photos` | Collection of image or video entries. |
+| `tracks` | Collection of audio entries for Playlist mode. |
+| `src` | External source used by Interactive mode. |
+| `controls` | Control description shown by Interactive mode. |
+
+### Media-level fields
+
+| Field | Purpose |
+| --- | --- |
+| `file` | Filename relative to the project folder. |
+| `src` | Explicit media path or URL. |
+| `type` | Optional explicit media type, such as `video`. |
+| `title` | Primary display label. |
+| `sub` | Secondary display label. |
+| `tag` | Optional category label. |
+| `app` | Optional application or tool label. |
+| `poster` / `thumb` | Optional explicit preview path. |
+| `exif` | Optional manually supplied image metadata. |
+
+### Audio-level fields
+
+| Field | Purpose |
+| --- | --- |
+| `file` | Audio filename. |
+| `src` | Explicit audio path or URL. |
+| `title` | Track title. |
+| `artist` | Track artist or creator. |
+| `cover` | Optional cover image. |
+
+## Renderer responsibilities
+
+### Gallery renderer
+
+`addCard()` and `layout()` manage media cards and their positions. Gallery state includes the current entries, cards, layout mode, and selected media index.
+
+### Interactive renderer
+
+`mountInteractive()` creates an iframe container and a fullscreen control. The embedded document remains external to the main application runtime.
+
+### Playlist renderer
+
+`mountPlaylist()` creates the audio element, transport controls, progress display, and track list. `stopAudio()` releases the active audio source when the view changes.
+
+### Lightbox controller
+
+The Lightbox controller owns the selected media index, previous/next navigation, touch gestures, keyboard controls, media information, and flip-panel state.
+
+## Thumbnail pipeline
+
+```text
+Original image
+    |
+    v
+GitHub Actions + Pillow
+    |
+    +--> thumbs/<filename>.webp
+    +--> data/thumbs.js
+    |
+    v
+Browser thumbnail lookup
+    |
+    v
+Full-resolution source when requested
+```
+
+The manifest prevents the browser from guessing preview filenames. If a manifest entry or preview candidate is unavailable, the runtime falls back to the original source.
+
+## Extension points
+
+The system can be extended by:
+
+- Adding a new project summary to `data/projects.js`.
+- Adding a matching detail file in `data/`.
+- Adding a new renderer branch in `loadProject()` for a new `type`.
+- Extending the media extension matchers when a new file format is supported.
+- Adding new metadata fields to the detail schema and rendering them in the Lightbox.
+
+The separation between project registry, project detail, media files, generated previews, and renderers allows each area to evolve independently.

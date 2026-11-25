@@ -181,18 +181,16 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 .lb .ibtn,.lb .fbtn{background:#0b0b0d;border-color:rgba(255,255,255,.24)}
 .lb .ibtn{position:absolute;z-index:5}
 .lb-x{top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
-.lb-p,.lb-n{top:50%;margin-top:-19px}
-.lb-p{left:max(18px,env(safe-area-inset-left))}.lb-n{right:max(18px,env(safe-area-inset-right))}
-@media(max-width:680px){.lb-p,.lb-n{display:none}}
 .lb-in{display:flex;flex-direction:column;align-items:center;gap:16px;max-width:92vw;pointer-events:none}
 .scene,.lb-ctl{pointer-events:auto}
 .scene{perspective:1500px;display:grid;place-items:center;cursor:pointer;transform:scale(.93) translateY(12px);transition:transform .45s var(--ease);touch-action:manipulation}
 .lb.open .scene{transform:none}
 .flip{display:grid;place-items:center;transform-style:preserve-3d;transition:transform .65s var(--ease)}
 .flip.on{transform:rotateY(180deg)}
-.front,.back{grid-area:1/1;border:1px solid rgba(255,255,255,.2);border-radius:24px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.front,.back{grid-area:1/1;border:1px solid rgba(255,255,255,.2);border-radius:var(--lb-radius,24px);backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .front{padding:6px;background:var(--surface)}
-.front img,.front video{display:block;max-width:min(88vw,760px);max-height:56dvh;width:auto;height:auto;border-radius:20px}
+.front img,.front video{display:block;max-width:min(88vw,760px);max-height:56dvh;width:auto;height:auto;border-radius:var(--lb-media-radius,20px)}
+.lb.lb-horizontal .front img,.lb.lb-horizontal .front video{max-width:min(94vw,1100px);max-height:68dvh}
 .back{width:100%;height:100%;min-width:min(88vw,390px);min-height:290px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;transform:rotateY(180deg);background:var(--surface)}
 .ex-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
 .ex-cam{font-family:var(--sans);font-size:13.5px;font-weight:600;letter-spacing:.01em}
@@ -245,8 +243,6 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 <!-- Lightbox -->
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Media view">
   <button class="ibtn lb-x" id="lbX" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-  <button class="ibtn lb-p" id="lbP" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
-  <button class="ibtn lb-n" id="lbN" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
   <div class="lb-in">
     <div class="scene" id="scene" role="button" tabindex="0" aria-label="Flip card for information">
       <div class="flip" id="flip">
@@ -274,7 +270,7 @@ body.modal-active header,body.modal-active main{pointer-events:none}
     <div class="lb-ctl">
       <button class="fbtn" id="fbtn" type="button"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16m0 0v5m0-5h5M3 12A9 9 0 0 1 18.5 5.8L21 8m0 0V3m0 5h-5"/></svg><span id="fbtnT">Media info</span></button>
     </div>
-    <div class="hint">tap to flip · swipe to browse · esc to close</div>
+    <div class="hint">tap to flip · esc to close</div>
   </div>
 </div>
 
@@ -485,7 +481,7 @@ function layout(force){
  if(widthChanged)lastLayoutW=W;
  const unit=mobileLayout?W/900:1;
  const P=mobileLayout?MOBILE_DP:DP,minH=mobileLayout?Math.max(300*unit,stage.clientHeight-110*unit):Math.max(300,stage.clientHeight-110);
- cards.forEach((el,i)=>{const p=P[i%P.length],w=Math.round(W*p.w),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
+ cards.forEach((el,i)=>{const p=P[i%P.length],aspectBoost=el._landscape?1.14:1,w=Math.round(W*p.w*aspectBoost),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
   el._d=p.d;el._l=l;el._w=w;
   if(mobileLayout){el.style.setProperty("--card-gap",`${9*unit}px`);el.style.setProperty("--card-meta-gap",`${8*unit}px`);el.style.setProperty("--card-meta-bottom",`${4*unit}px`);el.style.setProperty("--card-title-size",`${12*unit}px`);el.style.setProperty("--card-sub-size",`${9*unit}px`);el.style.setProperty("--frame-radius",`${Math.max(1,Math.round(w*.04*100)/100)}px`)}
   if(force||widthChanged||!el._sized){el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10);el._sized=true}});
@@ -608,11 +604,20 @@ function closePm(){if(!pmOpen)return;pmOpen=false;topBar.inert=false;stage.inert
 $("#projBtn").onclick=openPm;$("#pmX").onclick=e=>{e.stopPropagation();closePm()};pm.onclick=e=>{if(e.target===pm)closePm()};
 
 /* ---------- lightbox (Progressive Thumbnail -> Full-Res) ---------- */
-function openLb(){modal=true;topBar.inert=true;stage.inert=true;syncCardVideos(true);body.classList.add("modal-active");lb.classList.add("open");$("#lbX").focus({preventScroll:true})}
+function openLb(){modal=true;topBar.inert=true;stage.inert=true;syncCardVideos(true);body.classList.add("modal-active");lb.classList.add("open");syncLightboxShape();$("#lbX").focus({preventScroll:true})}
 function closeLb(){
  if(!modal)return;modal=false;topBar.inert=false;stage.inert=false;body.classList.remove("modal-active");lb.classList.remove("open");
  lbVid.pause();
  setTimeout(()=>{if(!modal){flip.classList.remove("on");$("#fbtnT").textContent="Media info";lbVid.removeAttribute("src");lbVid.load();syncCardVideos(false)}},340);
+}
+function syncLightboxShape(){
+ const media=lbImg.style.display!=="none"?lbImg:lbVid;
+ const rect=media.getBoundingClientRect(),w=rect.width||Math.min(innerWidth*.88,760);
+ const nw=media.naturalWidth||media.videoWidth||0,nh=media.naturalHeight||media.videoHeight||0;
+ lb.classList.toggle("lb-horizontal",!!(nw&&nh&&nw/nh>1.25));
+ const radius=Math.max(1,Math.round(w*.035*100)/100);
+ lb.style.setProperty("--lb-radius",`${radius}px`);
+ lb.style.setProperty("--lb-media-radius",`${Math.max(1,radius-4)}px`);
 }
 const decoded=new Map();
 function predecode(src){
@@ -645,11 +650,11 @@ async function select(i,open){
   const posterUrl=it.poster||vidPosterCache.get(it.src)||"";
   if(posterUrl)lbVid.poster=posterUrl;else lbVid.removeAttribute("poster");
   lbVid.src=it.src;
-  lbVid.onloadedmetadata=()=>fillExif(it,mediaEl);
+  lbVid.onloadedmetadata=()=>{fillExif(it,mediaEl);syncLightboxShape()};
   lbVid.onerror=()=>{if(lbVid.hasAttribute("crossorigin")){lbVid.removeAttribute("crossorigin");lbVid.load()}};
   lbVid.play().catch(()=>{});
   fillExif(it,mediaEl);
-  if(!modal)openLb();
+  if(!modal)openLb();else syncLightboxShape();
   return;
  }
 
@@ -661,6 +666,7 @@ async function select(i,open){
  if(hasDistinctThumb){
   // Open immediately with cached thumbnail, then upgrade to full-res once decoded
   lbImg.src=activeThumb;
+  lbImg.onload=syncLightboxShape;
   fillExif(it,mediaEl);
   if(!modal)openLb();
   const ok=await predecode(it.src);
@@ -668,16 +674,17 @@ async function select(i,open){
   if(ok){
    lbImg.src=it.src;
    lbImg.dataset.fullSrc=it.src;
+   syncLightboxShape();
    fillExif(it,lbImg);
   }
  }else{
   await Promise.race([predecode(it.src),new Promise(r=>setTimeout(r,450))]);
   if(tok!==selTok)return;
   lbImg.src=it.src;
-  lbImg.onload=()=>{if(tok===selTok){lbImg.dataset.fullSrc=it.src;fillExif(it,lbImg)}};
+  lbImg.onload=()=>{if(tok===selTok){lbImg.dataset.fullSrc=it.src;syncLightboxShape();fillExif(it,lbImg)}};
   if(lbImg.complete&&lbImg.naturalWidth>0)lbImg.dataset.fullSrc=it.src;
   fillExif(it,mediaEl);
-  if(!modal)openLb();
+  if(!modal)openLb();else syncLightboxShape();
  }
 }
 function toggleFlip(){const on=flip.classList.toggle("on");if(on&&!lbVid.paused)lbVid.pause();$("#fbtnT").textContent=on?"View media":"Media info";navigator.vibrate?.(10)}
@@ -685,17 +692,14 @@ $("#fbtn").onclick=e=>{e.stopPropagation();toggleFlip()};
 $("#scene").onclick=e=>{if(e.target===lbVid)return;toggleFlip()};
 $("#scene").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleFlip()}};
 $("#lbX").onclick=e=>{e.stopPropagation();closeLb()};
-$("#lbP").onclick=e=>{e.stopPropagation();select(cur-1,true)};
-$("#lbN").onclick=e=>{e.stopPropagation();select(cur+1,true)};
 lb.onclick=e=>{if(e.target===lb||e.target.classList.contains("lb-in"))closeLb()};
-let sX=0,sY=0;
-lb.addEventListener("touchstart",e=>{sX=e.touches[0].clientX;sY=e.touches[0].clientY},{passive:true});
-lb.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-sX,dy=t.clientY-sY;if(Math.abs(dx)>60&&Math.abs(dy)<50)select(cur+(dx<0?1:-1),true)},{passive:true});
 addEventListener("keydown",e=>{
  if(pmOpen&&e.key==="Escape"){closePm();return}
  if(!modal)return;
- if(e.key==="Escape")closeLb();else if(e.key==="ArrowLeft")select(cur-1,true);else if(e.key==="ArrowRight")select(cur+1,true);
+ if(e.key==="Escape")closeLb();
 });
+addEventListener("resize",()=>{if(modal)syncLightboxShape()},{passive:true});
+window.visualViewport?.addEventListener("resize",()=>{if(modal)syncLightboxShape()},{passive:true});
 
 /* ---------- mode 1: gallery ---------- */
 function addCard(it,i,tok=loadTok,targetContainer=activeViewEl||canvas){

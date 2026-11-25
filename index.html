@@ -55,15 +55,15 @@ header>*{pointer-events:auto}
 
 /* Mobile zoom-stable UI: keep the visual system proportional to the viewport. */
 .mobile-layout header{gap:8px;padding:max(2vw,env(safe-area-inset-top)) 2.4vw 1.3vw}
-.mobile-layout .pill{gap:8px;height:44px}
+.mobile-layout .pill{gap:8px;height:29px}
 .mobile-layout .mark{width:12px;height:12px}
 .mobile-layout .brand{font-size:20px}
 .mobile-layout .chev{width:13px;height:13px}
 .mobile-layout .count{display:inline-flex;gap:6px;font-size:10px;padding-left:12px;margin-left:4px}
 .mobile-layout .dot{width:5px;height:5px}
 .mobile-layout .tools{gap:8px}
-.mobile-layout .ibtn{width:44px;height:44px;min-width:44px;min-height:44px}
-.mobile-layout .ibtn svg{width:20px;height:20px}
+.mobile-layout .ibtn{width:29px;height:29px;min-width:29px;min-height:29px}
+.mobile-layout .ibtn svg{width:13px;height:13px}
 
 /* ---------- project switcher window ---------- */
 .pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0);visibility:hidden;pointer-events:none;transition:background .2s var(--ease),visibility 0s linear .2s}
@@ -475,6 +475,7 @@ addEventListener("pointermove",e=>{if(e.pointerType!=="mouse"||modal||pmOpen||gr
 
 /* ---------- scatter layout ---------- */
 const DP=[{x:.07,w:.3,g:-24,d:.45},{x:.6,w:.32,g:28,d:.75},{x:.24,w:.34,g:-12,d:.9},{x:.48,w:.31,g:-40,d:.6},{x:.07,w:.28,g:24,d:.5},{x:.65,w:.29,g:-30,d:.8}];
+const MOBILE_DP=[{x:.02,w:.3,g:-24,d:.45},{x:.64,w:.32,g:28,d:.75},{x:.18,w:.34,g:-12,d:.9},{x:.53,w:.31,g:-40,d:.6},{x:.02,w:.28,g:24,d:.5},{x:.68,w:.29,g:-30,d:.8}];
 let lt=0,lastLayoutW=0;
 const scheduleLayout=()=>{lt||(lt=requestAnimationFrame(()=>{lt=0;layout(false)}))};
 function layout(force){
@@ -483,7 +484,7 @@ function layout(force){
  const widthChanged=Math.abs(W-lastLayoutW)>1;
  if(widthChanged)lastLayoutW=W;
  const unit=mobileLayout?W/900:1;
- const P=DP,minH=mobileLayout?Math.max(300*unit,stage.clientHeight-110*unit):Math.max(300,stage.clientHeight-110);
+ const P=mobileLayout?MOBILE_DP:DP,minH=mobileLayout?Math.max(300*unit,stage.clientHeight-110*unit):Math.max(300,stage.clientHeight-110);
  cards.forEach((el,i)=>{const p=P[i%P.length],w=Math.round(W*p.w),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
   el._d=p.d;el._l=l;el._w=w;
   if(mobileLayout){el.style.setProperty("--card-gap",`${9*unit}px`);el.style.setProperty("--card-meta-gap",`${8*unit}px`);el.style.setProperty("--card-meta-bottom",`${4*unit}px`);el.style.setProperty("--card-title-size",`${12*unit}px`);el.style.setProperty("--card-sub-size",`${9*unit}px`);el.style.setProperty("--frame-radius",`${Math.max(1,Math.round(w*.04*100)/100)}px`)}

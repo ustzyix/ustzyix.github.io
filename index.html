@@ -55,7 +55,7 @@ header>*{pointer-events:auto}
 
 /* Mobile zoom-stable UI: keep the visual system proportional to the viewport. */
 .mobile-layout header{position:relative;isolation:isolate;gap:8px;padding:max(2vw,env(safe-area-inset-top)) 2.4vw 1.3vw}
-.mobile-layout header::before{content:"";position:absolute;inset:-18px 0 -8px;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,.32) 72%,transparent);-webkit-backdrop-filter:blur(18px) saturate(.72);backdrop-filter:blur(18px) saturate(.72)}
+.mobile-layout header::before{content:"";position:absolute;inset:-22px 0 -28px;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,.34) 58%,transparent 100%);-webkit-backdrop-filter:blur(20px) saturate(.72);backdrop-filter:blur(20px) saturate(.72);-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.82) 50%,rgba(0,0,0,.28) 78%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.82) 50%,rgba(0,0,0,.28) 78%,transparent 100%);-webkit-mask-size:100% 100%;mask-size:100% 100%}
 .mobile-layout header>*{position:relative;z-index:1}
 .mobile-layout .pill{gap:8px;height:29px}
 .mobile-layout .mark{width:12px;height:12px}
@@ -498,10 +498,26 @@ function layout(force){
  if(widthChanged)lastLayoutW=W;
  const unit=mobileLayout?W/900:1;
  const P=mobileLayout?MOBILE_DP:DP,minH=mobileLayout?Math.max(300*unit,stage.clientHeight-110*unit):Math.max(300,stage.clientHeight-110);
- cards.forEach((el,i)=>{const p=P[i%P.length],aspectBoost=el._landscape?1.14:1,w=Math.round(W*p.w*aspectBoost),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
+ const portraitHeights=cards.map((el,i)=>{
+  if(el._landscape||!el._mediaReady)return 0;
+  const frame=el.querySelector(".frame"),media=el.querySelector("img,video");
+  const nw=media?.naturalWidth||media?.videoWidth||0,nh=media?.naturalHeight||media?.videoHeight||0;
+  const provisionalW=Math.round(W*P[i%P.length].w);
+  const h=nw&&nh?provisionalW*(nh/nw):frame?.getBoundingClientRect().height||0;
+  return h>0?h:0;
+ }).filter(Boolean).sort((a,b)=>a-b);
+ const balanceHeight=portraitHeights.length?portraitHeights[Math.floor(portraitHeights.length/2)]:0;
+ const balanceTolerance=.10;
+ cards.forEach((el,i)=>{const p=P[i%P.length];let w=Math.round(W*p.w);
+  if(el._landscape&&balanceHeight&&w<balanceHeight){
+   const delta=(balanceHeight-w)/balanceHeight;
+   w=delta>balanceTolerance?Math.round(balanceHeight):Math.round(w+(balanceHeight-w)*.7);
+  }
+  const l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
+  const sizeChanged=force||widthChanged||!el._sized||el._w!==w;
   el._d=p.d;el._l=l;el._w=w;
   if(mobileLayout){el.style.setProperty("--card-gap",`${9*unit}px`);el.style.setProperty("--card-meta-gap",`${8*unit}px`);el.style.setProperty("--card-meta-bottom",`${4*unit}px`);el.style.setProperty("--card-title-size",`${12*unit}px`);el.style.setProperty("--card-sub-size",`${9*unit}px`);el.style.setProperty("--frame-radius",`${Math.max(1,Math.round(w*.04*100)/100)}px`)}
-  if(force||widthChanged||!el._sized){el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10);el._sized=true}});
+  if(sizeChanged){el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10);el._hLocked=false;el._sized=true}});
  const heights=cards.map(el=>{
   if(!force&&!widthChanged&&el._hLocked&&el._h)return el._h;
   const h=el.offsetHeight||el._w*.75+44;

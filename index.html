@@ -462,10 +462,9 @@ function layout(force){
  const W=canvas.clientWidth;if(!W)return;
  const widthChanged=Math.abs(W-lastLayoutW)>1;
  if(widthChanged)lastLayoutW=W;
- const compact=innerWidth<680&&innerHeight>=innerWidth;
- const overlapPad=compact?0:16;
- const P=W<680?MP:DP,minH=Math.max(300,stage.clientHeight-110);
- cards.forEach((el,i)=>{const p=P[i%P.length],scale=compact&&el._landscape?1.06:1,w=Math.round(W*p.w*scale),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
+ const portraitLayout=innerHeight>=innerWidth&&innerWidth<1200;
+ const P=portraitLayout?MP:DP,minH=Math.max(300,stage.clientHeight-110);
+ cards.forEach((el,i)=>{const p=P[i%P.length],scale=portraitLayout&&el._landscape?1.06:1,w=Math.round(W*p.w*scale),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
   el._d=p.d;el._l=l;el._w=w;
   if(force||widthChanged||!el._sized||el._layoutScale!==scale){el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10);el._layoutScale=scale;el._sized=true}});
  const heights=cards.map(el=>{
@@ -476,8 +475,8 @@ function layout(force){
  });
  let bottom=0;
  cards.forEach((el,i)=>{const p=P[i%P.length],h=heights[i];let top=8;
-  if(i){const q=cards[i-1],ov=el._l<q._l+q._w+overlapPad&&el._l+el._w+overlapPad>q._l;
-   top=ov?bottom+(compact?Math.max(10,p.g+12):Math.max(20,p.g+24)):Math.max(bottom-Math.min(h,el._w*.85)*(compact?.58:.42)+p.g,q._t+(compact?24:42))}
+  if(i){const q=cards[i-1],ov=el._l<q._l+q._w+16&&el._l+el._w+16>q._l;
+   top=ov?bottom+Math.max(20,p.g+24):Math.max(bottom-Math.min(h,el._w*.85)*.42+p.g,q._t+42)}
   if(el._t!==top){el._t=top;el.style.top=Math.round(top)+"px"}
   bottom=Math.max(bottom,top+h)});
  const targetH=Math.max(bottom+56,minH)+"px";

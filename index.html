@@ -53,6 +53,18 @@ header>*{pointer-events:auto}
 [data-mode=interactive] #layoutBtn,[data-mode=playlist] #layoutBtn{display:none}
 @media(max-width:640px){.count{display:none}.brand{font-size:18px}}
 
+/* Mobile zoom-stable UI: keep the visual system proportional to the viewport. */
+.mobile-layout header{gap:.9vw;padding:max(2vw,env(safe-area-inset-top)) 2.4vw 1.3vw}
+.mobile-layout .pill{gap:.9vw;height:4.1vw}
+.mobile-layout .mark{width:1.3vw;height:1.3vw}
+.mobile-layout .brand{font-size:2.2vw}
+.mobile-layout .chev{width:1.4vw;height:1.4vw}
+.mobile-layout .count{display:inline-flex;gap:.65vw;font-size:1.1vw;padding-left:1.3vw;margin-left:.4vw}
+.mobile-layout .dot{width:.55vw;height:.55vw}
+.mobile-layout .tools{gap:.9vw}
+.mobile-layout .ibtn{width:4.1vw;height:4.1vw}
+.mobile-layout .ibtn svg{width:1.85vw;height:1.85vw}
+
 /* ---------- project switcher window ---------- */
 .pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0);visibility:hidden;pointer-events:none;transition:background .2s var(--ease),visibility 0s linear .2s}
 .pm.open{background:rgba(0,0,0,.86);visibility:visible;pointer-events:auto;transition:background .2s var(--ease),visibility 0s}
@@ -86,6 +98,7 @@ header>*{pointer-events:auto}
 main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 main::-webkit-scrollbar{display:none}
 .canvas{position:relative;width:calc(100% - 44px);max-width:1360px;margin:92px auto 0;min-height:calc(100dvh - 126px)}
+.mobile-layout .canvas{width:92vw;max-width:none;margin-top:10vw;min-height:calc(100dvh - 14vw)}
 .proj-view{position:relative;width:100%;min-height:inherit}
 .proj-view[hidden]{display:none!important}
 [data-mode=gallery][data-layout=grid] .canvas{min-height:0;margin-top:84px;padding-bottom:48px;height:auto!important}
@@ -104,6 +117,12 @@ main::-webkit-scrollbar{display:none}
 .card:active{transform:scale(.975)}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-6px)}.card:hover img,.card:hover video{transform:scale(1.025)}}
 .frame{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:16px;background:#111;border:1px solid rgba(255,255,255,.12)}
+.mobile-layout .card{gap:var(--card-gap,9px)}
+.mobile-layout .frame{border-radius:var(--frame-radius,16px)}
+.mobile-layout .meta{gap:var(--card-meta-gap,8px);padding-bottom:var(--card-meta-bottom,4px)}
+.mobile-layout .ttl{font-size:var(--card-title-size,12px)}
+.mobile-layout .sub,.mobile-layout[data-mode=gallery]:not([data-layout=grid]) .tag{font-size:var(--card-sub-size,9px)}
+.mobile-layout[data-mode=gallery]:not([data-layout=grid]) .tag{display:inline}
 .frame.loaded{aspect-ratio:auto}
 .frame img,.frame video{display:block;width:100%;height:auto;opacity:0;transition:opacity .4s var(--ease),transform .7s var(--ease);pointer-events:none}
 .frame.loaded img,.frame.loaded video{opacity:1}
@@ -345,6 +364,8 @@ function toEntry(p,i,folder,tfolder,thumbExts,allowVidThumb){
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const body=document.body;
+const mobileLayout=matchMedia("(pointer:coarse)").matches||navigator.maxTouchPoints>0;
+body.classList.toggle("mobile-layout",mobileLayout);
 let activeProj=PROJECTS[0],entries=[],cards=[],cur=0,modal=false,pmOpen=false,grid=false;
 let activeViewEl=null;
 const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),pm=$("#pm"),flip=$("#flip"),lbImg=$("#lbImg"),lbVid=$("#lbVid");
@@ -461,9 +482,11 @@ function layout(force){
  const W=canvas.clientWidth;if(!W)return;
  const widthChanged=Math.abs(W-lastLayoutW)>1;
  if(widthChanged)lastLayoutW=W;
- const P=DP,minH=Math.max(300,stage.clientHeight-110);
+ const unit=mobileLayout?W/900:1;
+ const P=DP,minH=mobileLayout?Math.max(300*unit,stage.clientHeight-110*unit):Math.max(300,stage.clientHeight-110);
  cards.forEach((el,i)=>{const p=P[i%P.length],w=Math.round(W*p.w),l=Math.min(Math.round(W*p.x),Math.max(0,W-w));
   el._d=p.d;el._l=l;el._w=w;
+  if(mobileLayout){el.style.setProperty("--card-gap",`${9*unit}px`);el.style.setProperty("--card-meta-gap",`${8*unit}px`);el.style.setProperty("--card-meta-bottom",`${4*unit}px`);el.style.setProperty("--card-title-size",`${12*unit}px`);el.style.setProperty("--card-sub-size",`${9*unit}px`);el.style.setProperty("--frame-radius",`${Math.max(1,Math.round(w*.04*100)/100)}px`)}
   if(force||widthChanged||!el._sized){el.style.width=w+"px";el.style.left=l+"px";el.style.zIndex=Math.round(p.d*10);el._sized=true}});
  const heights=cards.map(el=>{
   if(!force&&!widthChanged&&el._hLocked&&el._h)return el._h;
@@ -472,15 +495,19 @@ function layout(force){
   return h;
  });
  let bottom=0;
- cards.forEach((el,i)=>{const p=P[i%P.length],h=heights[i];let top=8;
-  if(i){const q=cards[i-1],ov=el._l<q._l+q._w+16&&el._l+el._w+16>q._l;
-   top=ov?bottom+Math.max(20,p.g+24):Math.max(bottom-Math.min(h,el._w*.85)*.42+p.g,q._t+42)}
+ cards.forEach((el,i)=>{const p=P[i%P.length],h=heights[i];let top=mobileLayout?8*unit:8;
+  const g=mobileLayout?p.g*unit:p.g;
+  if(i){const q=cards[i-1],overlapX=mobileLayout?16*unit:16,ov=el._l<q._l+q._w+overlapX&&el._l+el._w+overlapX>q._l;
+   const overlapY=mobileLayout?20*unit:20,offsetY=mobileLayout?24*unit:24,carryY=mobileLayout?42*unit:42;
+   top=ov?bottom+Math.max(overlapY,g+offsetY):Math.max(bottom-Math.min(h,el._w*.85)*.42+g,q._t+carryY)}
   if(el._t!==top){el._t=top;el.style.top=Math.round(top)+"px"}
   bottom=Math.max(bottom,top+h)});
- const targetH=Math.max(bottom+56,minH)+"px";
+ const targetH=Math.max(bottom+(mobileLayout?56*unit:56),minH)+"px";
  if(canvas.style.height!==targetH)canvas.style.height=targetH;
 }
 new ResizeObserver(()=>layout(true)).observe(stage);
+addEventListener("resize",()=>{lastLayoutW=0;scheduleLayout()},{passive:true});
+window.visualViewport?.addEventListener("resize",()=>{lastLayoutW=0;scheduleLayout()},{passive:true});
 
 /* ---------- EXIF / Media Metadata ---------- */
 const exifCache=new Map();

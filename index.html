@@ -346,7 +346,7 @@ function toEntry(p,i,folder,tfolder,thumbExts,allowVidThumb){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const body=document.body;
 let activeProj=PROJECTS[0],entries=[],cards=[],cur=0,modal=false,pmOpen=false,grid=false;
-let activeViewEl=null,transitionHold=false,resumeTimer=0;
+let activeViewEl=null;
 const canvas=$("#canvas"),stage=$("#stage"),topBar=$("#topBar"),lb=$("#lb"),pm=$("#pm"),flip=$("#flip"),lbImg=$("#lbImg"),lbVid=$("#lbVid");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const reduceMotion=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -834,14 +834,6 @@ function suspendCurrentView(){
  if(activeViewEl)activeViewEl.hidden=true;
 }
 
-function beginStaggeredResume(){
- transitionHold=true;
- clearTimeout(resumeTimer);
- resumeTimer=setTimeout(()=>{
-  transitionHold=false;
- },260);
-}
-
 function evictOldestView(){
  if(viewCache.size<MAX_CACHED_VIEWS)return;
  const oldestKey=viewCache.keys().next().value;
@@ -883,7 +875,6 @@ async function loadProject(baseProj,pushHash){
   }
   stage.scrollTop=cached.scrollTop||0;
   cards.forEach(c=>{const v=c.querySelector("video");if(v)vidObs.observe(v)});
-  beginStaggeredResume();
   return;
  }
 
@@ -901,12 +892,11 @@ async function loadProject(baseProj,pushHash){
  activeProj=proj;
  if(!ok&&proj.data){
   updateCount(`Could not load ${proj.data} — check file syntax.`);
-  beginStaggeredResume();
   return;
  }
 
- if(mode==="interactive"){mountInteractive(proj,viewEl);beginStaggeredResume();return}
- if(mode==="playlist"){mountPlaylist(proj,viewEl);beginStaggeredResume();return}
+ if(mode==="interactive"){mountInteractive(proj,viewEl);return}
+ if(mode==="playlist"){mountPlaylist(proj,viewEl);return}
 
  const fDir=cleanDir(proj.folder||"images");
  const tDir=resolveThumbDir(proj,fDir);
@@ -924,8 +914,6 @@ async function loadProject(baseProj,pushHash){
   evictOldestView();
   viewCache.set(proj.id,{el:viewEl,proj,entries,cards,scrollTop:0});
  }
-
- beginStaggeredResume();
 
  if(proj.discover!==false){
   scheduleIdle(()=>{
@@ -954,7 +942,6 @@ addEventListener("hashchange",()=>{
  const found=PROJECTS.find(p=>p.id===h);
  if(found&&found.id!==activeProj.id)loadProject(found,false);
 });
-requestAnimationFrame(()=>{});
 </script>
 </body>
 </html>

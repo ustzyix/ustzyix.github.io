@@ -11,8 +11,7 @@ window.setProjectData("videos-01", {
       title: "Velvet — 01",
       sub: "Velocity · 28 Jul 2023",
       tag: "1080×1080 · 39MB",
-      app: "Adobe After Effects",
-      aura: "#b91c1c"
+      app: "Adobe After Effects"
     }
   ]
 });

@@ -12,6 +12,20 @@ window.setProjectData("videos-01", {
       sub: "Velocity · 28 Jul 2023",
       ratio: 1,
       app: "Adobe After Effects"
+    },
+    {
+      file: "010.3CCmW_1.mp4",
+      title: "Amber — 02",
+      sub: "Velocity · 23 Sep 2023",
+      ratio: 1,
+      app: "Adobe After Effects"
+    },
+    {
+      file: "007.END.mp4",
+      title: "Memories — 03",
+      sub: "Velocity · 15 Jul 2023",
+      ratio: 1,
+      app: "Adobe After Effects"
     }
   ]
 });

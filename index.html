@@ -15,6 +15,7 @@
 :root{
  --bg:#000;--fg:#f5f5f5;--fg2:rgba(245,245,245,.62);--fg3:rgba(245,245,245,.38);
  --surface:#08080a;--surface-2:#111114;--line:rgba(255,255,255,.16);
+ --top-action-top:max(18px,env(safe-area-inset-top));--top-action-right:max(22px,env(safe-area-inset-right));
  --ease:cubic-bezier(.22,1,.36,1);
  --serif:"Cormorant Garamond","Playfair Display",Georgia,"Times New Roman",serif;
  --sans:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text",sans-serif;
@@ -30,7 +31,7 @@ button{font:inherit;color:inherit}
 
 /* ---------- header ---------- */
 header{position:fixed;top:0;left:0;right:0;z-index:25;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none;
- padding:max(18px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) 12px max(22px,env(safe-area-inset-left))}
+ padding:var(--top-action-top) var(--top-action-right) 12px max(22px,env(safe-area-inset-left))}
 header>*{pointer-events:auto}
 .pill{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0;border:0;border-radius:999px;background:transparent}
 .brand-btn{cursor:pointer;transition:transform .25s var(--ease),background .25s var(--ease)}
@@ -53,7 +54,8 @@ header>*{pointer-events:auto}
 @media(max-width:640px){.count{display:none}.brand{font-size:18px}}
 
 /* Mobile UI dimensions follow viewport width, so browser page zoom scales as one system. */
-.mobile-layout header{position:fixed;top:0;left:0;right:0;isolation:isolate;gap:2vw;padding:5vw 4vw 2.5vw}
+.mobile-layout{--top-action-top:5vw;--top-action-right:4vw}
+.mobile-layout header{position:fixed;top:0;left:0;right:0;isolation:isolate;gap:2vw;padding:var(--top-action-top) var(--top-action-right) 2.5vw}
 .mobile-layout header::before{content:"";position:absolute;inset:-2.5vw 0 -5vw;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,.34) 58%,transparent 100%);-webkit-backdrop-filter:blur(8vw) saturate(.72);backdrop-filter:blur(8vw) saturate(.72);-webkit-mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.82) 50%,rgba(0,0,0,.28) 78%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 22%,rgba(0,0,0,.82) 50%,rgba(0,0,0,.28) 78%,transparent 100%);-webkit-mask-size:100% 100%;mask-size:100% 100%}
 .mobile-layout header>*{position:relative;z-index:1}
 .mobile-layout .pill{gap:2vw;height:10vw}
@@ -71,7 +73,7 @@ header>*{pointer-events:auto}
 .pm-shell{width:min(100%,1180px);min-height:100%;margin:0 auto;display:flex;flex-direction:column}
 .pm-top{display:flex;align-items:center;justify-content:space-between;min-height:clamp(54px,10vw,76px)}
 .pm-brand{font-family:var(--serif);font-size:clamp(24px,6vw,34px);font-weight:600;letter-spacing:.01em}
-.pm-close{flex:0 0 auto}
+.pm-close{position:fixed;top:var(--top-action-top);right:var(--top-action-right);flex:0 0 auto}
 .pm-content{flex:1;display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:clamp(72px,12vh,140px) 0 clamp(24px,5vh,60px)}
 .pm-list{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(20px,4vh,36px);max-height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .pm-list::-webkit-scrollbar{display:none}
@@ -180,7 +182,7 @@ main::-webkit-scrollbar{display:none}
 body.modal-active header,body.modal-active main{pointer-events:none}
 .lb .ibtn,.lb .fbtn{background:#0b0b0d;border-color:rgba(255,255,255,.24)}
 .lb .ibtn{position:absolute;z-index:5}
-.lb-x{top:max(18px,env(safe-area-inset-top));right:max(18px,env(safe-area-inset-right))}
+.lb-x{top:var(--top-action-top);right:var(--top-action-right)}
 .lb-in{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:clamp(28px,4vh,64px);max-width:92vw;pointer-events:none}
 .scene,.lb-ctl{pointer-events:auto}
 .scene{perspective:1500px;display:grid;place-items:center;cursor:pointer;transform:scale(.93) translateY(12px);transition:transform .45s var(--ease);touch-action:manipulation}

@@ -36,7 +36,6 @@ header>*{pointer-events:auto}
 .brand-btn{cursor:pointer;transition:transform .25s var(--ease),background .25s var(--ease)}
 .brand-btn:active{transform:translateZ(0) scale(.95)}
 @media(hover:hover){.brand-btn:hover{opacity:.72}}
-.mark{display:none}
 .brand{font-family:var(--serif);font-size:20px;font-weight:600;letter-spacing:.01em}
 .chev{width:13px;height:13px;fill:none;stroke:var(--fg2);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s var(--ease)}
 .brand-btn[aria-expanded=true] .chev{transform:rotate(180deg)}
@@ -86,7 +85,7 @@ header>*{pointer-events:auto}
 .pitem:last-child{border-bottom:0}
 .pitem:active{background:rgba(255,255,255,.06)}
 @media(hover:hover){.pitem:hover{background:rgba(255,255,255,.035)}}
-.pitem.active{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.12);box-shadow:none}
+.pitem.active{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);box-shadow:none}
 .pthumb{flex-shrink:0;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
  background:transparent;border:1px solid rgba(255,255,255,.22)}
 .pcode{font-family:var(--mono);font-size:13.5px;font-weight:500;letter-spacing:.18em;padding-left:.18em;color:var(--fg)}
@@ -94,7 +93,7 @@ header>*{pointer-events:auto}
 .ptitle{font-family:var(--sans);font-size:17px;font-weight:600;letter-spacing:.01em;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .psub{font-family:var(--sans);font-size:13px;letter-spacing:.02em;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pbadge{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:0;border:0;border-radius:0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);background:transparent}
-.pitem.active .pbadge{color:var(--fg);border-color:transparent}
+.pitem.active .pbadge{color:var(--fg)}
 
 /* ---------- stage & keep-alive views ---------- */
 main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -122,29 +121,21 @@ main::-webkit-scrollbar{display:none}
 @media(hover:hover){.card:hover{z-index:15!important;transform:translateY(-6px)}.card:hover img,.card:hover video{transform:scale(1.025)}}
 .frame{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:16px;background:#111;border:1px solid rgba(255,255,255,.12)}
 .mobile-layout .card{gap:1.05vw;container-type:inline-size}
-.mobile-layout .meta{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:.33vw .83vw;padding:0 1px .41vw}
-.mobile-layout .tw{display:contents}
-.mobile-layout .ttl{grid-column:1/-1;grid-row:1;font-size:1.74vw}
-.mobile-layout .sub{grid-column:1;grid-row:2;font-size:1.23vw}
-.mobile-layout .tag{display:block;grid-column:2;grid-row:2;justify-self:end;max-width:45%;overflow:hidden;text-overflow:ellipsis;font-size:1.23vw}
+.mobile-layout .ttl{font-size:1.74vw}
+.mobile-layout .sub{font-size:1.23vw}
 .mobile-layout .frame{border-radius:1.2vw}
 .mobile-layout .vbadge{font-size:1.26vw}
 @supports (font-size:1cqw){
  .mobile-layout .card{gap:3.5cqw}
  .mobile-layout .frame{border-radius:4cqw}
- .mobile-layout .meta{gap:1.2cqw 3cqw;padding-bottom:1.5cqw}
- .mobile-layout .ttl{font-size:5.8cqw}
- .mobile-layout .sub,.mobile-layout .tag{font-size:4.1cqw}
- .mobile-layout .vbadge{font-size:4.2cqw}
 }
 .frame img,.frame video{display:block;width:100%;height:auto;opacity:0;transition:opacity .4s var(--ease),transform .7s var(--ease);pointer-events:none}
 .frame.loaded img,.frame.loaded video{opacity:1}
 .vbadge{position:absolute;top:10px;right:10px;z-index:2;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border:1px solid rgba(255,255,255,.24);border-radius:999px;font-size:9.5px;font-family:var(--mono);letter-spacing:.06em;background:#08080a;color:var(--fg)}
-.meta{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:0 1px 4px}
-.tw{min-width:0;display:flex;flex-direction:column;gap:2px}
+.meta{display:block;padding:0 1px 4px}
+.tw{width:100%;min-width:0;display:flex;flex-direction:column;gap:2px}
 .ttl{font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.01em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub{font-family:var(--mono);font-size:9px;letter-spacing:.03em;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tag{flex-shrink:0;padding:0;font-family:var(--mono);font-size:9px;letter-spacing:.03em;color:var(--fg2);text-align:right}
 
 /* ---------- interactive & playlist stages ---------- */
 .ix-wrap{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:10px auto 36px;padding:12px;border:1px solid var(--line);border-radius:24px;background:var(--surface);animation:rise .55s var(--ease) backwards}
@@ -226,7 +217,6 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 
 <header id="topBar" role="banner">
   <button class="pill brand-btn" id="projBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Switch project archive">
-    <span class="mark"></span>
     <span class="brand">ustzyix</span>
     <svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
     <span class="count"><span class="dot"></span><span id="projName">Archive</span> · <span id="count">0 items</span></span>
@@ -357,8 +347,8 @@ function toEntry(p,i,folder,tfolder,thumbExts,allowVidThumb){
  const rawRef=p.file||String(p.src||"").split("?")[0].split("/").pop();
  const file=safeDecode(rawRef);
  const isVid=p.type==="video"||VID_OK.test(file)||VID_OK.test(p.src||"");
- const taggedDimensions=String(p.tag||"").match(/(\d{3,5})\s*[x×]\s*(\d{3,5})/i);
- const ratio=Number(p.ratio)>0?Number(p.ratio):(taggedDimensions?Number(taggedDimensions[1])/Number(taggedDimensions[2]):0);
+ const declaredRatio=Number(p.ratio);
+ const ratio=Number.isFinite(declaredRatio)&&declaredRatio>0?declaredRatio:0;
  const src=p.src||`./${encodePath(fDir)}/${encodePath(file)}`;
  const manifestThumb=window.THUMBS_MAP?.[file]||"";
  const explicitThumb=p.poster||p.thumb||manifestThumb;
@@ -368,11 +358,11 @@ function toEntry(p,i,folder,tfolder,thumbExts,allowVidThumb){
   file,src,thumb,resolvedThumb:thumb,thumbCandidates,
   isVid,ratio,poster:isVid?thumb:(p.poster||""),
   caption:p.title||capOf(file),sub:p.sub||`Archive · ${pad(i+1)}`,
-  tag:p.tag||"",app:p.app||"",exif:p.exif||null,auto:!!p.auto
+  app:p.app||"",exif:p.exif||null,auto:!!p.auto
  };
 }
 
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s);
 const body=document.body;
 const mobileLayout=matchMedia("(pointer:coarse)").matches||navigator.maxTouchPoints>0;
 body.classList.toggle("mobile-layout",mobileLayout);
@@ -435,12 +425,19 @@ function fetchProjectDetail(proj){
   loadedScripts.set(proj.data,new Promise(res=>{
    const s=document.createElement("script");
    s.src=proj.data;
-   s.onload=()=>res(true);
-   s.onerror=()=>res(false);
+   let settled=false;
+   const finish=ok=>{if(settled)return;settled=true;clearTimeout(timer);res(ok)};
+   const timer=setTimeout(()=>finish(false),15000);
+   s.onload=()=>finish(true);
+   s.onerror=()=>finish(false);
    document.head.append(s);
   }));
  }
- return loadedScripts.get(proj.data).then(ok=>({ok:ok&&!!window.PROJECT_STORE[proj.id],proj:{...proj,...(window.PROJECT_STORE[proj.id]||{})}}));
+ return loadedScripts.get(proj.data).then(ok=>{
+  const loaded=ok&&!!window.PROJECT_STORE[proj.id];
+  if(!loaded)loadedScripts.delete(proj.data);
+  return{ok:loaded,proj:{...proj,...(window.PROJECT_STORE[proj.id]||{})}};
+ });
 }
 function prefetchProjects(){
  PROJECTS.forEach(p=>{if(p.data&&!window.PROJECT_STORE[p.id]&&!loadedScripts.has(p.data))fetchProjectDetail(p)});
@@ -524,8 +521,8 @@ function layout(force){
  cards.forEach((el,i)=>{const p=P[i%P.length],h=heights[i];let top=mobileLayout?8*unit:8;
   const g=mobileLayout?p.g*unit:p.g;
   if(i){const q=cards[i-1],overlapX=mobileLayout?16*unit:16,ov=el._l<q._l+q._w+overlapX&&el._l+el._w+overlapX>q._l;
-   const overlapY=mobileLayout?20*unit:20,offsetY=mobileLayout?24*unit:24,carryY=mobileLayout?42*unit:42;
-   top=ov?bottom+Math.max(overlapY,g+offsetY):Math.max(bottom-Math.min(h,el._w*.85)*.42+g,q._t+carryY)}
+   const overlapY=mobileLayout?14*unit:20,offsetY=mobileLayout?16*unit:24,carryY=mobileLayout?26*unit:42;
+   top=ov?bottom+Math.max(overlapY,g+offsetY):Math.max(bottom-Math.min(h,el._w*.85)*.52+g,q._t+carryY)}
   if(el._t!==top){el._t=top;el.style.top=Math.round(top)+"px"}
   bottom=Math.max(bottom,top+h)});
  const targetH=Math.max(bottom+(mobileLayout?56*unit:56),minH)+"px";
@@ -601,6 +598,7 @@ function renderProjectList(){
   const code=(merged.code||String(merged.title||"").replace(/[^A-Za-z0-9]/g,"").slice(0,2)||pad(idx+1)).toUpperCase();
   const btn=document.createElement("button");
   btn.type="button";btn.className="pitem"+(isAct?" active":"");
+  btn.setAttribute("aria-current",isAct?"true":"false");
   btn.innerHTML=`
    <div class="pthumb"><span class="pcode">${esc(code)}</span></div>
    <div class="pinfo">
@@ -629,7 +627,7 @@ function openPm(){
   scheduleIdle(prefetchProjects);
  });
 }
-function closePm(){if(!pmOpen)return;pmOpen=false;topBar.inert=false;stage.inert=false;$("#projBtn").setAttribute("aria-expanded","false");body.classList.remove("modal-active");pm.classList.remove("open");syncCardVideos(false)}
+function closePm(){if(!pmOpen)return;pmOpen=false;topBar.inert=false;stage.inert=false;const trigger=$("#projBtn");trigger.setAttribute("aria-expanded","false");body.classList.remove("modal-active");pm.classList.remove("open");syncCardVideos(false);trigger.focus({preventScroll:true})}
 $("#projBtn").onclick=openPm;$("#pmX").onclick=e=>{e.stopPropagation();closePm()};pm.onclick=e=>{if(e.target===pm)closePm()};
 
 /* ---------- lightbox (Progressive Thumbnail -> Full-Res) ---------- */
@@ -741,7 +739,7 @@ function addCard(it,i,tok=loadTok,targetContainer=activeViewEl||canvas){
  const mediaHtml=it.isVid
   ?`<video data-src="${esc(it.src)}" ${initPoster?`poster="${esc(initPoster)}"`:""} crossorigin="anonymous" muted loop playsinline preload="none"></video><span class="vbadge">▶ VIDEO</span>`
   :`<img alt="${esc(it.caption)}" decoding="async" draggable="false">`;
- el.innerHTML=`<div class="frame">${mediaHtml}</div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div>${it.tag?`<span class="tag">${esc(it.tag)}</span>`:""}</div>`;
+ el.innerHTML=`<div class="frame">${mediaHtml}</div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub||"Stillness")}</div></div></div>`;
  const frame=el.querySelector(".frame"),mediaEl=el.querySelector("img,video");
  if(it.isVid&&it.ratio>0)frame.style.aspectRatio=`${it.ratio}`;
  const onReady=()=>{

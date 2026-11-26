@@ -71,10 +71,8 @@ header>*{pointer-events:auto}
 .pm-shell{width:min(100%,1180px);min-height:100%;margin:0 auto;display:flex;flex-direction:column}
 .pm-top{display:flex;align-items:center;justify-content:space-between;min-height:clamp(54px,10vw,76px)}
 .pm-brand{font-family:var(--serif);font-size:clamp(24px,6vw,34px);font-weight:600;letter-spacing:.01em}
-.pm-close{display:grid;place-items:center;flex:0 0 auto;width:clamp(52px,12vw,64px);height:clamp(52px,12vw,64px);border:0;border-radius:50%;background:var(--fg);color:#000;cursor:pointer;transition:transform .2s var(--ease),opacity .2s var(--ease)}
-.pm-close:active{transform:scale(.92)}
-.pm-close svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.pm-content{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:clamp(34px,8vh,100px) 0 clamp(24px,5vh,60px)}
+.pm-close{flex:0 0 auto}
+.pm-content{flex:1;display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:clamp(72px,12vh,140px) 0 clamp(24px,5vh,60px)}
 .pm-list{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(20px,4vh,36px);max-height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .pm-list::-webkit-scrollbar{display:none}
 .pm-project{display:block;width:fit-content;max-width:100%;border:0;background:transparent;text-align:left;cursor:pointer;color:rgba(245,245,245,.43);transition:color .2s var(--ease),transform .2s var(--ease)}
@@ -234,8 +232,8 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 <div class="pm" id="pm" role="dialog" aria-modal="true" aria-label="Choose a project">
   <div class="pm-shell">
     <div class="pm-top">
-      <span class="pm-brand">ustzyix</span>
-      <button class="pm-close" id="pmX" type="button" aria-label="Close project menu"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <span class="pm-brand">Another Work</span>
+      <button class="ibtn pm-close" id="pmX" type="button" aria-label="Close project menu"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="pm-content">
       <nav class="pm-list" id="pmList" aria-label="Projects"></nav>

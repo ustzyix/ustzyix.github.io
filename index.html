@@ -65,35 +65,34 @@ header>*{pointer-events:auto}
 .mobile-layout .ibtn{width:10vw;height:10vw;min-width:10vw;min-height:10vw}
 .mobile-layout .ibtn svg{width:4.5vw;height:4.5vw}
 
-/* ---------- project switcher window ---------- */
-.pm{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0);visibility:hidden;pointer-events:none;transition:background .2s var(--ease),visibility 0s linear .2s}
-.pm.open{background:rgba(0,0,0,.86);visibility:visible;pointer-events:auto;transition:background .2s var(--ease),visibility 0s}
-.pm-box{width:100%;max-width:460px;max-height:min(78dvh,560px);display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.18);border-radius:28px;background:linear-gradient(180deg,#111114 0%,#08080a 100%);box-shadow:0 28px 80px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.035) inset;
- opacity:0;will-change:transform,opacity;transform:translate3d(0,10px,0) scale(.96);
- transition:transform .2s var(--ease),opacity .2s var(--ease)}
-.pm.open .pm-box{opacity:1;transform:translate3d(0,0,0) scale(1)}
-.pm-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 24px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
-.pm-t{font-family:var(--sans);font-size:19px;font-weight:600;letter-spacing:.01em;line-height:1.2}
-.pm-x{display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:#0b0b0d;
- cursor:pointer;transition:transform .2s var(--ease),background .2s var(--ease)}
-.pm-x:active{transform:scale(.9)}
-.pm-x svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.pm-list{display:flex;flex-direction:column;gap:0;padding:14px 18px 18px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+/* ---------- full-screen project navigation ---------- */
+.pm{position:fixed;inset:0;z-index:35;display:flex;padding:max(18px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(22px,env(safe-area-inset-left));background:#000;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .24s var(--ease),visibility 0s linear .24s}
+.pm.open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .24s var(--ease),visibility 0s}
+.pm-shell{width:min(100%,1180px);min-height:100%;margin:0 auto;display:flex;flex-direction:column}
+.pm-top{display:flex;align-items:center;justify-content:space-between;min-height:clamp(54px,10vw,76px)}
+.pm-brand{font-family:var(--serif);font-size:clamp(24px,6vw,34px);font-weight:600;letter-spacing:.01em}
+.pm-close{display:grid;place-items:center;flex:0 0 auto;width:clamp(52px,12vw,64px);height:clamp(52px,12vw,64px);border:0;border-radius:50%;background:var(--fg);color:#000;cursor:pointer;transition:transform .2s var(--ease),opacity .2s var(--ease)}
+.pm-close:active{transform:scale(.92)}
+.pm-close svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.pm-content{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;padding:clamp(34px,8vh,100px) 0 clamp(24px,5vh,60px)}
+.pm-list{display:flex;flex-direction:column;align-items:flex-start;gap:clamp(20px,4vh,36px);max-height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .pm-list::-webkit-scrollbar{display:none}
-.pitem{display:flex;align-items:center;gap:16px;width:100%;padding:14px 8px;border:0;border-bottom:1px solid rgba(255,255,255,.1);border-radius:0;text-align:left;cursor:pointer;
- background:transparent;transition:background .25s var(--ease),color .25s var(--ease)}
-.pitem:last-child{border-bottom:0}
-.pitem:active{background:rgba(255,255,255,.06)}
-@media(hover:hover){.pitem:hover{background:rgba(255,255,255,.035)}}
-.pitem.active{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);box-shadow:none}
-.pthumb{flex-shrink:0;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
- background:transparent;border:1px solid rgba(255,255,255,.22)}
-.pcode{font-family:var(--mono);font-size:13.5px;font-weight:500;letter-spacing:.18em;padding-left:.18em;color:var(--fg)}
-.pinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.ptitle{font-family:var(--sans);font-size:17px;font-weight:600;letter-spacing:.01em;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.psub{font-family:var(--sans);font-size:13px;letter-spacing:.02em;color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pbadge{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:0;border:0;border-radius:0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg2);background:transparent}
-.pitem.active .pbadge{color:var(--fg)}
+.pm-project{display:block;width:fit-content;max-width:100%;border:0;background:transparent;text-align:left;cursor:pointer;color:rgba(245,245,245,.43);transition:color .2s var(--ease),transform .2s var(--ease)}
+.pm-project[hidden]{display:none}
+.pm-project:active{transform:translateX(3px)}
+.pm-project[aria-current="page"]{color:var(--fg)}
+@media(hover:hover){.pm-project:hover{color:var(--fg)}}
+.pm-project-name{display:block;font-family:var(--sans);font-size:clamp(34px,9vw,58px);font-weight:500;letter-spacing:-.055em;line-height:1.04;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm-project-sub{display:block;margin-top:6px;font-family:var(--sans);font-size:clamp(15px,3.8vw,20px);font-weight:400;letter-spacing:-.02em;line-height:1.3;color:rgba(245,245,245,.43);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s var(--ease)}
+.pm-project-sub[hidden]{display:none}
+.pm-project[aria-current="page"] .pm-project-sub,.pm-project:hover .pm-project-sub{color:rgba(245,245,245,.68)}
+.pm-empty{font-family:var(--sans);font-size:15px;color:var(--fg2)}
+.pm-empty[hidden]{display:none}
+.pm-search-wrap{display:flex;align-items:center;gap:14px;width:100%;min-height:clamp(58px,14vw,76px);padding:0 clamp(18px,5vw,30px);border-radius:999px;background:#171719;color:var(--fg2)}
+.pm-search-wrap svg{width:23px;height:23px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.pm-search{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--fg);font:400 clamp(16px,4vw,20px)/1.2 var(--sans);letter-spacing:-.02em;user-select:text;-webkit-user-select:text}
+.pm-search::placeholder{color:rgba(245,245,245,.5);opacity:1}
+@media(min-width:760px){.pm{padding-left:max(40px,env(safe-area-inset-left));padding-right:max(40px,env(safe-area-inset-right))}.pm-content{padding-top:clamp(50px,10vh,130px)}.pm-list{gap:clamp(24px,4vh,42px)}}
 
 /* ---------- stage & keep-alive views ---------- */
 main{position:fixed;inset:0;z-index:2;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -231,14 +230,21 @@ body.modal-active header,body.modal-active main{pointer-events:none}
 
 <main id="stage" role="main"><div class="canvas" id="canvas" data-empty-msg="No items found in this collection yet."></div></main>
 
-<!-- Project Switcher Window -->
-<div class="pm" id="pm" role="dialog" aria-modal="true" aria-label="Another Work">
-  <div class="pm-box">
-    <div class="pm-hd">
-      <div class="pm-t">Another Work</div>
-      <button class="pm-x" id="pmX" type="button" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+<!-- Full-screen Project Navigation -->
+<div class="pm" id="pm" role="dialog" aria-modal="true" aria-label="Choose a project">
+  <div class="pm-shell">
+    <div class="pm-top">
+      <span class="pm-brand">ustzyix</span>
+      <button class="pm-close" id="pmX" type="button" aria-label="Close project menu"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
-    <div class="pm-list" id="pmList"></div>
+    <div class="pm-content">
+      <nav class="pm-list" id="pmList" aria-label="Projects"></nav>
+      <p class="pm-empty" id="pmEmpty" role="status" hidden>No matching projects</p>
+    </div>
+    <label class="pm-search-wrap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+      <input class="pm-search" id="pmSearch" type="search" placeholder="Search projects" aria-label="Search projects" autocomplete="off" spellcheck="false"/>
+    </label>
   </div>
 </div>
 
@@ -585,32 +591,34 @@ async function fillExif(it,mediaEl){
  T("#xRes",m.resolution||(w&&h?`${w} × ${h} (${(w*h/1e6).toFixed(1)} MP)`:"Loading…"));
 }
 
-/* ---------- project switcher modal ---------- */
+/* ---------- project navigation ---------- */
 const TYPE_ICON={
  playlist:`<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`
 };
 function renderProjectList(){
- const list=$("#pmList");list.innerHTML="";
- PROJECTS.forEach((p,idx)=>{
+ const list=$("#pmList"),search=$("#pmSearch");list.replaceChildren();search.value="";$("#pmEmpty").hidden=true;
+ PROJECTS.forEach(p=>{
   const isAct=p.id===activeProj.id;
   const cachedDetail=window.PROJECT_STORE[p.id];
   const merged={...p,...(cachedDetail||{})};
-  const code=(merged.code||String(merged.title||"").replace(/[^A-Za-z0-9]/g,"").slice(0,2)||pad(idx+1)).toUpperCase();
   const btn=document.createElement("button");
-  btn.type="button";btn.className="pitem"+(isAct?" active":"");
-  btn.setAttribute("aria-current",isAct?"true":"false");
-  btn.innerHTML=`
-   <div class="pthumb"><span class="pcode">${esc(code)}</span></div>
-   <div class="pinfo">
-    <div class="ptitle">${esc(merged.title||`Project ${pad(idx+1)}`)}</div>
-    <div class="psub">${esc(merged.sub||"")}</div>
-   </div>
-   <span class="pbadge">${isAct?`<span class="dot"></span>Active`:`Open`}</span>`;
+  btn.type="button";btn.className="pm-project";btn.setAttribute("aria-current",isAct?"page":"false");
+  const name=document.createElement("span"),sub=document.createElement("span");
+  name.className="pm-project-name";name.textContent=merged.title||"Project";
+  sub.className="pm-project-sub";sub.textContent=merged.sub||"";sub.hidden=!sub.textContent;
+  btn.append(name,sub);
+  btn.dataset.search=[merged.title,merged.sub,merged.year,merged.code].filter(Boolean).join(" ").toLocaleLowerCase();
   btn.addEventListener("pointerenter",()=>{if(p.data)fetchProjectDetail(p)},{passive:true});
   btn.addEventListener("touchstart",()=>{if(p.data)fetchProjectDetail(p)},{passive:true});
   btn.onclick=()=>{closePm();if(!isAct)loadProject(p,true)};
   list.append(btn);
  });
+ filterProjectList();
+}
+function filterProjectList(){
+ const query=$("#pmSearch").value.trim().toLocaleLowerCase();let visible=0;
+ Array.from($("#pmList").children).forEach(item=>{const match=!query||item.dataset.search.includes(query);item.hidden=!match;if(match)visible++});
+ $("#pmEmpty").hidden=visible>0;
 }
 function openPm(){
  if(modal||pmOpen)return;
@@ -628,6 +636,7 @@ function openPm(){
  });
 }
 function closePm(){if(!pmOpen)return;pmOpen=false;topBar.inert=false;stage.inert=false;const trigger=$("#projBtn");trigger.setAttribute("aria-expanded","false");body.classList.remove("modal-active");pm.classList.remove("open");syncCardVideos(false);trigger.focus({preventScroll:true})}
+$("#pmSearch").addEventListener("input",filterProjectList);
 $("#projBtn").onclick=openPm;$("#pmX").onclick=e=>{e.stopPropagation();closePm()};pm.onclick=e=>{if(e.target===pm)closePm()};
 
 /* ---------- lightbox (Progressive Thumbnail -> Full-Res) ---------- */

@@ -10,7 +10,6 @@ window.setProjectData("archive-01", {
       file: "IMG_5755 (2).jpg",
       title: "Crimson — 01",
       sub: "Nocturne · 01",
-      tag: "fluted · grain",
       exif: {
         camera: "Apple iPhone 7 Plus", captured: "12 Oct 2025 · 12:16",
         aperture: "f/1.8", shutter: "1/1500s", focal: "3.99 mm", iso: "ISO 20",
@@ -21,7 +20,6 @@ window.setProjectData("archive-01", {
       file: "IMG_5738 (1).jpg",
       title: "Magenta — 02",
       sub: "Stillness · 02",
-      tag: "bloom · grain",
       exif: {
         camera: "Apple iPhone 7 Plus", captured: "12 Oct 2025 · 11:59",
         aperture: "f/1.8", shutter: "1/100s", focal: "3.99 mm", iso: "ISO 32",
@@ -32,7 +30,6 @@ window.setProjectData("archive-01", {
       file: "IMG_5898.jpg",
       title: "Amber — 03",
       sub: "Morning · 03",
-      tag: "mist · grain",
       exif: {
         camera: "Apple iPhone 7 Plus", captured: "16 Jan 2026 · 09:45",
         aperture: "f/2.8", shutter: "1/100s", focal: "6.60 mm", iso: "ISO 25",
@@ -43,7 +40,6 @@ window.setProjectData("archive-01", {
       file: "IMG_0018.jpg",
       title: "Obsidian — 04",
       sub: "Nocturne · 04",
-      tag: "fluted · grain",
       exif: {
         camera: "Apple iPhone 15", captured: "28 Mar 2024 · 20:50",
         aperture: "f/1.6", shutter: "1/17s", focal: "5.96 mm", iso: "ISO 1000",
@@ -54,7 +50,6 @@ window.setProjectData("archive-01", {
       file: "IMG_1328 (2).jpg",
       title: "Gilt — 05",
       sub: "Night · 05",
-      tag: "bloom · grain",
       exif: {
         camera: "Apple iPhone 15 Pro Max", captured: "18 Sep 2025 · 21:25",
         aperture: "f/1.8", shutter: "1/25s", focal: "6.76 mm", iso: "ISO 500",

@@ -4,49 +4,96 @@
 */
 import { state, stage } from "./state.js";
 
-/* ---------- Auto First-Frame Video Poster Cache ---------- */
+/* ---------- Video Poster Cache ---------- */
+
+const POSTER_CACHE_LIMIT = 48;
+
 export const vidPosterCache = new Map();
 
+export function cacheVideoPoster(key, url) {
+  if (!key || !url) return "";
+
+  if (vidPosterCache.has(key)) {
+    vidPosterCache.delete(key);
+  }
+
+  vidPosterCache.set(key, url);
+
+  while (vidPosterCache.size > POSTER_CACHE_LIMIT) {
+    const oldest = vidPosterCache.keys().next().value;
+    vidPosterCache.delete(oldest);
+  }
+
+  return url;
+}
+
+export function getVideoPoster(key) {
+  if (!key || !vidPosterCache.has(key)) {
+    return "";
+  }
+
+  const value = vidPosterCache.get(key);
+
+  // Move recently used item to the newest position.
+  vidPosterCache.delete(key);
+  vidPosterCache.set(key, value);
+
+  return value;
+}
+
+/* ---------- Auto First-Frame Video Poster Cache ---------- */
+
 const posterCanvas = document.createElement("canvas");
-const posterCtx = posterCanvas.getContext("2d", { alpha: false });
+const posterCtx = posterCanvas.getContext("2d", {
+  alpha: false
+});
 
 export function captureVideoPoster(videoEl, key) {
+  const cached = getVideoPoster(key);
+
+  if (cached) return cached;
+
   if (
     !videoEl ||
     !key ||
-    vidPosterCache.has(key) ||
     !videoEl.videoWidth ||
     !videoEl.videoHeight
   ) {
-    return vidPosterCache.get(key) || "";
+    return "";
   }
 
   try {
     const w = 160;
+
     const h = Math.max(
       1,
-      Math.round(w * (videoEl.videoHeight / videoEl.videoWidth))
+      Math.round(
+        w * (videoEl.videoHeight / videoEl.videoWidth)
+      )
     );
 
     posterCanvas.width = w;
     posterCanvas.height = h;
 
-    posterCtx.drawImage(videoEl, 0, 0, w, h);
+    posterCtx.drawImage(
+      videoEl,
+      0,
+      0,
+      w,
+      h
+    );
 
-    const url = posterCanvas.toDataURL("image/jpeg", 0.72);
+    const url = posterCanvas.toDataURL(
+      "image/jpeg",
+      0.72
+    );
 
     if (url && url.length > 64) {
-      vidPosterCache.set(key, url);
-
-      if (vidPosterCache.size > 40) {
-        vidPosterCache.delete(
-          vidPosterCache.keys().next().value
-        );
-      }
-
-      return url;
+      return cacheVideoPoster(key, url);
     }
-  } catch (_) {}
+  } catch (_) {
+    // Cross-origin media may prevent canvas extraction.
+  }
 
   return "";
 }
@@ -57,16 +104,21 @@ export const visibleVideos = new Set();
 
 /**
  * Load video source only once.
+ * Failed previews are not loaded again automatically.
  */
 export function ensureVideoSource(videoEl) {
   if (
-    videoEl &&
-    !videoEl.getAttribute("src") &&
-    videoEl.dataset.src
+    !videoEl ||
+    !videoEl.isConnected ||
+    videoEl.dataset.failed === "true" ||
+    videoEl.getAttribute("src") ||
+    !videoEl.dataset.src
   ) {
-    videoEl.src = videoEl.dataset.src;
-    videoEl.load();
+    return;
   }
+
+  videoEl.src = videoEl.dataset.src;
+  videoEl.load();
 }
 
 /**
@@ -76,6 +128,7 @@ function playPreview(videoEl) {
   if (
     !videoEl ||
     !videoEl.isConnected ||
+    videoEl.dataset.failed === "true" ||
     !visibleVideos.has(videoEl) ||
     !videoEl.paused
   ) {
@@ -84,13 +137,22 @@ function playPreview(videoEl) {
 
   ensureVideoSource(videoEl);
 
+  if (videoEl.dataset.failed === "true") return;
+
   const playPromise = videoEl.play();
 
-  if (playPromise && typeof playPromise.catch === "function") {
+  if (
+    playPromise &&
+    typeof playPromise.catch === "function"
+  ) {
     playPromise.catch((err) => {
-      // Ignore interruptions caused by pause, source changes, or DOM removal.
+      // Ignore interruptions caused by pause, source changes,
+      // or DOM removal.
       if (err?.name !== "AbortError") {
-        console.warn("Video preview playback failed:", err);
+        console.warn(
+          "Video preview playback failed:",
+          err
+        );
       }
     });
   }
@@ -107,12 +169,14 @@ export const vidObs = new IntersectionObserver(
       if (entry.isIntersecting) {
         visibleVideos.add(videoEl);
 
-        ensureVideoSource(videoEl);
+        if (videoEl.dataset.failed === "true") {
+          return;
+        }
 
+        ensureVideoSource(videoEl);
         playPreview(videoEl);
       } else {
         visibleVideos.delete(videoEl);
-
         videoEl.pause();
       }
     });
@@ -143,7 +207,10 @@ export function syncCardVideos(pauseAll = false) {
       return;
     }
 
-    if (visibleVideos.has(videoEl)) {
+    if (
+      visibleVideos.has(videoEl) &&
+      videoEl.dataset.failed !== "true"
+    ) {
       playPreview(videoEl);
     }
   });
@@ -166,17 +233,25 @@ export function predecode(src) {
       im.decode
         ? im.decode().then(() => im.naturalWidth > 0)
         : new Promise((resolve) => {
-            im.onload = () => resolve(im.naturalWidth > 0);
+            im.onload = () => {
+              resolve(im.naturalWidth > 0);
+            };
+
             im.onerror = () => resolve(false);
           })
     ).catch(() => false);
 
-    rec = { im, prom };
+    rec = {
+      im,
+      prom
+    };
 
     decoded.set(src, rec);
 
     if (decoded.size > 4) {
-      decoded.delete(decoded.keys().next().value);
+      decoded.delete(
+        decoded.keys().next().value
+      );
     }
   }
 

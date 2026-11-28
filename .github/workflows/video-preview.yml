@@ -66,7 +66,7 @@ jobs:
           declare -A expected_previews=()
           declare -A expected_posters=()
 
-          echo "Found ${#source_files[@]} source video(s)." 
+          echo "Found ${#source_files[@]} source video(s)."
           if [[ ${#source_files[@]} -eq 0 ]]; then
             echo "No source MP4 files remain; generated assets will be cleaned up."
           fi
@@ -191,7 +191,7 @@ jobs:
           git commit -m "Generate video previews and posters [skip ci]"
 
           for attempt in 1 2 3; do
-            git fetch origin "$GITHUB_REF_NAME"
+            git fetch origin
 
             if ! git rebase "origin/$GITHUB_REF_NAME"; then
               git rebase --abort || true

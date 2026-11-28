@@ -66,7 +66,7 @@ jobs:
 
           for src in image_sources:
               duplicate_stem = stem_counts[src.stem.casefold()] > 1
-              source_ext = src.suffix.lower().lstrip(".")
+              source_ext = src.suffix.lstrip(".")
               out_name = (
                   f"{src.stem}.{source_ext}.webp"
                   if duplicate_stem
@@ -139,7 +139,7 @@ jobs:
             git commit -m "chore: update thumbs and data/thumbs.js [skip ci]"
 
             for attempt in 1 2 3; do
-              git fetch origin main
+              git fetch origin
 
               if ! git rebase origin/main; then
                 git rebase --abort || true

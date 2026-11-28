@@ -1,0 +1,20 @@
+{
+  "007.END.mp4": {
+    "sha256": "380e1d3760bbdc6441d77984b33d7908d1ef6efa9e2b0c24e1899e1d5b6fbc84",
+    "pipeline_version": 1,
+    "preview": "videos/preview/007.END.preview.mp4",
+    "poster": "videos/posters/007.END.webp"
+  },
+  "008.END_1.mp4": {
+    "sha256": "4de3c6485a312c7bce4d1a1215e421b5e5ab9968150fd62dd85781a9f1656b33",
+    "pipeline_version": 1,
+    "preview": "videos/preview/008.END_1.preview.mp4",
+    "poster": "videos/posters/008.END_1.webp"
+  },
+  "010.3CCmW_1.mp4": {
+    "sha256": "033edff6be7ad99c4ca4d095fd216fc193656cb027dd2a2b83c0f1025b1cf826",
+    "pipeline_version": 1,
+    "preview": "videos/preview/010.3CCmW_1.preview.mp4",
+    "poster": "videos/posters/010.3CCmW_1.webp"
+  }
+}

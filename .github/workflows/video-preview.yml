@@ -57,8 +57,13 @@ jobs:
           MANIFEST="$VIDEO_DIR/.preview-manifest.json"
           CHANGED_LIST="$RUNNER_TEMP/changed-videos.nul"
           MANIFEST_TEMP="$RUNNER_TEMP/preview-manifest.json"
+          export VIDEO_DIR PREVIEW_DIR POSTER_DIR MANIFEST CHANGED_LIST MANIFEST_TEMP
 
           mkdir -p "$PREVIEW_DIR" "$POSTER_DIR"
+
+          mapfile -d '' -t source_files < <(
+            find "$VIDEO_DIR" -maxdepth 1 -type f -iname '*.mp4' -print0
+          )
 
           # Hash source contents rather than relying on checkout timestamps.
           # Reject case-insensitive stem collisions before generating output paths.
@@ -107,7 +112,12 @@ jobs:
           changed = []
 
           for source in sources:
-              digest = hashlib.sha256(source.read_bytes()).hexdigest()
+              digest = hashlib.sha256()
+              with source.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              source_hash = digest.hexdigest()
+
               name = source.stem
               preview = preview_dir / f"{name}.preview.mp4"
               poster = poster_dir / f"{name}.webp"
@@ -115,7 +125,7 @@ jobs:
               unchanged = (
                   not force_rebuild
                   and isinstance(old_entry, dict)
-                  and old_entry.get("sha256") == digest
+                  and old_entry.get("sha256") == source_hash
                   and preview.is_file() and preview.stat().st_size > 0
                   and poster.is_file() and poster.stat().st_size > 0
               )
@@ -124,7 +134,7 @@ jobs:
                   changed.append(source.name)
 
               next_manifest[source.name] = {
-                  "sha256": digest,
+                  "sha256": source_hash,
                   "preview": f"videos/preview/{name}.preview.mp4",
                   "poster": f"videos/posters/{name}.webp",
               }
@@ -141,14 +151,8 @@ jobs:
           if force_rebuild:
               print("Manual force rebuild is enabled.")
           PY
-        env:
-          VIDEO_DIR: "$VIDEO_DIR"
-          PREVIEW_DIR: "$PREVIEW_DIR"
-          POSTER_DIR: "$POSTER_DIR"
-          MANIFEST: "$MANIFEST"
-          CHANGED_LIST: "$CHANGED_LIST"
-          MANIFEST_TEMP: "$MANIFEST_TEMP"
 
+          echo "Source videos found: ${#source_files[@]}"
           mapfile -d '' -t changed_files < "$CHANGED_LIST"
           echo "Videos to encode: ${#changed_files[@]}"
 
@@ -207,19 +211,18 @@ jobs:
             echo "Created poster successfully: $poster"
           done
 
-          # Clean up assets for deleted or renamed source videos.
-          shopt -s nullglob
+          # Build the expected output sets from every current source, not just changed files.
           declare -A expected_previews=()
           declare -A expected_posters=()
-
-          for file in "$VIDEO_DIR"/*.mp4 "$VIDEO_DIR"/*.MP4; do
-            [[ -f "$file" ]] || continue
+          for file in "${source_files[@]}"; do
             filename="${file##*/}"
             name="${filename%.*}"
             expected_previews["${name}.preview.mp4"]=1
             expected_posters["${name}.webp"]=1
           done
 
+          # Remove generated assets for deleted or renamed source videos.
+          shopt -s nullglob
           for generated in "$PREVIEW_DIR"/*.preview.mp4; do
             filename="${generated##*/}"
             if [[ -z "${expected_previews[$filename]+x}" ]]; then

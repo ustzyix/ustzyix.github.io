@@ -16,7 +16,9 @@ window.MEDIA_MANIFEST = {
     "IMG_5898.jpg"
   ],
   "videos": [
-    "008.END_1.mp4"
+    "007.END.mp4",
+    "008.END_1.mp4",
+    "010.3CCmW_1.mp4"
   ],
   "audio": []
 };

@@ -45,8 +45,9 @@ jobs:
 
           VIDEO_DIR="$GITHUB_WORKSPACE/videos"
           PREVIEW_DIR="$VIDEO_DIR/preview"
+          POSTER_DIR="$VIDEO_DIR/posters"
 
-          mkdir -p "$PREVIEW_DIR"
+          mkdir -p "$PREVIEW_DIR" "$POSTER_DIR"
 
           echo "Working directory:"
           pwd
@@ -62,18 +63,23 @@ jobs:
               -print0
           )
 
-          if [[ ${#source_files[@]} -eq 0 ]]; then
-            echo "::error::No source MP4 files found."
-            exit 1
-          fi
+          declare -A expected_previews=()
+          declare -A expected_posters=()
 
-          echo "Found ${#source_files[@]} source video(s)."
+          echo "Found ${#source_files[@]} source video(s)." 
+          if [[ ${#source_files[@]} -eq 0 ]]; then
+            echo "No source MP4 files remain; generated assets will be cleaned up."
+          fi
 
           for file in "${source_files[@]}"; do
             filename="$(basename "$file")"
             name="${filename%.*}"
 
             output="$PREVIEW_DIR/${name}.preview.mp4"
+            poster="$POSTER_DIR/${name}.webp"
+
+            expected_previews["${name}.preview.mp4"]=1
+            expected_posters["${name}.webp"]=1
 
             echo "--------------------------------"
             printf 'Input: %s\n' "$file"
@@ -111,9 +117,6 @@ jobs:
             echo "Created successfully: $output"
 
             # Generate a persistent WebP poster for the gallery card.
-            poster="$VIDEO_DIR/posters/${name}.webp"
-            mkdir -p "$VIDEO_DIR/posters"
-
             if ! ffmpeg -hide_banner -loglevel error \
               -y \
               -ss 0.5 \
@@ -144,12 +147,30 @@ jobs:
             echo "Created poster successfully: $poster"
           done
 
-          echo "Preview generation completed."
+          # Remove generated previews and posters whose source MP4 was deleted.
+          shopt -s nullglob
 
-          find "$PREVIEW_DIR" \
+          for generated in "$PREVIEW_DIR"/*.preview.mp4; do
+            filename="${generated##*/}"
+            if [[ -z "${expected_previews[$filename]+x}" ]]; then
+              echo "Removing stale preview: $generated"
+              rm -f "$generated"
+            fi
+          done
+
+          for generated in "$POSTER_DIR"/*.webp; do
+            filename="${generated##*/}"
+            if [[ -z "${expected_posters[$filename]+x}" ]]; then
+              echo "Removing stale poster: $generated"
+              rm -f "$generated"
+            fi
+          done
+
+          echo "Video asset generation and cleanup completed."
+
+          find "$PREVIEW_DIR" "$POSTER_DIR" \
             -maxdepth 1 \
             -type f \
-            -iname '*.mp4' \
             -print
 
       - name: Commit previews
@@ -167,8 +188,25 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Generate video previews [skip ci]"
+          git commit -m "Generate video previews and posters [skip ci]"
 
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          for attempt in 1 2 3; do
+            git fetch origin "$GITHUB_REF_NAME"
 
-          echo "Preview files committed successfully."
+            if ! git rebase "origin/$GITHUB_REF_NAME"; then
+              git rebase --abort || true
+              echo "::error::Could not rebase generated video assets."
+              exit 1
+            fi
+
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "Video previews and posters committed successfully."
+              exit 0
+            fi
+
+            echo "Push attempt $attempt failed; retrying after fetching latest changes."
+            sleep 2
+          done
+
+          echo "::error::Could not push generated video assets after 3 attempts."
+          exit 1

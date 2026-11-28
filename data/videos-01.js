@@ -1,7 +1,7 @@
 /* ==========================================================
    ustzyix — Motion Archive
    ========================================================== */
-window.setProjectData("videos-01", {
+export default {
   folder: "videos",
   discover: true,
 
@@ -28,4 +28,4 @@ window.setProjectData("videos-01", {
       app: "Adobe After Effects"
     }
   ]
-});
+};

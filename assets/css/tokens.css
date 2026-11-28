@@ -1,0 +1,12 @@
+:root{
+ --bg:#000;--fg:#f5f5f5;--fg2:rgba(245,245,245,.62);--fg3:rgba(245,245,245,.38);
+ --surface:#08080a;--surface-2:#111114;--line:rgba(255,255,255,.16);
+ --top-action-top:max(18px,env(safe-area-inset-top));--top-action-right:max(22px,env(safe-area-inset-right));
+ --ease:cubic-bezier(.22,1,.36,1);
+ --header-blur:8vw;
+ --z-header-background:0;--z-header-content:1;--z-content:2;--z-card-hover:15;
+ --z-header:25;--z-project-menu:35;--z-lightbox:40;--z-fullscreen:45;--z-lightbox-control:5;
+ --serif:"Cormorant Garamond","Playfair Display",Georgia,"Times New Roman",serif;
+ --sans:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Inter","SF Pro Text",sans-serif;
+ --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace
+}

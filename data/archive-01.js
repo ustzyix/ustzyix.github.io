@@ -1,7 +1,7 @@
 /* ==========================================================
    ustzyix — Still Archive
    ========================================================== */
-window.setProjectData("archive-01", {
+export default {
   folder: "images",
   discover: true,
 
@@ -57,4 +57,4 @@ window.setProjectData("archive-01", {
       }
     }
   ]
-});
+};

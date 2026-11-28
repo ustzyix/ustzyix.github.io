@@ -6,3 +6,17 @@ window.THUMBS_MAP = {
   "IMG_5755 (2).jpg": "thumbs/IMG_5755 (2).webp",
   "IMG_5898.jpg": "thumbs/IMG_5898.webp"
 };
+
+window.MEDIA_MANIFEST = {
+  "images": [
+    "IMG_0018.jpg",
+    "IMG_1328 (2).jpg",
+    "IMG_5738 (1).jpg",
+    "IMG_5755 (2).jpg",
+    "IMG_5898.jpg"
+  ],
+  "videos": [
+    "008.END_1.mp4"
+  ],
+  "audio": []
+};

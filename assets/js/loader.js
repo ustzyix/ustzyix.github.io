@@ -84,22 +84,12 @@ function prefetchProjects(){
 }
 
 
-/* ---------- GitHub folder auto-discovery ---------- */
-const DTTL=15*60*1000;
-function repoInfo(){
- if(G.repo){const[o,r]=G.repo.split("/");return{o,r}}
- const h=location.hostname,seg=location.pathname.split("/")[1];
- return h.endsWith(".github.io")?{o:h.split(".")[0],r:seg&&!/\./.test(seg)?seg:h}:null}
-async function discoverFiles(folder,regex,pid,onFiles){
- const r=repoInfo();if(!r)return;
- const dk=`gallery_dir_v4_${folder}`;
- let cached=null;
- try{cached=JSON.parse(localStorage.getItem(dk)||"null")}catch(_){}
- if(cached?.files?.length){if(activeProj.id===pid)onFiles(cached.files);if(Date.now()-cached.t<DTTL)return}
- try{const res=await fetch(`https://api.github.com/repos/${r.o}/${r.r}/contents/${folder}`);if(!res.ok)return;
-  const files=(await res.json()).filter(f=>f.type==="file"&&regex.test(f.name)).map(f=>f.name).sort();
-  try{localStorage.setItem(dk,JSON.stringify({t:Date.now(),files}))}catch(_){}
-  if(activeProj.id===pid)onFiles(files)}catch(_){}
+/* ---------- Static media manifest discovery ---------- */
+function discoverFiles(folder,regex,pid,onFiles){
+ const names=window.MEDIA_MANIFEST?.[folder];
+ if(!Array.isArray(names))return;
+ const files=names.filter(name=>typeof name==="string"&&regex.test(name)).sort();
+ if(activeProj.id===pid)onFiles(files);
 }
 
 /* ---------- Keep-Alive View Cache & Project Switcher ---------- */

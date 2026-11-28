@@ -398,6 +398,11 @@ export function suspendCurrentView() {
         v.removeAttribute("src");
         v.load();
       }
+
+      // A failed preview should be eligible for a fresh attempt
+      // when this cached view is activated again.
+      delete v.dataset.failed;
+      c.removeAttribute("data-video-error");
     }
   });
 

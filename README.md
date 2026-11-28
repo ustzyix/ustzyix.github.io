@@ -22,13 +22,15 @@ index.html
 
 Media directories
   |-- images/                   full-resolution source images
-  |-- thumbs/                   generated WebP previews
-  |-- videos/                   video media
+  |-- thumbs/                   generated WebP image thumbnails
+  |-- videos/                   original video files
+  |   |-- preview/              generated lightweight MP4 previews
+  |   +-- posters/              generated WebP video posters
   +-- audio/                    optional playlist audio
 
-GitHub Actions (.github/workflows/make-thumbs.yml)
-  |-- images/ -> thumbs/<name>.webp + THUMBS_MAP
-  +-- images/ + videos/ + audio/ -> MEDIA_MANIFEST in data/thumbs.js
+GitHub Actions
+  |-- make-thumbs.yml           image thumbnails + data/thumbs.js
+  +-- video-preview.yml         MP4 previews + WebP posters + stale-file cleanup
 ```
 
 ## Core principles
@@ -37,7 +39,7 @@ GitHub Actions (.github/workflows/make-thumbs.yml)
 * **Strict separation of concerns:** `index.html` contains only the document shell and enforces a strict Content Security Policy (`script-src 'self'`). No CSS or JavaScript is embedded inline.
 * **Two-tier data loading:** Lightweight project summaries load upfront from `data/projects.js`; detailed project modules load lazily via dynamic `import()` only when selected or prefetched.
 * **Static media discovery:** GitHub Actions generates `data/thumbs.js` on push. Runtime folder discovery reads `MEDIA_MANIFEST` locally and never calls the GitHub Contents API.
-* **Preview vs. original media:** Galleries and initial lightbox frames use lightweight WebP thumbnails while full-resolution images decode asynchronously in the background.
+* **Preview vs. original media:** Image cards use generated WebP thumbnails. Video cards use lightweight MP4 previews and generated WebP posters; the Lightbox loads the original video.
 * **Keep-alive view caching:** Rendered gallery views are retained in an in-memory LRU cache so switching back to a previously viewed project restores scroll position and DOM state immediately.
 
 ## Repository structure
@@ -66,9 +68,14 @@ GitHub Actions (.github/workflows/make-thumbs.yml)
 ├── images/
 ├── thumbs/
 ├── videos/
-├── audio/                    optional
+│   ├── preview/               generated MP4 previews
+│   └── posters/               generated WebP posters
+├── audio/                     optional
+├── scripts/
+│   └── validate-media.mjs
 ├── .github/workflows/
-│   └── make-thumbs.yml
+│   ├── make-thumbs.yml
+│   └── video-preview.yml
 ├── LICENSE
 └── README.md
 ```
@@ -87,7 +94,7 @@ The application shell. It defines the Content Security Policy, preloads core ES 
 ### `assets/js/`
 * `state.js`: Imports `GALLERY`, exports path/formatting utilities, DOM element references, the LRU `viewCache` map, and the shared mutable `state` object.
 * `loader.js`: Dynamically imports `data/<project>.js` modules, normalizes media entries, resolves thumbnail fallback chains, runs manifest discovery, and manages view lifecycle/eviction.
-* `media.js`: Manages the viewport `IntersectionObserver` for deferred video loading, captures first-frame canvas posters (`vidPosterCache`), and maintains an async `Image.decode()` cache.
+* `media.js`: Manages the viewport `IntersectionObserver` for deferred video loading, captures fallback first-frame canvas posters (`vidPosterCache`), and maintains an async `Image.decode()` cache.
 * `renderers.js`: Implements the balanced scatter layout engine, desktop pointer parallax, gallery card creation, sandboxed interactive iframe mounting, and HTML5 audio playlist controls.
 * `lightbox.js`: Controls lightbox media transitions, progressive thumbnail-to-full-resolution upgrades, dynamic aspect-ratio framing, keyboard/touch handlers, and the metadata flip panel.
 * `main.js`: Module entry point. Binds the scatter/grid FLIP layout toggle, resize observers, project picker search/prefetching, and URL hash routing.
@@ -165,16 +172,30 @@ export const MEDIA_MANIFEST = {
 
 ### Media directories
 * `images/`: Full-resolution source images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`).
-* `thumbs/`: Auto-generated WebP thumbnails (max width `800px`, quality `80`).
-* `videos/`: Video files (`.mp4`, `.webm`, `.mov`, `.m4v`).
+* `thumbs/`: Auto-generated WebP image thumbnails (max width `800px`, quality `80`). If source filenames share the same stem, the original extension is included in the thumbnail filename (for example, `photo.jpg.webp` and `photo.png.webp`). GIF thumbnails use the first frame; the original GIF remains animated.
+* `videos/`: Original video files (`.mp4`, `.webm`, `.mov`, `.m4v`).
+* `videos/preview/`: Generated lightweight H.264 MP4 previews named `<source-stem>.preview.mp4`; used by gallery cards.
+* `videos/posters/`: Generated WebP posters named `<source-stem>.webp`; used as persistent gallery card artwork.
 * `audio/`: Optional audio tracks (`.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`).
 
 ### `.github/workflows/make-thumbs.yml`
 Runs on pushes to `main` affecting `images/**`, `videos/**`, `audio/**`, or the workflow file itself (as well as manual `workflow_dispatch`). Using Python 3.12 and Pillow, it:
 1. Applies EXIF orientation, resizes new or updated images to a maximum width of `800px` with Lanczos resampling, and encodes them as WebP files in `thumbs/`.
-2. Removes orphaned thumbnails from `thumbs/` when source images are deleted.
-3. Scans `images/`, `videos/`, and `audio/` and writes updated `THUMBS_MAP` and `MEDIA_MANIFEST` exports to `data/thumbs.js`.
-4. Commits updated previews and manifest changes back to `main` with `[skip ci]`.
+2. Uses the first frame of GIF files to create static WebP thumbnails while preserving the original animated GIF.
+3. Avoids thumbnail filename collisions by adding the source extension when multiple image files share the same stem.
+4. Removes orphaned thumbnails from `thumbs/` when source images are deleted.
+5. Scans `images/`, `videos/`, and `audio/` and writes updated `THUMBS_MAP` and `MEDIA_MANIFEST` exports to `data/thumbs.js`.
+6. Fetches and rebases against the latest `main` before pushing generated changes, retrying transient push races up to three times.
+
+### `.github/workflows/video-preview.yml`
+Runs on pushes to `main` that add, update, or delete root-level `videos/*.mp4` files, or change the workflow itself (as well as manual `workflow_dispatch`). Using FFmpeg, it:
+1. Generates a lightweight H.264 MP4 preview at a maximum height of `480px`, with audio and non-video streams removed.
+2. Extracts a WebP poster from the video at `0.5s`, falling back to the first frame for very short clips.
+3. Writes previews to `videos/preview/<source-stem>.preview.mp4` and posters to `videos/posters/<source-stem>.webp`.
+4. Removes generated previews and posters when their source MP4 files are deleted.
+5. Fetches and rebases against the latest branch before pushing generated assets, retrying transient push races up to three times.
+
+Both workflows use `[skip ci]` on generated commits to avoid unnecessary workflow loops.
 
 ## Runtime lifecycle
 
@@ -193,7 +214,7 @@ Runs on pushes to `main` affecting `images/**`, `videos/**`, `audio/**`, or the 
 ### 5. Layout & progressive rendering
 * **Scatter & FLIP grid:** `layout()` positions cards using responsive coordinate tables (`DP` / `MOBILE_DP`), balancing landscape widths against the median portrait card height. Toggling grid mode animates card positions via the Web Animations API.
 * **Images:** Cards load `THUMBS_MAP` previews first with priority hints (`fetchPriority="high"` and eager loading for the first two items).
-* **Videos:** Video elements store their URL in `data-src`. `IntersectionObserver` assigns `src` when a card enters the viewport (`threshold: 0.15`) and pauses playback when scrolled off-screen.
+* **Videos:** Cards display a generated WebP poster while the lightweight MP4 preview is deferred. Video elements store the preview URL in `data-src`; `IntersectionObserver` assigns `src` when a card enters the viewport (`threshold: 0.15`) and pauses playback when scrolled off-screen. Opening the Lightbox loads the original video source.
 
 ### 6. Lightbox inspection
 Selecting a card opens the Lightbox immediately with its cached thumbnail while `predecode()` decodes the full-resolution source asynchronously. Once decoded, the full-resolution image swaps in seamlessly, and tapping or pressing Enter/Space flips the card to reveal authored EXIF or video stream metadata.
@@ -247,3 +268,19 @@ python3 -m http.server 8080
 ```
 
 Then open `http://localhost:8080` in your browser.
+
+### Media validation
+
+Run the repository's standalone media validator from the project root:
+
+```bash
+node scripts/validate-media.mjs
+```
+
+The validator checks that `MEDIA_MANIFEST` matches the top-level media files, every image has an existing thumbnail mapping, thumbnail targets are unique, and MP4 preview/poster assets match their source videos. Missing or orphaned generated video assets are warnings by default because they are created by GitHub Actions. To make those generated-asset checks fail the command, run:
+
+```bash
+node scripts/validate-media.mjs --strict-generated
+```
+
+Run strict mode after the video-preview workflow has completed.

@@ -38,7 +38,7 @@ jobs:
           IMG_DIR = Path("images")
           THUMB_DIR = Path("thumbs")
           OUT_JS = Path("data/thumbs.js")
-          VALID_EXT = {".jpg", ".jpeg", ".png", ".webp", ".avif"}
+          VALID_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
           MANIFEST_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
           VIDEO_EXTS = {".mp4", ".webm", ".mov", ".m4v"}
           AUDIO_EXTS = {".mp3", ".m4a", ".wav", ".ogg", ".flac"}
@@ -51,27 +51,52 @@ jobs:
           thumbs_map = {}
           expected_files = set()
 
-          if IMG_DIR.exists():
-              for src in sorted(IMG_DIR.iterdir(), key=lambda p: p.name.lower()):
-                  if not src.is_file() or src.suffix.lower() not in VALID_EXT:
-                      continue
+          image_sources = [
+              src
+              for src in sorted(IMG_DIR.iterdir(), key=lambda p: p.name.lower())
+              if src.is_file() and src.suffix.lower() in VALID_EXT
+          ] if IMG_DIR.exists() else []
 
-                  out_name = f"{src.stem}.webp"
-                  dst = THUMB_DIR / out_name
-                  expected_files.add(out_name)
+          # Preserve unique stems for the simple <stem>.webp convention.
+          # When stems collide, include the original extension in the output name.
+          stem_counts = {}
+          for src in image_sources:
+              key = src.stem.casefold()
+              stem_counts[key] = stem_counts.get(key, 0) + 1
 
-                  # Rebuild only when the thumbnail is missing or the source is newer.
-                  if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
-                      with Image.open(src) as im:
-                          im = ImageOps.exif_transpose(im)
-                          if im.mode not in ("RGB", "RGBA"):
+          for src in image_sources:
+              duplicate_stem = stem_counts[src.stem.casefold()] > 1
+              source_ext = src.suffix.lstrip(".")
+              out_name = (
+                  f"{src.stem}.{source_ext}.webp"
+                  if duplicate_stem
+                  else f"{src.stem}.webp"
+              )
+              dst = THUMB_DIR / out_name
+              expected_files.add(out_name)
+
+              # Rebuild only when the thumbnail is missing or the source is newer.
+              if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
+                  with Image.open(src) as im:
+                      # GIF thumbnails use the first frame; the original GIF remains animated.
+                      if src.suffix.lower() == ".gif":
+                          im.seek(0)
+
+                      im = ImageOps.exif_transpose(im.copy())
+
+                      if im.mode not in ("RGB", "RGBA"):
+                          if "transparency" in im.info:
+                              im = im.convert("RGBA")
+                          else:
                               im = im.convert("RGB")
-                          if im.width > MAX_WIDTH:
-                              new_h = max(1, round(im.height * (MAX_WIDTH / im.width)))
-                              im = im.resize((MAX_WIDTH, new_h), Image.Resampling.LANCZOS)
-                          im.save(dst, "WEBP", quality=QUALITY, method=6)
 
-                  thumbs_map[src.name] = f"thumbs/{out_name}"
+                      if im.width > MAX_WIDTH:
+                          new_h = max(1, round(im.height * (MAX_WIDTH / im.width)))
+                          im = im.resize((MAX_WIDTH, new_h), Image.Resampling.LANCZOS)
+
+                      im.save(dst, "WEBP", quality=QUALITY, method=6)
+
+              thumbs_map[src.name] = f"thumbs/{out_name}"
 
           # Remove stale thumbnails whose source images no longer exist.
           for old in THUMB_DIR.iterdir():
@@ -112,6 +137,25 @@ jobs:
           git add thumbs data/thumbs.js
           if ! git diff --cached --quiet; then
             git commit -m "chore: update thumbs and data/thumbs.js [skip ci]"
-            git pull --rebase origin main
-            git push
+
+            for attempt in 1 2 3; do
+              git fetch origin
+
+              if ! git rebase origin/main; then
+                git rebase --abort || true
+                echo "::error::Could not rebase generated thumbnails."
+                exit 1
+              fi
+
+              if git push origin HEAD:main; then
+                echo "Thumbnails and media manifest committed successfully."
+                exit 0
+              fi
+
+              echo "Push attempt $attempt failed; retrying after fetching latest changes."
+              sleep 2
+            done
+
+            echo "::error::Could not push generated thumbnails after 3 attempts."
+            exit 1
           fi

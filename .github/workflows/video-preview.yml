@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'videos/*.mp4'
-      - '.github/workflows/make-previews.yml'
+      - '.github/workflows/video-preview.yml'
 
   workflow_dispatch:
 
@@ -22,13 +22,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: true
 
-      # 2. Install FFmpeg
       - name: Install FFmpeg
         shell: bash
         run: |
@@ -39,7 +38,6 @@ jobs:
 
           ffmpeg -version
 
-      # 3. Generate preview videos
       - name: Generate previews
         shell: bash
         run: |
@@ -50,17 +48,12 @@ jobs:
 
           mkdir -p "$PREVIEW_DIR"
 
-          echo "================================"
           echo "Working directory:"
           pwd
 
           echo "Video directory:"
           printf '%s\n' "$VIDEO_DIR"
 
-          echo "================================"
-          echo "Searching source videos..."
-
-          # Collect source video paths safely.
           mapfile -d '' -t source_files < <(
             find "$VIDEO_DIR" \
               -maxdepth 1 \
@@ -69,7 +62,6 @@ jobs:
               -print0
           )
 
-          # Stop if no source videos are found.
           if [[ ${#source_files[@]} -eq 0 ]]; then
             echo "::error::No source MP4 files found."
             exit 1
@@ -77,26 +69,21 @@ jobs:
 
           echo "Found ${#source_files[@]} source video(s)."
 
-          # Process each source video.
           for file in "${source_files[@]}"; do
-
             filename="$(basename "$file")"
             name="${filename%.*}"
 
             output="$PREVIEW_DIR/${name}.preview.mp4"
 
-            echo ""
-            echo "================================"
-            printf 'Input:  %s\n' "$file"
+            echo "--------------------------------"
+            printf 'Input: %s\n' "$file"
             printf 'Output: %s\n' "$output"
 
-            # Validate input.
             if [[ ! -f "$file" ]]; then
               echo "::error::Input file not found: $file"
               exit 1
             fi
 
-            # Generate optimized preview.
             ffmpeg -hide_banner -loglevel error \
               -y \
               -i "$file" \
@@ -112,33 +99,26 @@ jobs:
               -movflags +faststart \
               "$output"
 
-            # Validate generated preview.
             if [[ ! -s "$output" ]]; then
               echo "::error::Preview generation failed: $output"
               exit 1
             fi
 
-            # Verify that FFmpeg can read the generated file.
             ffmpeg -hide_banner -v error \
               -i "$output" \
               -f null -
 
             echo "Created successfully: $output"
-
           done
 
-          echo ""
-          echo "================================"
-          echo "All previews generated successfully."
+          echo "Preview generation completed."
 
-          echo "Generated preview files:"
           find "$PREVIEW_DIR" \
             -maxdepth 1 \
             -type f \
             -iname '*.mp4' \
             -print
 
-      # 4. Commit generated previews
       - name: Commit previews
         shell: bash
         run: |
@@ -150,7 +130,7 @@ jobs:
           git add videos/preview/
 
           if git diff --cached --quiet; then
-            echo "No preview changes to commit."
+            echo "No preview changes."
             exit 0
           fi
 

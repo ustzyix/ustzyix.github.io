@@ -25,12 +25,19 @@ jobs:
       # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # 2. Install FFmpeg
       - name: Install FFmpeg
+        shell: bash
         run: |
+          set -euo pipefail
+
           sudo apt-get update
           sudo apt-get install -y ffmpeg
+
+          ffmpeg -version
 
       # 3. Generate preview videos
       - name: Generate previews
@@ -38,34 +45,58 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p videos/preview
+          VIDEO_DIR="$GITHUB_WORKSPACE/videos"
+          PREVIEW_DIR="$VIDEO_DIR/preview"
 
+          mkdir -p "$PREVIEW_DIR"
+
+          echo "================================"
           echo "Working directory:"
           pwd
 
-          echo "Source video files:"
-          find videos \
-            -maxdepth 1 \
-            -type f \
-            -iname '*.mp4' \
-            -print
+          echo "Video directory:"
+          printf '%s\n' "$VIDEO_DIR"
 
-          while IFS= read -r -d '' file; do
+          echo "================================"
+          echo "Searching source videos..."
+
+          # Collect source video paths safely.
+          mapfile -d '' -t source_files < <(
+            find "$VIDEO_DIR" \
+              -maxdepth 1 \
+              -type f \
+              -iname '*.mp4' \
+              -print0
+          )
+
+          # Stop if no source videos are found.
+          if [[ ${#source_files[@]} -eq 0 ]]; then
+            echo "::error::No source MP4 files found."
+            exit 1
+          fi
+
+          echo "Found ${#source_files[@]} source video(s)."
+
+          # Process each source video.
+          for file in "${source_files[@]}"; do
 
             filename="$(basename "$file")"
             name="${filename%.*}"
 
-            output="videos/preview/${name}.preview.mp4"
+            output="$PREVIEW_DIR/${name}.preview.mp4"
 
-            echo "--------------------------------"
-            printf 'Input: %q\n' "$file"
-            printf 'Output: %q\n' "$output"
+            echo ""
+            echo "================================"
+            printf 'Input:  %s\n' "$file"
+            printf 'Output: %s\n' "$output"
 
+            # Validate input.
             if [[ ! -f "$file" ]]; then
               echo "::error::Input file not found: $file"
               exit 1
             fi
 
+            # Generate optimized preview.
             ffmpeg -hide_banner -loglevel error \
               -y \
               -i "$file" \
@@ -81,22 +112,31 @@ jobs:
               -movflags +faststart \
               "$output"
 
+            # Validate generated preview.
             if [[ ! -s "$output" ]]; then
               echo "::error::Preview generation failed: $output"
               exit 1
             fi
 
-            echo "Created: $output"
+            # Verify that FFmpeg can read the generated file.
+            ffmpeg -hide_banner -v error \
+              -i "$output" \
+              -f null -
 
-          done < <(
-            find videos \
-              -maxdepth 1 \
-              -type f \
-              -iname '*.mp4' \
-              -print0
-          )
+            echo "Created successfully: $output"
 
-          echo "Preview generation completed."
+          done
+
+          echo ""
+          echo "================================"
+          echo "All previews generated successfully."
+
+          echo "Generated preview files:"
+          find "$PREVIEW_DIR" \
+            -maxdepth 1 \
+            -type f \
+            -iname '*.mp4' \
+            -print
 
       # 4. Commit generated previews
       - name: Commit previews
@@ -110,9 +150,12 @@ jobs:
           git add videos/preview/
 
           if git diff --cached --quiet; then
-            echo "No preview changes."
+            echo "No preview changes to commit."
             exit 0
           fi
 
           git commit -m "Generate video previews [skip ci]"
-          git push
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          echo "Preview files committed successfully."

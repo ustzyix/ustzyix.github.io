@@ -3,11 +3,11 @@ import { GALLERY as G } from "../../data/projects.js";
 import { THUMBS_MAP, MEDIA_MANIFEST } from "../../data/thumbs.js";
 import {
   $, state, body, stage, canvas,
-  viewCache, visibleVideos, MAX_CACHED_VIEWS,
+  viewCache, MAX_CACHED_VIEWS,
   cleanDir, isDirectUrl, encodePath, safeDecode,
   VID_OK, MEDIA_OK, capOf, pad, scheduleIdle
 } from "./state.js";
-import { vidObs } from "./media.js";
+import { vidObs, visibleVideos } from "./media.js";
 import {
   stopAudio, updateCount, layout, scheduleLayout,
   mountInteractive, mountPlaylist, addCard
@@ -99,7 +99,7 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
 }
 
 /* ---------- Lazy Loader & Idle Prefetcher for data/*.js Modules ---------- */
-const projectStore = new Map();
+export const projectStore = new Map();
 const loadedModules = new Map();
 
 export async function fetchProjectDetail(proj) {

@@ -44,11 +44,20 @@ function validateNames(label, values) {
   }
 
   const valid = [];
+  const seen = new Set();
+
   for (const value of values) {
     if (typeof value !== "string" || !value || path.basename(value) !== value) {
       errors.push(`Invalid filename in MEDIA_MANIFEST.${label}: ${String(value)}`);
       continue;
     }
+
+    if (seen.has(value)) {
+      errors.push(`Duplicate filename in MEDIA_MANIFEST.${label}: ${value}`);
+      continue;
+    }
+
+    seen.add(value);
     valid.push(value);
   }
   return valid;
@@ -99,7 +108,11 @@ for (const [sourceName, target] of Object.entries(THUMBS_MAP || {})) {
 
   const resolved = path.resolve(ROOT, target);
   const relative = path.relative(ROOT, resolved);
-  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+  if (
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  ) {
     errors.push(`Thumbnail path escapes the repository: ${target}`);
     continue;
   }

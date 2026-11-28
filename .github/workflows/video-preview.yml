@@ -140,10 +140,10 @@ jobs:
               }
 
           changed_list.write_bytes(
-              b"".join(os.fsencode(name) + b"\\0" for name in changed)
+              b"".join(os.fsencode(name) + b"\0" for name in changed)
           )
           manifest_temp.write_text(
-              json.dumps(next_manifest, ensure_ascii=False, indent=2) + "\\n",
+              json.dumps(next_manifest, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8",
           )
 
@@ -163,22 +163,22 @@ jobs:
             poster="$POSTER_DIR/${name}.webp"
 
             echo "--------------------------------"
-            printf 'Input: %s\\n' "$file"
-            printf 'Output: %s\\n' "$output"
+            printf 'Input: %s\n' "$file"
+            printf 'Output: %s\n' "$output"
 
-            ffmpeg -hide_banner -loglevel error \\
-              -y \\
-              -i "$file" \\
-              -map 0:v:0 \\
-              -vf 'scale=-2:min(480\\,ih)' \\
-              -an \\
-              -sn \\
-              -dn \\
-              -c:v libx264 \\
-              -preset medium \\
-              -crf 30 \\
-              -pix_fmt yuv420p \\
-              -movflags +faststart \\
+            ffmpeg -hide_banner -loglevel error \
+              -y \
+              -i "$file" \
+              -map 0:v:0 \
+              -vf 'scale=-2:min(480\,ih)' \
+              -an \
+              -sn \
+              -dn \
+              -c:v libx264 \
+              -preset medium \
+              -crf 30 \
+              -pix_fmt yuv420p \
+              -movflags +faststart \
               "$output"
 
             if [[ ! -s "$output" ]]; then
@@ -190,16 +190,16 @@ jobs:
             echo "Created and validated preview: $output"
 
             # Generate a persistent WebP poster for the gallery card.
-            if ! ffmpeg -hide_banner -loglevel error \\
-              -y -ss 0.5 -i "$file" \\
-              -frames:v 1 \\
-              -vf 'scale=800:800:force_original_aspect_ratio=decrease' \\
+            if ! ffmpeg -hide_banner -loglevel error \
+              -y -ss 0.5 -i "$file" \
+              -frames:v 1 \
+              -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
               -c:v libwebp -quality 78 "$poster" || [[ ! -s "$poster" ]]; then
               rm -f "$poster"
               # Very short clips may not contain a frame at 0.5 seconds.
-              ffmpeg -hide_banner -loglevel error \\
-                -y -i "$file" -frames:v 1 \\
-                -vf 'scale=800:800:force_original_aspect_ratio=decrease' \\
+              ffmpeg -hide_banner -loglevel error \
+                -y -i "$file" -frames:v 1 \
+                -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
                 -c:v libwebp -quality 78 "$poster"
             fi
 

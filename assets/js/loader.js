@@ -2,13 +2,19 @@
 /* Project media normalization, detail loading, folder discovery, and view lifecycle. */
 import { GALLERY as G } from "../../data/projects.js";
 import { THUMBS_MAP, MEDIA_MANIFEST } from "../../data/thumbs.js";
+
 import {
   $, state, body, stage, canvas,
   viewCache, MAX_CACHED_VIEWS,
   cleanDir, isDirectUrl, encodePath, safeDecode,
   VID_OK, MEDIA_OK, capOf, pad, scheduleIdle
 } from "./state.js";
-import { vidObs, visibleVideos } from "./media.js";
+
+import {
+  vidObs,
+  visibleVideos
+} from "./media.js";
+
 import {
   stopAudio, updateCount, layout, scheduleLayout,
   mountInteractive, mountPlaylist, addCard
@@ -17,6 +23,7 @@ import {
 const PROJECTS = G.projects || [];
 
 /* ---------- Thumbnail Directory & Extension Resolvers ---------- */
+
 export function resolveThumbDir(proj, fDir) {
   const raw =
     proj.thumbFolder !== undefined
@@ -27,37 +34,64 @@ export function resolveThumbDir(proj, fDir) {
       ? G.thumbFolder
       : G.thumbs;
 
-  if (raw === false || raw === null || raw === "") return "";
-  if (raw === true) return `${fDir}/thumbs`;
+  if (raw === false || raw === null || raw === "") {
+    return "";
+  }
+
+  if (raw === true) {
+    return `${fDir}/thumbs`;
+  }
+
   return cleanDir(raw);
 }
 
 export function resolveThumbExts(proj) {
-  const raw = proj.thumbExt !== undefined ? proj.thumbExt : G.thumbExt;
+  const raw =
+    proj.thumbExt !== undefined
+      ? proj.thumbExt
+      : G.thumbExt;
+
   if (!raw) return [];
 
   return (Array.isArray(raw) ? raw : [raw])
-    .map((e) => String(e).replace(/^\.+/, "").toLowerCase())
+    .map((e) =>
+      String(e).replace(/^\.+/, "").toLowerCase()
+    )
     .filter(Boolean);
 }
 
 export function buildThumbCandidates(
-  file, fDir, tDir, thumbExts,
-  explicitThumb, isVid, allowVidThumb
+  file,
+  fDir,
+  tDir,
+  thumbExts,
+  explicitThumb,
+  isVid,
+  allowVidThumb
 ) {
   const list = [];
 
   const push = (u) => {
-    if (u && !list.includes(u)) list.push(u);
+    if (u && !list.includes(u)) {
+      list.push(u);
+    }
   };
 
   if (explicitThumb) {
     if (isDirectUrl(explicitThumb)) {
       push(explicitThumb);
-    } else if (String(explicitThumb).includes("/")) {
-      push(`./${encodePath(String(explicitThumb).replace(/^\.?\//, ""))}`);
+    } else if (
+      String(explicitThumb).includes("/")
+    ) {
+      push(
+        `./${encodePath(
+          String(explicitThumb).replace(/^\.?\//, "")
+        )}`
+      );
     } else {
-      push(`./${encodePath(tDir || fDir)}/${encodePath(explicitThumb)}`);
+      push(
+        `./${encodePath(tDir || fDir)}/${encodePath(explicitThumb)}`
+      );
     }
   }
 
@@ -67,20 +101,30 @@ export function buildThumbCandidates(
 
     if (!isVid) {
       if (thumbExts && thumbExts.length) {
-        thumbExts.forEach((te) =>
-          push(`./${dirEnc}/${encodePath(`${base}.${te}`)}`)
-        );
+        thumbExts.forEach((te) => {
+          push(
+            `./${dirEnc}/${encodePath(`${base}.${te}`)}`
+          );
+        });
       }
 
-      push(`./${dirEnc}/${encodePath(file)}`);
-    } else if (allowVidThumb || (thumbExts && thumbExts.length)) {
-      const vExts = thumbExts && thumbExts.length
-        ? thumbExts
-        : ["webp", "jpg"];
-
-      vExts.forEach((te) =>
-        push(`./${dirEnc}/${encodePath(`${base}.${te}`)}`)
+      push(
+        `./${dirEnc}/${encodePath(file)}`
       );
+    } else if (
+      allowVidThumb ||
+      (thumbExts && thumbExts.length)
+    ) {
+      const vExts =
+        thumbExts && thumbExts.length
+          ? thumbExts
+          : ["webp", "jpg"];
+
+      vExts.forEach((te) => {
+        push(
+          `./${dirEnc}/${encodePath(`${base}.${te}`)}`
+        );
+      });
     }
   }
 
@@ -88,10 +132,13 @@ export function buildThumbCandidates(
 }
 
 /* ---------- Video Source Resolver ---------- */
+
 function resolveMediaSource(value, folder) {
   if (!value) return "";
 
-  if (isDirectUrl(value)) return value;
+  if (isDirectUrl(value)) {
+    return value;
+  }
 
   return `./${encodePath(folder)}/${encodePath(
     String(value).replace(/^\.?\//, "")
@@ -99,10 +146,21 @@ function resolveMediaSource(value, folder) {
 }
 
 /* ---------- Normalize Media Entry ---------- */
-export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
-  if (typeof p === "string") p = { file: p };
+
+export function toEntry(
+  p,
+  i,
+  folder,
+  tfolder,
+  thumbExts,
+  allowVidThumb
+) {
+  if (typeof p === "string") {
+    p = { file: p };
+  }
 
   const fDir = cleanDir(folder || "images");
+
   const tDir = tfolder === true
     ? `${fDir}/thumbs`
     : cleanDir(tfolder || "");
@@ -119,8 +177,10 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
     VID_OK.test(p.src || "");
 
   const declaredRatio = Number(p.ratio);
+
   const ratio =
-    Number.isFinite(declaredRatio) && declaredRatio > 0
+    Number.isFinite(declaredRatio) &&
+    declaredRatio > 0
       ? declaredRatio
       : 0;
 
@@ -129,15 +189,21 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
     p.src ||
     `./${encodePath(fDir)}/${encodePath(file)}`;
 
-  // Preview may be explicitly declared in the project data.
-  // For MP4 files, use the GitHub Actions naming convention by default.
-  const rawPreview = p.previewSrc || p.preview || "";
+  // Preview may be explicitly declared in project data.
+  // MP4 files use the GitHub Actions naming convention.
+  const rawPreview =
+    p.previewSrc ||
+    p.preview ||
+    "";
 
   let previewSrc = "";
 
   if (isVid) {
     if (rawPreview) {
-      previewSrc = resolveMediaSource(rawPreview, fDir);
+      previewSrc = resolveMediaSource(
+        rawPreview,
+        fDir
+      );
     } else if (/\.mp4$/i.test(file)) {
       const previewFile =
         `${file.replace(/\.[^/.]+$/, "")}.preview.mp4`;
@@ -145,13 +211,25 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
       previewSrc =
         `./${encodePath(fDir)}/preview/${encodePath(previewFile)}`;
     } else {
-      // Non-MP4 videos without a generated preview use Original.
       previewSrc = src;
     }
   }
 
-  const manifestThumb = THUMBS_MAP?.[file] || "";
-  const explicitThumb = p.poster || p.thumb || manifestThumb;
+  const manifestThumb =
+    THUMBS_MAP?.[file] || "";
+
+  // Generated video Poster convention:
+  // videos/posters/<original-name>.webp
+  const generatedVideoPoster =
+    isVid && /\.mp4$/i.test(file)
+      ? `${fDir}/posters/${file.replace(/\.[^/.]+$/, "")}.webp`
+      : "";
+
+  const explicitThumb =
+    p.poster ||
+    p.thumb ||
+    manifestThumb ||
+    generatedVideoPoster;
 
   const thumbCandidates = buildThumbCandidates(
     file,
@@ -163,7 +241,9 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
     allowVidThumb
   );
 
-  const thumb = thumbCandidates[0] || (isVid ? "" : src);
+  const thumb =
+    thumbCandidates[0] ||
+    (isVid ? "" : src);
 
   return {
     file,
@@ -181,7 +261,10 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
 
     isVid,
     ratio,
-    poster: isVid ? thumb : p.poster || "",
+
+    poster: isVid
+      ? thumb
+      : p.poster || "",
 
     caption: p.title || capOf(file),
     sub: p.sub || `Archive · ${pad(i + 1)}`,
@@ -192,7 +275,9 @@ export function toEntry(p, i, folder, tfolder, thumbExts, allowVidThumb) {
 }
 
 /* ---------- Lazy Loader & Idle Prefetcher for data/*.js Modules ---------- */
+
 export const projectStore = new Map();
+
 const loadedModules = new Map();
 
 export async function fetchProjectDetail(proj) {
@@ -218,7 +303,10 @@ export async function fetchProjectDetail(proj) {
         .then((mod) => {
           const detail = mod.default || mod;
 
-          if (detail && typeof detail === "object") {
+          if (
+            detail &&
+            typeof detail === "object"
+          ) {
             projectStore.set(storeKey, detail);
             return true;
           }
@@ -230,9 +318,13 @@ export async function fetchProjectDetail(proj) {
   }
 
   const ok = await loadedModules.get(proj.data);
-  const loaded = ok && projectStore.has(storeKey);
 
-  if (!loaded) loadedModules.delete(proj.data);
+  const loaded =
+    ok && projectStore.has(storeKey);
+
+  if (!loaded) {
+    loadedModules.delete(proj.data);
+  }
 
   return {
     ok: loaded,
@@ -258,19 +350,32 @@ export function prefetchProjects() {
 }
 
 /* ---------- Static Media Manifest Discovery ---------- */
-export function discoverFiles(folder, regex, pid, onFiles) {
+
+export function discoverFiles(
+  folder,
+  regex,
+  pid,
+  onFiles
+) {
   const names = MEDIA_MANIFEST?.[folder];
 
   if (!Array.isArray(names)) return;
 
   const files = names
-    .filter((name) => typeof name === "string" && regex.test(name))
+    .filter(
+      (name) =>
+        typeof name === "string" &&
+        regex.test(name)
+    )
     .sort();
 
-  if (state.activeProj?.id === pid) onFiles(files);
+  if (state.activeProj?.id === pid) {
+    onFiles(files);
+  }
 }
 
 /* ---------- Keep-Alive View Cache & Project Switcher ---------- */
+
 export function suspendCurrentView() {
   stopAudio();
   visibleVideos.clear();
@@ -303,9 +408,13 @@ export function suspendCurrentView() {
 }
 
 export function evictOldestView() {
-  if (viewCache.size < MAX_CACHED_VIEWS) return;
+  if (viewCache.size < MAX_CACHED_VIEWS) {
+    return;
+  }
 
-  const oldestKey = viewCache.keys().next().value;
+  const oldestKey =
+    viewCache.keys().next().value;
+
   const old = viewCache.get(oldestKey);
 
   if (old) {
@@ -327,6 +436,7 @@ export function evictOldestView() {
 }
 
 /* ---------- Project Loader ---------- */
+
 export async function loadProject(baseProj, pushHash) {
   suspendCurrentView();
 
@@ -342,7 +452,8 @@ export async function loadProject(baseProj, pushHash) {
 
   body.dataset.mode = mode;
 
-  $("#projName").textContent = baseProj.title || "Archive";
+  $("#projName").textContent =
+    baseProj.title || "Archive";
 
   document.title =
     `ustzyix — ${baseProj.title || "Visual Studio"}`;
@@ -356,6 +467,7 @@ export async function loadProject(baseProj, pushHash) {
   }
 
   /* ---------- Restore Cached Gallery ---------- */
+
   if (
     mode === "gallery" &&
     baseProj.id &&
@@ -384,7 +496,10 @@ export async function loadProject(baseProj, pushHash) {
 
       canvas.style.height = "";
     } else {
-      state.cards.forEach((c) => c.classList.add("settled"));
+      state.cards.forEach((c) => {
+        c.classList.add("settled");
+      });
+
       layout(false);
     }
 
@@ -392,19 +507,25 @@ export async function loadProject(baseProj, pushHash) {
 
     state.cards.forEach((c) => {
       const v = c.querySelector("video");
-      if (v) vidObs.observe(v);
+
+      if (v) {
+        vidObs.observe(v);
+      }
     });
 
     return;
   }
 
   /* ---------- Create New View ---------- */
+
   $("#count").textContent = "Loading…";
 
   canvas.style.height = "";
   canvas.removeAttribute("data-empty");
 
-  if (stage.scrollTop) stage.scrollTop = 0;
+  if (stage.scrollTop) {
+    stage.scrollTop = 0;
+  }
 
   const viewEl = document.createElement("div");
 
@@ -415,7 +536,8 @@ export async function loadProject(baseProj, pushHash) {
   state.cards = [];
   state.entries = [];
 
-  const { ok, proj } = await fetchProjectDetail(baseProj);
+  const { ok, proj } =
+    await fetchProjectDetail(baseProj);
 
   if (tok !== state.loadTok) {
     viewEl.remove();
@@ -428,6 +550,7 @@ export async function loadProject(baseProj, pushHash) {
     updateCount(
       `Could not load ${proj.data} — check file syntax.`
     );
+
     return;
   }
 
@@ -442,7 +565,9 @@ export async function loadProject(baseProj, pushHash) {
   }
 
   /* ---------- Build Gallery Entries ---------- */
+
   const fDir = cleanDir(proj.folder || "images");
+
   const tDir = resolveThumbDir(proj, fDir);
   const tExts = resolveThumbExts(proj);
 
@@ -450,11 +575,13 @@ export async function loadProject(baseProj, pushHash) {
     !!(proj.videoThumbs ?? G.videoThumbs);
 
   state.entries = (proj.photos || [])
-    .filter((p) => p && (
-      typeof p === "string" ||
-      p.file ||
-      p.src
-    ))
+    .filter((p) =>
+      p && (
+        typeof p === "string" ||
+        p.file ||
+        p.src
+      )
+    )
     .map((p, i) =>
       toEntry(
         p,
@@ -472,7 +599,9 @@ export async function loadProject(baseProj, pushHash) {
 
   updateCount();
 
-  if (!state.grid) layout(true);
+  if (!state.grid) {
+    layout(true);
+  }
 
   if (proj.id) {
     evictOldestView();
@@ -487,44 +616,55 @@ export async function loadProject(baseProj, pushHash) {
   }
 
   /* ---------- Discover Additional Media ---------- */
+
   if (proj.discover !== false) {
     scheduleIdle(() => {
       if (tok !== state.loadTok) return;
 
-      discoverFiles(fDir, MEDIA_OK, proj.id, (files) => {
-        if (tok !== state.loadTok) return;
+      discoverFiles(
+        fDir,
+        MEDIA_OK,
+        proj.id,
+        (files) => {
+          if (tok !== state.loadTok) return;
 
-        const have = new Set(
-          state.entries.map((p) => p.file)
-        );
-
-        const added = files.filter((f) => !have.has(f));
-
-        if (!added.length) return;
-
-        added.forEach((f) => {
-          const e = toEntry(
-            { file: f, auto: true },
-            state.entries.length,
-            fDir,
-            tDir,
-            tExts,
-            allowVidThumb
+          const have = new Set(
+            state.entries.map((p) => p.file)
           );
 
-          state.entries.push(e);
-
-          addCard(
-            e,
-            state.entries.length - 1,
-            tok,
-            viewEl
+          const added = files.filter(
+            (f) => !have.has(f)
           );
-        });
 
-        updateCount();
-        scheduleLayout();
-      });
+          if (!added.length) return;
+
+          added.forEach((f) => {
+            const e = toEntry(
+              {
+                file: f,
+                auto: true
+              },
+              state.entries.length,
+              fDir,
+              tDir,
+              tExts,
+              allowVidThumb
+            );
+
+            state.entries.push(e);
+
+            addCard(
+              e,
+              state.entries.length - 1,
+              tok,
+              viewEl
+            );
+          });
+
+          updateCount();
+          scheduleLayout();
+        }
+      );
     });
   }
 }

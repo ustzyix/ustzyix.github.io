@@ -1,7 +1,7 @@
 /* ==========================================================
    ustzyix — Project Index
    ========================================================== */
-window.GALLERY = {
+export const GALLERY = {
   projects: [
     {
       id: "archive-01",

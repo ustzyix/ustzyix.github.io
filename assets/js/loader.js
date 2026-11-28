@@ -1,4 +1,3 @@
-
 /* Project media normalization, detail loading, folder discovery, and view lifecycle. */
 import { GALLERY as G } from "../../data/projects.js";
 import { THUMBS_MAP, MEDIA_MANIFEST } from "../../data/thumbs.js";

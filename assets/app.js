@@ -250,31 +250,8 @@ new ResizeObserver(()=>layout(true)).observe(stage);
 addEventListener("resize",()=>{lastLayoutW=0;scheduleLayout()},{passive:true});
 window.visualViewport?.addEventListener("resize",()=>{lastLayoutW=0;scheduleLayout()},{passive:true});
 
-/* ---------- EXIF / Media Metadata ---------- */
-const exifCache=new Map();
-function parseTiff(v,t){
- const L=v.getUint16(t)===0x4949,g16=o=>v.getUint16(t+o,L),g32=o=>v.getUint32(t+o,L),p={},
- str=(o,n)=>{let s="";for(let i=0;i<n-1&&v.getUint8(t+o+i);i++)s+=String.fromCharCode(v.getUint8(t+o+i));return s.trim()},
- rat=o=>[g32(o),g32(o+4)];
- const ifd=off=>{const n=g16(off);
-  for(let i=0;i<n;i++){const e=off+2+i*12,tag=g16(e),c=g32(e+4),vo=g32(e+8);
-   if(tag===0x10F)p.make=str(vo,c);else if(tag===0x110)p.model=str(vo,c);else if(tag===0x131)p.software=str(vo,c);
-   else if(tag===0x9003||tag===0x132)p.date=p.date||str(vo,c);else if(tag===0x8769)ifd(vo);
-   else if(tag===0x829A){const[a,b]=rat(vo);if(a&&b)p.shutter=a<b?`1/${Math.round(b/a)}s`:`${(a/b).toFixed(1)}s`}
-   else if(tag===0x829D){const[a,b]=rat(vo);if(a&&b)p.aperture="f/"+(a/b).toFixed(1).replace(/\.0$/,"")}
-   else if(tag===0x8827)p.iso="ISO "+g16(e+8);
-   else if(tag===0x920A){const[a,b]=rat(vo);if(a&&b)p.focal=(a/b).toFixed(2).replace(/\.00$/,"")+" mm"}}};
- ifd(g32(4));return p}
-async function readExif(src){
- if(exifCache.has(src))return exifCache.get(src);
- let out=null;
- try{let r=await fetch(src,{headers:{Range:"bytes=0-65535"}});const v=new DataView(await r.arrayBuffer());
-  if(v.getUint16(0)===0xFFD8){let o=2;
-   while(o<v.byteLength-4){const m=v.getUint16(o),len=v.getUint16(o+2);
-    if(m===0xFFE1&&v.getUint32(o+4)===0x45786966){out=parseTiff(v,o+10);break}
-    if((m&0xFF00)!==0xFF00)break;o+=2+len}}}catch(_){}
- exifCache.set(src,out);return out}
-async function fillExif(it,mediaEl){
+/* ---------- Stored Media Metadata ---------- */
+function fillExif(it,mediaEl){
  const T=(id,v)=>$(id).textContent=v||"—";
  if(it.isVid){
   $("#mL1").textContent="Duration";$("#mL2").textContent="Format";$("#mL3").textContent="Ratio";$("#mL4").textContent="Audio";
@@ -289,12 +266,10 @@ async function fillExif(it,mediaEl){
   return;
  }
  $("#mL1").textContent="Aperture";$("#mL2").textContent="Shutter";$("#mL3").textContent="Focal";$("#mL4").textContent="ISO";
- const m=it.exif||{},full=m.camera&&m.captured&&m.aperture&&m.shutter&&m.focal&&m.iso;
- const a=full?{}:(await readExif(it.src))||{};
- T("#xCam",m.camera||`${a.make||""} ${a.model||""}`.trim());
- T("#xDate",m.captured||(a.date||"").replace(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}:\d{2}).*$/,"$3/$2/$1 · $4"));
- T("#xAp",m.aperture||a.aperture);T("#xSh",m.shutter||a.shutter);T("#xFo",m.focal||a.focal);T("#xIso",m.iso||a.iso);
- T("#xApp",m.app||it.app||a.software);T("#xFile",it.file);
+ const m=it.exif||{};
+ T("#xCam",m.camera);T("#xDate",m.captured);
+ T("#xAp",m.aperture);T("#xSh",m.shutter);T("#xFo",m.focal);T("#xIso",m.iso);
+ T("#xApp",m.app||it.app);T("#xFile",it.file);
 
  const fullReady=lbImg.dataset.fullSrc===it.src&&lbImg.naturalWidth>0;
  const fallbackOnly=it.resolvedThumb===it.src&&mediaEl?.naturalWidth>0;

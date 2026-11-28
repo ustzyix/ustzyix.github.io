@@ -1,3 +1,4 @@
+
 /* Layout behavior and renderers for gallery, interactive work, and playlist views. */
 import {
   $, state, stage, canvas, mobileLayout,
@@ -33,6 +34,7 @@ const DP = [
   { x: 0.07, w: 0.28, g: 24, d: 0.5 },
   { x: 0.65, w: 0.29, g: -30, d: 0.8 }
 ];
+
 const MOBILE_DP = [
   { x: 0.02, w: 0.3, g: -24, d: 0.45 },
   { x: 0.64, w: 0.32, g: 28, d: 0.75 },
@@ -159,7 +161,7 @@ export function addCard(it, i, tok = state.loadTok, targetContainer = state.acti
 
   const initPoster = it.poster || vidPosterCache.get(it.src) || "";
   const mediaHtml = it.isVid
-    ? `<video data-src="${esc(it.src)}" ${initPoster ? `poster="${esc(initPoster)}"` : ""} crossorigin="anonymous" muted loop playsinline preload="none"></video><span class="vbadge">▶ VIDEO</span>`
+    ? `<video data-src="${esc(it.src)}" ${initPoster ? `poster="${esc(initPoster)}"` : ""} crossorigin="anonymous" muted autoplay loop playsinline preload="none"></video><span class="vbadge">▶ VIDEO</span>`
     : `<img alt="${esc(it.caption)}" decoding="async" draggable="false">`;
   el.innerHTML = `<div class="frame">${mediaHtml}</div><div class="meta"><div class="tw"><div class="ttl">${esc(it.caption)}</div><div class="sub">${esc(it.sub || "Stillness")}</div></div></div>`;
 
@@ -287,7 +289,7 @@ export function mountInteractive(proj, targetContainer = state.activeViewEl || c
   canvas.removeAttribute("data-empty");
   const wrap = document.createElement("div");
   wrap.className = "ix-wrap";
-  wrap.innerHTML = `<div class="ix-frame"><iframe src="${esc(proj.src || "")}" title="${esc(proj.title || "Interactive Work")}" allow="autoplay; fullscreen" loading="eager"></iframe></div><div class="ix-bar"><div class="ix-info"><div class="ttl">${esc(proj.title || "Interactive")}</div><div class="ix-ctl">${esc(proj.controls || "Touch / Keyboard Controls")}</div></div><button class="ix-fs" id="ixFsBtn" type="button"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>Fullscreen</span></button></div>`;
+  wrap.innerHTML = `<div class="ix-frame"><iframe src="${esc(proj.src || "")}" title="${esc(proj.title || "Interactive Work")}" sandbox="allow-scripts allow-forms allow-pointer-lock" allow="autoplay; fullscreen" loading="eager"></iframe></div><div class="ix-bar"><div class="ix-info"><div class="ttl">${esc(proj.title || "Interactive")}</div><div class="ix-ctl">${esc(proj.controls || "Touch / Keyboard Controls")}</div></div><button class="ix-fs" id="ixFsBtn" type="button"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>Fullscreen</span></button></div>`;
   targetContainer.append(wrap);
   wrap.querySelector("#ixFsBtn").onclick = () => {
     if (document.fullscreenElement) {

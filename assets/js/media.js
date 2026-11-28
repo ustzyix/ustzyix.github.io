@@ -1,9 +1,12 @@
 
-/* Deferred media loading, video observation/posters, and async image decode cache. EXIF parsing is intentionally omitted; data-authored metadata remains supported. */
+/* Deferred media loading, video observation/posters, and async image decode cache.
+   EXIF parsing is intentionally omitted; data-authored metadata remains supported.
+*/
 import { state, stage } from "./state.js";
 
 /* ---------- Auto First-Frame Video Poster Cache ---------- */
 export const vidPosterCache = new Map();
+
 const posterCanvas = document.createElement("canvas");
 const posterCtx = posterCanvas.getContext("2d", { alpha: false });
 
@@ -36,7 +39,9 @@ export function captureVideoPoster(videoEl, key) {
       vidPosterCache.set(key, url);
 
       if (vidPosterCache.size > 40) {
-        vidPosterCache.delete(vidPosterCache.keys().next().value);
+        vidPosterCache.delete(
+          vidPosterCache.keys().next().value
+        );
       }
 
       return url;
@@ -46,32 +51,69 @@ export function captureVideoPoster(videoEl, key) {
   return "";
 }
 
-/* ---------- Viewport Observer: Play Visible Videos & Track Active Video ---------- */
+/* ---------- Viewport Observer: Play Visible Videos ---------- */
+
 export const visibleVideos = new Set();
 
+/**
+ * Load video source only once.
+ */
 export function ensureVideoSource(videoEl) {
-  if (videoEl && !videoEl.getAttribute("src") && videoEl.dataset.src) {
+  if (
+    videoEl &&
+    !videoEl.getAttribute("src") &&
+    videoEl.dataset.src
+  ) {
     videoEl.src = videoEl.dataset.src;
     videoEl.load();
   }
 }
 
+/**
+ * Safely resume a preview video.
+ */
+function playPreview(videoEl) {
+  if (
+    !videoEl ||
+    !videoEl.isConnected ||
+    !visibleVideos.has(videoEl) ||
+    !videoEl.paused
+  ) {
+    return;
+  }
+
+  ensureVideoSource(videoEl);
+
+  const playPromise = videoEl.play();
+
+  if (playPromise && typeof playPromise.catch === "function") {
+    playPromise.catch((err) => {
+      // Ignore interruptions caused by pause, source changes, or DOM removal.
+      if (err?.name !== "AbortError") {
+        console.warn("Video preview playback failed:", err);
+      }
+    });
+  }
+}
+
+/**
+ * Observe video visibility inside the gallery stage.
+ */
 export const vidObs = new IntersectionObserver(
-  (ents) => {
-    ents.forEach((en) => {
-      const v = en.target;
+  (entries) => {
+    entries.forEach((entry) => {
+      const videoEl = entry.target;
 
-      if (en.isIntersecting) {
-        visibleVideos.add(v);
+      if (entry.isIntersecting) {
+        visibleVideos.add(videoEl);
 
-        // Load once on first visibility.
-        ensureVideoSource(v);
+        ensureVideoSource(videoEl);
 
-        // Resume visible preview videos.
-        v.play().catch(() => {});
+        playPreview(videoEl);
       } else {
-        visibleVideos.delete(v);
-        v.pause();
+        visibleVideos.delete(videoEl);
+
+        videoEl.pause();
       }
     });
   },
@@ -81,24 +123,34 @@ export const vidObs = new IntersectionObserver(
   }
 );
 
-export function syncCardVideos(pauseAll) {
-  state.cards.forEach((c) => {
-    const v = c.querySelector("video");
+/**
+ * Synchronize gallery preview videos.
+ *
+ * pauseAll = true:
+ *   Pause every gallery preview (Lightbox opened).
+ *
+ * pauseAll = false:
+ *   Resume only videos currently marked visible.
+ */
+export function syncCardVideos(pauseAll = false) {
+  state.cards.forEach((card) => {
+    const videoEl = card.querySelector("video");
 
-    if (!v) return;
+    if (!videoEl) return;
 
     if (pauseAll) {
-      v.pause();
-    } else if (visibleVideos.has(v)) {
-      ensureVideoSource(v);
+      videoEl.pause();
+      return;
+    }
 
-      // Resume previews after closing the lightbox/modal.
-      v.play().catch(() => {});
+    if (visibleVideos.has(videoEl)) {
+      playPreview(videoEl);
     }
   });
 }
 
 /* ---------- Async Image Decode Cache ---------- */
+
 const decoded = new Map();
 
 export function predecode(src) {
@@ -106,19 +158,21 @@ export function predecode(src) {
 
   if (!rec) {
     const im = new Image();
+
     im.decoding = "async";
     im.src = src;
 
     const prom = (
       im.decode
         ? im.decode().then(() => im.naturalWidth > 0)
-        : new Promise((r) => {
-            im.onload = () => r(im.naturalWidth > 0);
-            im.onerror = () => r(false);
+        : new Promise((resolve) => {
+            im.onload = () => resolve(im.naturalWidth > 0);
+            im.onerror = () => resolve(false);
           })
     ).catch(() => false);
 
     rec = { im, prom };
+
     decoded.set(src, rec);
 
     if (decoded.size > 4) {

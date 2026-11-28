@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'videos/*.mp4'
+      - '.github/workflows/make-previews.yml'
 
   workflow_dispatch:
 
@@ -36,21 +37,41 @@ jobs:
       - name: Generate previews
         shell: bash
         run: |
+          set -euo pipefail
+
           mkdir -p videos/preview
 
+          echo "Working directory:"
+          pwd
+
+          echo "Source video files:"
+          find videos \
+            -maxdepth 1 \
+            -type f \
+            -iname '*.mp4' \
+            -print
+
           while IFS= read -r -d '' file; do
-            filename=$(basename "$file")
+
+            filename="$(basename "$file")"
             name="${filename%.*}"
 
             output="videos/preview/${name}.preview.mp4"
 
-            echo "Processing: $filename"
+            echo "--------------------------------"
+            printf 'Input: %q\n' "$file"
+            printf 'Output: %q\n' "$output"
+
+            if [[ ! -f "$file" ]]; then
+              echo "::error::Input file not found: $file"
+              exit 1
+            fi
 
             ffmpeg -hide_banner -loglevel error \
               -y \
               -i "$file" \
               -map 0:v:0 \
-              -vf "scale=-2:min(480\\,ih)" \
+              -vf 'scale=-2:min(480\,ih)' \
               -an \
               -sn \
               -dn \
@@ -60,6 +81,11 @@ jobs:
               -pix_fmt yuv420p \
               -movflags +faststart \
               "$output"
+
+            if [[ ! -s "$output" ]]; then
+              echo "::error::Preview generation failed: $output"
+              exit 1
+            fi
 
             echo "Created: $output"
 
@@ -71,9 +97,14 @@ jobs:
               -print0
           )
 
+          echo "Preview generation completed."
+
       # 4. Commit generated previews
       - name: Commit previews
+        shell: bash
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -84,5 +115,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Generate video previews"
+          git commit -m "Generate video previews [skip ci]"
           git push

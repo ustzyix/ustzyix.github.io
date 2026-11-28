@@ -1,37 +1,44 @@
 # System Architecture
 
-This repository is a static, client-side media application. The browser loads one HTML entry point, reads project definitions from JavaScript data files, and renders the selected project without a backend service or server-side rendering.
+This repository is a zero-backend, zero-bundler static media application built with vanilla HTML, CSS, and Native ES Modules. The browser loads a single HTML entry point, imports structured project modules on demand, and renders image, video, interactive, or audio collections without server-side rendering or runtime API calls.
 
 ## System model
 
+```text
 Browser
   |
   v
 index.html
-  |-- data/projects.js       project registry
-  |-- data/thumbs.js         thumbnail map and static media manifest
-  |-- data/<project>.js      lazy project details
-  |-- assets/css/            presentation styles
-  |-- assets/js/             application logic
-  |-- images/                original images
-  |-- thumbs/                optimized image previews
-  |-- videos/                video media
-  +-- audio/                 optional playlist media
+  |-- assets/css/               layered presentation styles
+  +-- assets/js/main.js         ES module entry point
+        |-- data/projects.js    project registry (export const GALLERY)
+        |-- data/thumbs.js      thumbnail map & static media manifest
+        |-- data/<project>.js   lazy-loaded project details (export default)
+        |-- assets/js/state.js  shared state, helpers, & DOM references
+        |-- assets/js/loader.js dynamic imports, normalization, & view cache
+        |-- assets/js/media.js  video observer, poster capture, & image decode
+        |-- assets/js/renderers.js gallery, interactive, & playlist renderers
+        +-- assets/js/lightbox.js  progressive lightbox & metadata flip card
 
-GitHub Actions
-  |-- images/ -> thumbs/ + THUMBS_MAP
-  +-- images/videos/audio -> MEDIA_MANIFEST
+Media directories
+  |-- images/                   full-resolution source images
+  |-- thumbs/                   generated WebP previews
+  |-- videos/                   video media
+  +-- audio/                    optional playlist audio
+
+GitHub Actions (.github/workflows/make-thumbs.yml)
+  |-- images/ -> thumbs/<name>.webp + THUMBS_MAP
+  +-- images/ + videos/ + audio/ -> MEDIA_MANIFEST in data/thumbs.js
+```
 
 ## Core principles
 
-- index.html contains the application shell and loads external CSS and JavaScript assets.
-- Project summaries load first; detailed project data loads only when needed.
-- Project metadata is maintained separately from media files.
-- A generated static manifest lists discoverable files by folder.
-- Runtime discovery reads the manifest and does not call the GitHub Contents API.
-- Rendering is selected by the project type.
-- Original media and preview media have separate responsibilities.
-- Browser APIs handle lazy loading, media decoding, navigation, and fullscreen behavior.
+* **Zero-build ES Modules:** Application logic and data files use native `import` and `export` syntax (`<script type="module">`) with no bundler or transpilation step.
+* **Strict separation of concerns:** `index.html` contains only the document shell and enforces a strict Content Security Policy (`script-src 'self'`). No CSS or JavaScript is embedded inline.
+* **Two-tier data loading:** Lightweight project summaries load upfront from `data/projects.js`; detailed project modules load lazily via dynamic `import()` only when selected or prefetched.
+* **Static media discovery:** GitHub Actions generates `data/thumbs.js` on push. Runtime folder discovery reads `MEDIA_MANIFEST` locally and never calls the GitHub Contents API.
+* **Preview vs. original media:** Galleries and initial lightbox frames use lightweight WebP thumbnails while full-resolution images decode asynchronously in the background.
+* **Keep-alive view caching:** Rendered gallery views are retained in an in-memory LRU cache so switching back to a previously viewed project restores scroll position and DOM state immediately.
 
 ## Repository structure
 
@@ -62,43 +69,42 @@ GitHub Actions
 ├── audio/                    optional
 ├── .github/workflows/
 │   └── make-thumbs.yml
+├── LICENSE
 └── README.md
 ```
 
 ## File responsibilities
 
-### index.html
+### `index.html`
+The application shell. It defines the Content Security Policy, preloads core ES modules (`rel="modulepreload"`), loads the four CSS layers in `tokens` → `base` → `gallery` → `lightbox` order, and boots the runtime through a single `<script type="module" src="assets/js/main.js"></script>` tag.
 
-The HTML shell contains the page structure and loads the four CSS files in tokens, base, gallery, and lightbox order. At the end of the page it loads project data, the generated data/thumbs.js file, then the six JavaScript modules in dependency order. No application CSS or JavaScript is embedded in the HTML.
+### `assets/css/`
+* `tokens.css`: Design tokens for colors, typography, blur, radii, and z-index layers.
+* `base.css`: Reset rules, viewport stage, top navigation bar, and full-screen project picker modal.
+* `gallery.css`: Scatter and grid card layouts, entrance transitions, video badges, and hover states.
+* `lightbox.css`: Lightbox frame, 3D metadata flip card, interactive iframe container, and audio playlist deck.
 
-### assets/css/
-
-- tokens.css contains shared colors, fonts, blur, and stacking order values.
-- base.css contains reset styles, the page layout, header, and project picker.
-- gallery.css contains gallery cards, grid layout, and hover states.
-- lightbox.css contains the lightbox, card flip, interactive iframe, and playlist styles.
-
-### assets/js/
-
-- state.js defines shared state, project registry access, and DOM references.
-- loader.js loads project details, normalizes media entries, reads the static manifest, and manages cached project views.
-- media.js handles video visibility, poster capture, and asynchronous image decoding. It does not parse EXIF data.
-- renderers.js contains the gallery, interactive, and playlist renderers.
-- lightbox.js controls media information and the lightbox.
-- main.js binds the project picker, hash routing, startup, and shared UI events.
+### `assets/js/`
+* `state.js`: Imports `GALLERY`, exports path/formatting utilities, DOM element references, the LRU `viewCache` map, and the shared mutable `state` object.
+* `loader.js`: Dynamically imports `data/<project>.js` modules, normalizes media entries, resolves thumbnail fallback chains, runs manifest discovery, and manages view lifecycle/eviction.
+* `media.js`: Manages the viewport `IntersectionObserver` for deferred video loading, captures first-frame canvas posters (`vidPosterCache`), and maintains an async `Image.decode()` cache.
+* `renderers.js`: Implements the balanced scatter layout engine, desktop pointer parallax, gallery card creation, sandboxed interactive iframe mounting, and HTML5 audio playlist controls.
+* `lightbox.js`: Controls lightbox media transitions, progressive thumbnail-to-full-resolution upgrades, dynamic aspect-ratio framing, keyboard/touch handlers, and the metadata flip panel.
+* `main.js`: Module entry point. Binds the scatter/grid FLIP layout toggle, resize observers, project picker search/prefetching, and URL hash routing.
 
 ### `data/projects.js`
+The project registry. Exports `GALLERY` containing lightweight metadata used to populate the project switcher and locate each project's detail module.
 
-The project registry. It contains lightweight summaries used to build the project switcher and locate each project’s detailed data file.
-
-```js
-window.GALLERY = {
+```javascript
+export const GALLERY = {
   projects: [
     {
       id: "project-id",
       type: "gallery",
+      code: "AR",
       title: "Project title",
       sub: "Project description",
+      year: "2024 — 2026",
       data: "data/project-id.js"
     }
   ]
@@ -106,212 +112,138 @@ window.GALLERY = {
 ```
 
 Supported `type` values:
-
-- `gallery`: image and video cards.
-- `interactive`: an embedded interactive document.
-- `playlist`: an audio player and track list.
+* `gallery`: Scatter/grid image and video cards with lightbox inspection.
+* `interactive`: Embedded external document via `<iframe>` with fullscreen support.
+* `playlist`: Audio deck with transport controls, scrubbing, and track list.
 
 ### `data/<project>.js`
+Detailed configuration for an individual project, exported as the module's default object. Current project modules include `data/archive-01.js` and `data/videos-01.js`.
 
-The detailed data source for one project. A detail file registers data through `window.setProjectData()`.
-
-```js
-window.setProjectData("project-id", {
+```javascript
+export default {
   folder: "images",
   discover: true,
   photos: [
     {
       file: "example.jpg",
-      title: "Example",
-      sub: "Description",
+      title: "Example — 01",
+      sub: "Series · 01",
       exif: {
         camera: "Camera name",
-        captured: "Capture date"
+        captured: "12 Oct 2025 · 12:16",
+        aperture: "f/1.8",
+        shutter: "1/1500s",
+        focal: "3.99 mm",
+        iso: "ISO 20",
+        app: "Adobe Lightroom",
+        resolution: "2612 × 1470 (3.8 MP)"
       }
     }
   ]
-});
+};
 ```
 
-The current repository includes `data/archive-01.js` and `data/videos-01.js` as project-specific data files. Their role is the same as any future `data/<project>.js` file.
+### `data/thumbs.js`
+Auto-generated by GitHub Actions. Exports two static lookup objects consumed by `loader.js`:
 
-### data/thumbs.js
-
-GitHub Actions generates this file. It contains two static data objects:
-
-```js
-window.THUMBS_MAP = {
+```javascript
+export const THUMBS_MAP = {
   "example.jpg": "thumbs/example.webp"
 };
 
-window.MEDIA_MANIFEST = {
+export const MEDIA_MANIFEST = {
   "images": ["example.jpg"],
   "videos": ["example.mp4"],
   "audio": ["example.mp3"]
 };
 ```
 
-- THUMBS_MAP maps original image filenames to preview paths.
-- MEDIA_MANIFEST maps folder names to arrays of filename strings.
-- When a project has discover enabled, discoverFiles filters its folder list and adds matching files that are not already declared in project data.
-- Setting discover to false disables automatic additions for that project.
-- A folder without a manifest entry has no automatic additions.
+* `THUMBS_MAP` maps source image filenames in `images/` to generated WebP previews in `thumbs/`.
+* `MEDIA_MANIFEST` maps top-level media directories (`images`, `videos`, `audio`) to sorted filename arrays.
+* When `discover` is enabled (`discover !== false`), `discoverFiles()` filters `MEDIA_MANIFEST[folder]` by supported extensions and appends any files not already declared in the project module.
+* Discovery scans direct children of each target directory only and does not recurse into subdirectories.
 
-The manifest currently covers images, videos, and audio. Discovery reads direct children of each folder; it does not recurse into subfolders.
+### Media directories
+* `images/`: Full-resolution source images (`.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`).
+* `thumbs/`: Auto-generated WebP thumbnails (max width `800px`, quality `80`).
+* `videos/`: Video files (`.mp4`, `.webm`, `.mov`, `.m4v`).
+* `audio/`: Optional audio tracks (`.mp3`, `.m4a`, `.wav`, `.ogg`, `.flac`).
 
-### `images/`
-
-Stores original image files. These files are used for full-resolution viewing and thumbnail generation.
-
-### `thumbs/`
-
-Stores generated preview images. The runtime uses these files for the initial gallery view when a matching entry exists in `data/thumbs.js`.
-
-### `videos/`
-
-Stores video files. A media entry is recognized as a video when its `type` is `video` or its filename has a supported video extension.
-
-### .github/workflows/make-thumbs.yml
-
-The media pipeline runs when files change under images/, videos/, or audio/, and when the workflow itself changes. It creates or refreshes image previews, removes stale previews, and writes both THUMBS_MAP and MEDIA_MANIFEST to data/thumbs.js. Generated changes are committed back to the repository when needed.
-
-The browser consumes the generated static data and does not request directory listings from GitHub's Contents API.
+### `.github/workflows/make-thumbs.yml`
+Runs on pushes to `main` affecting `images/**`, `videos/**`, `audio/**`, or the workflow file itself (as well as manual `workflow_dispatch`). Using Python 3.12 and Pillow, it:
+1. Applies EXIF orientation, resizes new or updated images to a maximum width of `800px` with Lanczos resampling, and encodes them as WebP files in `thumbs/`.
+2. Removes orphaned thumbnails from `thumbs/` when source images are deleted.
+3. Scans `images/`, `videos/`, and `audio/` and writes updated `THUMBS_MAP` and `MEDIA_MANIFEST` exports to `data/thumbs.js`.
+4. Commits updated previews and manifest changes back to `main` with `[skip ci]`.
 
 ## Runtime lifecycle
 
-### 1. Bootstrap
+### 1. Bootstrap & routing
+`index.html` loads `assets/js/main.js` as an ES module. `main.js` reads `location.hash` to select the initial project (defaulting to `PROJECTS[0]`) and listens for `hashchange` events to switch views without page reloads.
 
-The page loads data/projects.js and data/thumbs.js before the application modules. The globals are:
+### 2. Project detail loading
+`fetchProjectDetail()` dynamically imports `data/<project>.js` once, caches its default export in `projectStore`, and merges it with the base project registry entry. Hovering or touching items in the project picker triggers early prefetching.
 
-- window.GALLERY for project summaries.
-- window.PROJECT_STORE for loaded project details.
-- window.THUMBS_MAP for preview paths.
-- window.MEDIA_MANIFEST for discoverable filenames grouped by folder.
+### 3. Mode dispatch & view caching
+`loadProject()` suspends the active view (pausing videos and stopping active audio) and checks `viewCache` (capped at 6 cached gallery views). On a cache hit, the existing DOM container is restored; otherwise, a new `.proj-view` is created and dispatched to `addCard()`, `mountInteractive()`, or `mountPlaylist()`.
 
-### 2. Project selection
+### 4. Normalization & manifest discovery
+`toEntry()` resolves source paths, thumbnail candidates, media types, and captions. If `discover` is enabled, `discoverFiles()` schedules an idle task (`requestIdleCallback`) to append undeclared files listed in `MEDIA_MANIFEST`.
 
-The initial project is selected from the URL hash. The project picker can select another registered project and update the hash without a full page reload.
+### 5. Layout & progressive rendering
+* **Scatter & FLIP grid:** `layout()` positions cards using responsive coordinate tables (`DP` / `MOBILE_DP`), balancing landscape widths against the median portrait card height. Toggling grid mode animates card positions via the Web Animations API.
+* **Images:** Cards load `THUMBS_MAP` previews first with priority hints (`fetchPriority="high"` and eager loading for the first two items).
+* **Videos:** Video elements store their URL in `data-src`. `IntersectionObserver` assigns `src` when a card enters the viewport (`threshold: 0.15`) and pauses playback when scrolled off-screen.
 
-### 3. Detail loading
-
-fetchProjectDetail() loads a project's detail script once and stores its payload. This is a static JavaScript file request from the site.
-
-### 4. Mode dispatch
-
-loadProject() checks the project type and calls one renderer:
-
-```text
-gallery      -> create media cards
-interactive  -> mount an iframe view
-playlist     -> mount an audio view
-```
-
-### 5. Media normalization and discovery
-
-toEntry() converts media data into a common shape with source paths, preview candidates, media type, captions, labels, and optional manually supplied metadata.
-
-When discover is enabled, discoverFiles() reads the filename strings from window.MEDIA_MANIFEST[folder], filters them by supported media type, and adds entries that are not already declared. This step does not make a GitHub API or directory-listing request. The browser still requests project data and media files when needed.
-
-### 6. Media rendering
-
-addCard() creates a card and attaches the appropriate media element. Images try preview candidates first. Videos use a deferred data-src value so their original source is assigned when a card becomes visible.
-
-### 7. Visibility management
-
-IntersectionObserver tracks video cards in the viewport. Visible videos may load their source; videos that leave the viewport are paused and their source is released.
-
-### 8. Lightbox loading
-
-The Lightbox opens the selected media item. When a preview is available, it can display immediately while the original image is decoded asynchronously. The original source replaces the preview after decoding completes.
-
-### 9. View caching
-
-Project views can be kept in an in-memory cache. Returning to a cached project restores its view state instead of rebuilding it.
+### 6. Lightbox inspection
+Selecting a card opens the Lightbox immediately with its cached thumbnail while `predecode()` decodes the full-resolution source asynchronously. Once decoded, the full-resolution image swaps in seamlessly, and tapping or pressing Enter/Space flips the card to reveal authored EXIF or video stream metadata.
 
 ## Gallery data contract
 
 ### Project-level fields
 
-| Field | Purpose |
-| --- | --- |
-| `folder` | Source directory for media files. |
-| `discover` | When true, adds matching filenames from the static manifest for the project folder; when false, only declared items are used. |
-| `photos` | Collection of image or video entries. |
-| `tracks` | Collection of audio entries for Playlist mode. |
-| `src` | External source used by Interactive mode. |
-| `controls` | Control description shown by Interactive mode. |
+| Field | Type | Purpose |
+| :--- | :--- | :--- |
+| `folder` | `string` | Source directory for media files (defaults to `"images"` or `"audio"`). |
+| `discover` | `boolean` | When `true` (default), appends undeclared files from `MEDIA_MANIFEST[folder]`. |
+| `thumbFolder` | `string \| boolean` | Optional custom preview directory override. |
+| `thumbExt` | `string \| string[]` | Optional preview file extensions to probe. |
+| `videoThumbs` | `boolean` | Enables probing preview images for video entries. |
+| `photos` | `Array<string \| object>` | Media entries for `gallery` mode. |
+| `tracks` | `Array<string \| object>` | Audio entries for `playlist` mode. |
+| `src` | `string` | Embedded URL for `interactive` mode. |
+| `controls` | `string` | Control hint text displayed in `interactive` mode. |
 
-### Media-level fields
+### Media-level fields (`photos`)
 
-| Field | Purpose |
-| --- | --- |
-| `file` | Filename relative to the project folder. |
-| `src` | Explicit media path or URL. |
-| `type` | Optional explicit media type, such as `video`. |
-| `title` | Primary display label. |
-| `sub` | Secondary display label. |
-| `ratio` | Optional media aspect ratio, used when dimensions are not yet available. |
-| `app` | Optional application or tool label. |
-| `poster` / `thumb` | Optional explicit preview path. |
-| `exif` | Optional manually supplied image metadata. |
+| Field | Type | Purpose |
+| :--- | :--- | :--- |
+| `file` | `string` | Filename relative to the project `folder`. |
+| `src` | `string` | Explicit media path or external URL. |
+| `type` | `string` | Optional explicit media type (e.g., `"video"`). |
+| `title` | `string` | Primary display caption. |
+| `sub` | `string` | Secondary subtitle label. |
+| `ratio` | `number` | Optional aspect ratio (`width / height`) reserved before metadata loads. |
+| `app` | `string` | Software or tool label displayed on the info card. |
+| `poster` / `thumb` | `string` | Explicit preview or video poster path. |
+| `exif` | `object` | Authored camera metadata (`camera`, `captured`, `aperture`, `shutter`, `focal`, `iso`, `app`, `resolution`). |
 
-### Audio-level fields
+### Audio-level fields (`tracks`)
 
-| Field | Purpose |
-| --- | --- |
-| `file` | Audio filename. |
-| `src` | Explicit audio path or URL. |
-| `title` | Track title. |
-| `artist` | Track artist or creator. |
-| `cover` | Optional cover image. |
+| Field | Type | Purpose |
+| :--- | :--- | :--- |
+| `file` | `string` | Audio filename relative to `folder`. |
+| `src` | `string` | Explicit audio path or URL. |
+| `title` | `string` | Track title. |
+| `artist` | `string` | Artist or creator credit. |
+| `cover` | `string` | Optional track artwork path or URL. |
 
-## Renderer responsibilities
+## Local development
 
-### Gallery renderer
+Because browsers enforce CORS restrictions on ES module imports (`<script type="module">`), serve the repository over HTTP rather than opening `index.html` directly via `file://`:
 
-`addCard()` and `layout()` manage media cards and their positions. Gallery state includes the current entries, cards, layout mode, and selected media index.
-
-### Interactive renderer
-
-`mountInteractive()` creates an iframe container and a fullscreen control. The embedded document remains external to the main application runtime.
-
-### Playlist renderer
-
-`mountPlaylist()` creates the audio element, transport controls, progress display, and track list. `stopAudio()` releases the active audio source when the view changes.
-
-### Lightbox controller
-
-The Lightbox controller owns the selected media index, previous/next navigation, touch gestures, keyboard controls, media information, and flip-panel state.
-
-## Media pipeline
-
-```text
-images/ -- GitHub Actions + Pillow --> thumbs/<filename>.webp
-   |                                      |
-   +------------------------------------> THUMBS_MAP
-
-images/ + videos/ + audio/
-   |
-   +-- GitHub Actions --> MEDIA_MANIFEST in data/thumbs.js
-   |
-   v
-Browser static filename lookup
-   |
-   v
-Media files requested as needed
+```bash
+python3 -m http.server 8080
 ```
 
-If a thumbnail is unavailable, the runtime tries the next preview candidate and then the original source.
-
-## Extension points
-
-The system can be extended by:
-
-- Adding a new project summary to `data/projects.js`.
-- Adding a matching detail file in `data/`.
-- Adding a manifest key and workflow scan for a new media folder.
-- Adding a new renderer branch in `loadProject()` for a new `type`.
-- Extending the media extension matchers and workflow scan when a new file format is supported.
-- Adding new metadata fields to the detail schema and rendering them in the Lightbox.
-
-The separation between project registry, project detail, media files, generated previews, and renderers allows each area to evolve independently.
+Then open `http://localhost:8080` in your browser.

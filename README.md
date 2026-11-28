@@ -4,43 +4,53 @@ This repository is a static, client-side media application. The browser loads on
 
 ## System model
 
-```text
 Browser
   |
   v
 index.html
-  |-- data/projects.js     project registry
-  |-- data/thumbs.js       generated thumbnail manifest
-  |-- data/<project>.js    lazy project data
-  |-- images/              original image media
-  |-- thumbs/              optimized image previews
-  |-- videos/              video media
-  |
-  +-- Gallery renderer
-  +-- Interactive renderer
-  +-- Playlist renderer
-  +-- Lightbox and media metadata
+  |-- data/projects.js       project registry
+  |-- data/thumbs.js         thumbnail map and static media manifest
+  |-- data/<project>.js      lazy project details
+  |-- assets/css/            presentation styles
+  |-- assets/js/             application logic
+  |-- images/                original images
+  |-- thumbs/                optimized image previews
+  |-- videos/                video media
+  +-- audio/                 optional playlist media
 
 GitHub Actions
-  |
-  +-- images/ -> thumbs/ + data/thumbs.js
-```
+  |-- images/ -> thumbs/ + THUMBS_MAP
+  +-- images/videos/audio -> MEDIA_MANIFEST
 
 ## Core principles
 
-- The application has a single runtime entry point: `index.html`.
-- Static project summaries are loaded first; detailed project data is loaded only when needed.
-- Media metadata is separated from media files.
-- Rendering is selected by the project `type`.
+- index.html contains the application shell and loads external CSS and JavaScript assets.
+- Project summaries load first; detailed project data loads only when needed.
+- Project metadata is maintained separately from media files.
+- A generated static manifest lists discoverable files by folder.
+- Runtime discovery reads the manifest and does not call the GitHub Contents API.
+- Rendering is selected by the project type.
 - Original media and preview media have separate responsibilities.
 - Browser APIs handle lazy loading, media decoding, navigation, and fullscreen behavior.
-- Generated files are kept separate from manually maintained source files.
 
 ## Repository structure
 
 ```text
 .
 ├── index.html
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css
+│   │   ├── base.css
+│   │   ├── gallery.css
+│   │   └── lightbox.css
+│   └── js/
+│       ├── state.js
+│       ├── loader.js
+│       ├── media.js
+│       ├── renderers.js
+│       ├── lightbox.js
+│       └── main.js
 ├── data/
 │   ├── projects.js
 │   ├── archive-01.js
@@ -49,6 +59,7 @@ GitHub Actions
 ├── images/
 ├── thumbs/
 ├── videos/
+├── audio/                    optional
 ├── .github/workflows/
 │   └── make-thumbs.yml
 └── README.md
@@ -56,21 +67,25 @@ GitHub Actions
 
 ## File responsibilities
 
-### `index.html`
+### index.html
 
-The application runtime and presentation layer. It contains:
+The HTML shell contains the page structure and loads the four CSS files in tokens, base, gallery, and lightbox order. At the end of the page it loads project data, the generated data/thumbs.js file, then the six JavaScript modules in dependency order. No application CSS or JavaScript is embedded in the HTML.
 
-- HTML structure for the application shell.
-- CSS for layout, responsive behavior, controls, cards, and dialogs.
-- Project loading and routing logic.
-- Gallery, Interactive, and Playlist renderers.
-- Lightbox navigation and media information.
-- Thumbnail selection and fallback handling.
-- Lazy loading for images and videos.
-- EXIF parsing for image metadata.
-- Project view caching.
+### assets/css/
 
-The runtime is organized as a set of browser-side modules inside the page rather than separate bundled files.
+- tokens.css contains shared colors, fonts, blur, and stacking order values.
+- base.css contains reset styles, the page layout, header, and project picker.
+- gallery.css contains gallery cards, grid layout, and hover states.
+- lightbox.css contains the lightbox, card flip, interactive iframe, and playlist styles.
+
+### assets/js/
+
+- state.js defines shared state, project registry access, and DOM references.
+- loader.js loads project details, normalizes media entries, reads the static manifest, and manages cached project views.
+- media.js handles video visibility, poster capture, and asynchronous image decoding. It does not parse EXIF data.
+- renderers.js contains the gallery, interactive, and playlist renderers.
+- lightbox.js controls media information and the lightbox.
+- main.js binds the project picker, hash routing, startup, and shared UI events.
 
 ### `data/projects.js`
 
@@ -109,7 +124,6 @@ window.setProjectData("project-id", {
       file: "example.jpg",
       title: "Example",
       sub: "Description",
-      tag: "Category",
       exif: {
         camera: "Camera name",
         captured: "Capture date"
@@ -121,17 +135,29 @@ window.setProjectData("project-id", {
 
 The current repository includes `data/archive-01.js` and `data/videos-01.js` as project-specific data files. Their role is the same as any future `data/<project>.js` file.
 
-### `data/thumbs.js`
+### data/thumbs.js
 
-The generated thumbnail manifest. It maps original filenames to preview files.
+GitHub Actions generates this file. It contains two static data objects:
 
 ```js
 window.THUMBS_MAP = {
   "example.jpg": "thumbs/example.webp"
 };
+
+window.MEDIA_MANIFEST = {
+  "images": ["example.jpg"],
+  "videos": ["example.mp4"],
+  "audio": ["example.mp3"]
+};
 ```
 
-This file is an output of the thumbnail pipeline and should not be treated as the primary media index.
+- THUMBS_MAP maps original image filenames to preview paths.
+- MEDIA_MANIFEST maps folder names to arrays of filename strings.
+- When a project has discover enabled, discoverFiles filters its folder list and adds matching files that are not already declared in project data.
+- Setting discover to false disables automatic additions for that project.
+- A folder without a manifest entry has no automatic additions.
+
+The manifest currently covers images, videos, and audio. Discovery reads direct children of each folder; it does not recurse into subfolders.
 
 ### `images/`
 
@@ -145,59 +171,54 @@ Stores generated preview images. The runtime uses these files for the initial ga
 
 Stores video files. A media entry is recognized as a video when its `type` is `video` or its filename has a supported video extension.
 
-### `.github/workflows/make-thumbs.yml`
+### .github/workflows/make-thumbs.yml
 
-The media preprocessing pipeline. It reads supported files from `images/`, creates preview images, removes stale previews, and regenerates `data/thumbs.js`.
+The media pipeline runs when files change under images/, videos/, or audio/, and when the workflow itself changes. It creates or refreshes image previews, removes stale previews, and writes both THUMBS_MAP and MEDIA_MANIFEST to data/thumbs.js. Generated changes are committed back to the repository when needed.
 
-The workflow is independent from the browser runtime: the website only consumes the generated files.
+The browser consumes the generated static data and does not request directory listings from GitHub's Contents API.
 
 ## Runtime lifecycle
 
 ### 1. Bootstrap
 
-The page creates the application shell and initializes the global data containers:
+The page loads data/projects.js and data/thumbs.js before the application modules. The globals are:
 
-- `window.GALLERY` stores the project registry.
-- `window.PROJECT_STORE` stores loaded project details.
-- `window.THUMBS_MAP` stores preview paths.
+- window.GALLERY for project summaries.
+- window.PROJECT_STORE for loaded project details.
+- window.THUMBS_MAP for preview paths.
+- window.MEDIA_MANIFEST for discoverable filenames grouped by folder.
 
 ### 2. Project selection
 
-The initial project is selected from the URL hash. The project switcher can select another registered project and update the hash without a full page reload.
+The initial project is selected from the URL hash. The project picker can select another registered project and update the hash without a full page reload.
 
 ### 3. Detail loading
 
-`fetchProjectDetail()` loads the project’s `data` file only once. Loaded files are tracked in a map so the same script is not requested repeatedly.
+fetchProjectDetail() loads a project's detail script once and stores its payload. This is a static JavaScript file request from the site.
 
 ### 4. Mode dispatch
 
-`loadProject()` checks the project `type` and calls one renderer:
+loadProject() checks the project type and calls one renderer:
 
 ```text
-type === "gallery"      -> create media cards
-type === "interactive"  -> mount an iframe view
-type === "playlist"     -> mount an audio view
+gallery      -> create media cards
+interactive  -> mount an iframe view
+playlist     -> mount an audio view
 ```
 
-### 5. Gallery normalization
+### 5. Media normalization and discovery
 
-`toEntry()` converts different input forms into one internal media-entry shape. It resolves:
+toEntry() converts media data into a common shape with source paths, preview candidates, media type, captions, labels, and optional manually supplied metadata.
 
-- Original source path.
-- Preview candidates.
-- Media type.
-- Caption and labels.
-- Optional metadata.
-
-This normalized shape allows images and videos to use the same card, navigation, and Lightbox logic.
+When discover is enabled, discoverFiles() reads the filename strings from window.MEDIA_MANIFEST[folder], filters them by supported media type, and adds entries that are not already declared. This step does not make a GitHub API or directory-listing request. The browser still requests project data and media files when needed.
 
 ### 6. Media rendering
 
-`addCard()` creates a card and attaches the appropriate media element. Images use preview candidates first. Videos use a deferred `data-src` value so the original video source is not assigned before the card is visible.
+addCard() creates a card and attaches the appropriate media element. Images try preview candidates first. Videos use a deferred data-src value so their original source is assigned when a card becomes visible.
 
 ### 7. Visibility management
 
-`IntersectionObserver` tracks video cards in the viewport. Visible videos may load their source; videos that leave the viewport are paused and their source is released.
+IntersectionObserver tracks video cards in the viewport. Visible videos may load their source; videos that leave the viewport are paused and their source is released.
 
 ### 8. Lightbox loading
 
@@ -205,7 +226,7 @@ The Lightbox opens the selected media item. When a preview is available, it can 
 
 ### 9. View caching
 
-Project views can be kept in an in-memory cache. Returning to a cached project restores its view state instead of rebuilding the entire project from the beginning.
+Project views can be kept in an in-memory cache. Returning to a cached project restores its view state instead of rebuilding it.
 
 ## Gallery data contract
 
@@ -214,7 +235,7 @@ Project views can be kept in an in-memory cache. Returning to a cached project r
 | Field | Purpose |
 | --- | --- |
 | `folder` | Source directory for media files. |
-| `discover` | Enables optional directory discovery through the GitHub Contents API. |
+| `discover` | When true, adds matching filenames from the static manifest for the project folder; when false, only declared items are used. |
 | `photos` | Collection of image or video entries. |
 | `tracks` | Collection of audio entries for Playlist mode. |
 | `src` | External source used by Interactive mode. |
@@ -229,7 +250,7 @@ Project views can be kept in an in-memory cache. Returning to a cached project r
 | `type` | Optional explicit media type, such as `video`. |
 | `title` | Primary display label. |
 | `sub` | Secondary display label. |
-| `tag` | Optional category label. |
+| `ratio` | Optional media aspect ratio, used when dimensions are not yet available. |
 | `app` | Optional application or tool label. |
 | `poster` / `thumb` | Optional explicit preview path. |
 | `exif` | Optional manually supplied image metadata. |
@@ -262,25 +283,25 @@ Project views can be kept in an in-memory cache. Returning to a cached project r
 
 The Lightbox controller owns the selected media index, previous/next navigation, touch gestures, keyboard controls, media information, and flip-panel state.
 
-## Thumbnail pipeline
+## Media pipeline
 
 ```text
-Original image
-    |
-    v
-GitHub Actions + Pillow
-    |
-    +--> thumbs/<filename>.webp
-    +--> data/thumbs.js
-    |
-    v
-Browser thumbnail lookup
-    |
-    v
-Full-resolution source when requested
+images/ -- GitHub Actions + Pillow --> thumbs/<filename>.webp
+   |                                      |
+   +------------------------------------> THUMBS_MAP
+
+images/ + videos/ + audio/
+   |
+   +-- GitHub Actions --> MEDIA_MANIFEST in data/thumbs.js
+   |
+   v
+Browser static filename lookup
+   |
+   v
+Media files requested as needed
 ```
 
-The manifest prevents the browser from guessing preview filenames. If a manifest entry or preview candidate is unavailable, the runtime falls back to the original source.
+If a thumbnail is unavailable, the runtime tries the next preview candidate and then the original source.
 
 ## Extension points
 
@@ -288,8 +309,9 @@ The system can be extended by:
 
 - Adding a new project summary to `data/projects.js`.
 - Adding a matching detail file in `data/`.
+- Adding a manifest key and workflow scan for a new media folder.
 - Adding a new renderer branch in `loadProject()` for a new `type`.
-- Extending the media extension matchers when a new file format is supported.
+- Extending the media extension matchers and workflow scan when a new file format is supported.
 - Adding new metadata fields to the detail schema and rendering them in the Lightbox.
 
 The separation between project registry, project detail, media files, generated previews, and renderers allows each area to evolve independently.

@@ -1,4 +1,3 @@
-
 /* Manually authored media metadata and lightbox controls. */
 import {
   $, state, body, topBar, stage, lb, flip,
@@ -8,14 +7,17 @@ import {
 import {
   predecode,
   syncCardVideos,
-  vidPosterCache
+  getVideoPoster
 } from "./media.js";
 
 import { closePm } from "./main.js";
 
 /* ---------- Stored Media Metadata ---------- */
+
 export function fillExif(it, mediaEl) {
-  const T = (id, v) => ($(id).textContent = v || "—");
+  const T = (id, v) => {
+    $(id).textContent = v || "—";
+  };
 
   if (it.isVid) {
     $("#mL1").textContent = "Duration";
@@ -23,21 +25,46 @@ export function fillExif(it, mediaEl) {
     $("#mL3").textContent = "Ratio";
     $("#mL4").textContent = "Audio";
 
-    const ext = (it.file.split(".").pop() || "MP4").toUpperCase();
+    const ext =
+      (it.file.split(".").pop() || "MP4").toUpperCase();
 
-    const vw = lbVid.videoWidth || mediaEl?.videoWidth || 0;
-    const vh = lbVid.videoHeight || mediaEl?.videoHeight || 0;
-    const dur = lbVid.duration || mediaEl?.duration || 0;
+    const vw =
+      lbVid.videoWidth ||
+      mediaEl?.videoWidth ||
+      0;
+
+    const vh =
+      lbVid.videoHeight ||
+      mediaEl?.videoHeight ||
+      0;
+
+    const dur =
+      lbVid.duration ||
+      mediaEl?.duration ||
+      0;
 
     T("#xCam", it.sub || "Motion Sequence");
     T("#xDate", state.activeProj?.year || "Video");
     T("#xAp", dur ? fmtTime(dur) : "Loop");
     T("#xSh", ext);
-    T("#xFo", vw && vh ? `${(vw / vh).toFixed(2)}:1` : "—");
+
+    T(
+      "#xFo",
+      vw && vh
+        ? `${(vw / vh).toFixed(2)}:1`
+        : "—"
+    );
+
     T("#xIso", "Stereo");
     T("#xApp", it.app || "—");
     T("#xFile", it.file);
-    T("#xRes", vw && vh ? `${vw} × ${vh}` : "—");
+
+    T(
+      "#xRes",
+      vw && vh
+        ? `${vw} × ${vh}`
+        : "—"
+    );
 
     return;
   }
@@ -90,6 +117,7 @@ export function fillExif(it, mediaEl) {
 }
 
 /* ---------- Lightbox ---------- */
+
 export function openLb() {
   state.modal = true;
 
@@ -104,7 +132,9 @@ export function openLb() {
 
   syncLightboxShape();
 
-  $("#lbX").focus({ preventScroll: true });
+  $("#lbX").focus({
+    preventScroll: true
+  });
 }
 
 export function closeLb() {
@@ -124,9 +154,14 @@ export function closeLb() {
   setTimeout(() => {
     if (!state.modal) {
       flip.classList.remove("on");
+
       $("#fbtnT").textContent = "Media info";
 
       // Release Original source and associated media resources.
+      lbVid.onloadedmetadata = null;
+      lbVid.onloadeddata = null;
+      lbVid.onerror = null;
+
       lbVid.removeAttribute("src");
       lbVid.load();
 
@@ -148,8 +183,15 @@ export function syncLightboxShape() {
     rect.width ||
     Math.min(innerWidth * 0.88, 760);
 
-  const nw = media.naturalWidth || media.videoWidth || 0;
-  const nh = media.naturalHeight || media.videoHeight || 0;
+  const nw =
+    media.naturalWidth ||
+    media.videoWidth ||
+    0;
+
+  const nh =
+    media.naturalHeight ||
+    media.videoHeight ||
+    0;
 
   lb.classList.toggle(
     "lb-horizontal",
@@ -157,24 +199,76 @@ export function syncLightboxShape() {
   );
 
   const radius =
-    Math.max(1, Math.round(w * 0.035 * 100) / 100);
+    Math.max(
+      1,
+      Math.round(w * 0.035 * 100) / 100
+    );
 
   const gap =
-    Math.max(1, Math.round(w * 0.008 * 100) / 100);
+    Math.max(
+      1,
+      Math.round(w * 0.008 * 100) / 100
+    );
 
-  lb.style.setProperty("--lb-radius", `${radius}px`);
-  lb.style.setProperty("--lb-media-radius", `${Math.max(1, radius - 4)}px`);
-  lb.style.setProperty("--lb-frame-gap", `${gap}px`);
+  lb.style.setProperty(
+    "--lb-radius",
+    `${radius}px`
+  );
+
+  lb.style.setProperty(
+    "--lb-media-radius",
+    `${Math.max(1, radius - 4)}px`
+  );
+
+  lb.style.setProperty(
+    "--lb-frame-gap",
+    `${gap}px`
+  );
+}
+
+/* ---------- Video Error UI ---------- */
+
+function clearVideoError() {
+  $("#scene")
+    .querySelector(".lb-media-error")
+    ?.remove();
+
+  lb.removeAttribute("data-media-error");
+}
+
+function showVideoError() {
+  clearVideoError();
+
+  lb.dataset.mediaError = "original";
+
+  const notice = document.createElement("div");
+
+  notice.className = "lb-media-error";
+  notice.setAttribute("role", "status");
+
+  notice.textContent =
+    "Original video could not be loaded.";
+
+  notice.style.cssText =
+    "position:absolute;inset:auto 12px 12px;z-index:5;" +
+    "padding:10px 14px;border-radius:8px;" +
+    "background:rgba(0,0,0,.78);color:#fff;" +
+    "font:inherit;text-align:center;pointer-events:none;";
+
+  $("#scene").append(notice);
 }
 
 /* ---------- Media Selection ---------- */
+
 export async function select(i, open) {
   if (!state.entries.length) return;
 
   state.cur =
-    (i + state.entries.length) % state.entries.length;
+    (i + state.entries.length) %
+    state.entries.length;
 
   const it = state.entries[state.cur];
+
   const mediaEl =
     state.cards[state.cur]?.querySelector("img,video");
 
@@ -186,10 +280,14 @@ export async function select(i, open) {
     it.resolvedThumb || it.thumb;
 
   flip.classList.remove("on");
+
   $("#fbtnT").textContent = "Media info";
   $("#cap").textContent = it.caption;
 
+  clearVideoError();
+
   /* ---------- Video: Original Source ---------- */
+
   if (it.isVid) {
     lbImg.style.display = "none";
     lbImg.dataset.fullSrc = "";
@@ -200,10 +298,10 @@ export async function select(i, open) {
     const originalSrc =
       it.originalSrc || it.src;
 
-    // Poster can come from Preview or a generated thumbnail.
+    // Poster can come from generated thumbnail or cache.
     const posterUrl =
       it.poster ||
-      vidPosterCache.get(it.previewSrc || it.src) ||
+      getVideoPoster(it.previewSrc || it.src) ||
       "";
 
     if (posterUrl) {
@@ -212,13 +310,17 @@ export async function select(i, open) {
       lbVid.removeAttribute("poster");
     }
 
-    // Reset any previous media source before assigning Original.
+    // Reset previous playback.
     lbVid.pause();
+
+    lbVid.onloadedmetadata = null;
+    lbVid.onloadeddata = null;
+    lbVid.onerror = null;
+
     lbVid.removeAttribute("src");
     lbVid.load();
 
-    lbVid.crossOrigin = "anonymous";
-    lbVid.src = originalSrc;
+    let retriedWithoutCors = false;
 
     lbVid.onloadedmetadata = () => {
       if (tok !== state.selTok) return;
@@ -227,14 +329,38 @@ export async function select(i, open) {
       syncLightboxShape();
     };
 
+    lbVid.onloadeddata = () => {
+      if (tok !== state.selTok) return;
+
+      clearVideoError();
+      syncLightboxShape();
+    };
+
     lbVid.onerror = () => {
       if (tok !== state.selTok) return;
 
-      // Retry without crossorigin if needed.
-      if (lbVid.hasAttribute("crossorigin")) {
+      // Retry the same Original URL once without CORS.
+      if (
+        !retriedWithoutCors &&
+        lbVid.hasAttribute("crossorigin")
+      ) {
+        retriedWithoutCors = true;
+
+        lbVid.pause();
+
         lbVid.removeAttribute("crossorigin");
+        lbVid.removeAttribute("src");
         lbVid.load();
+
+        lbVid.src = originalSrc;
+        lbVid.load();
+
+        lbVid.play().catch(() => {});
+
+        return;
       }
+
+      showVideoError();
     };
 
     if (!state.modal) {
@@ -242,6 +368,10 @@ export async function select(i, open) {
     } else {
       syncLightboxShape();
     }
+
+    lbVid.crossOrigin = "anonymous";
+    lbVid.src = originalSrc;
+    lbVid.load();
 
     lbVid.play().catch(() => {});
 
@@ -251,16 +381,24 @@ export async function select(i, open) {
   }
 
   /* ---------- Image ---------- */
+
   lbVid.pause();
+
+  lbVid.onloadedmetadata = null;
+  lbVid.onloadeddata = null;
+  lbVid.onerror = null;
+
   lbVid.removeAttribute("src");
   lbVid.load();
 
   lbVid.style.display = "none";
+
   lbImg.style.display = "block";
   lbImg.dataset.fullSrc = "";
 
   const hasDistinctThumb =
-    activeThumb && activeThumb !== it.src;
+    activeThumb &&
+    activeThumb !== it.src;
 
   if (hasDistinctThumb) {
     // Open immediately with cached thumbnail.
@@ -269,11 +407,18 @@ export async function select(i, open) {
 
     fillExif(it, mediaEl);
 
-    if (!state.modal) openLb();
+    if (!state.modal) {
+      openLb();
+    }
 
     const ok = await predecode(it.src);
 
-    if (tok !== state.selTok || !state.modal) return;
+    if (
+      tok !== state.selTok ||
+      !state.modal
+    ) {
+      return;
+    }
 
     if (ok) {
       lbImg.src = it.src;
@@ -295,12 +440,16 @@ export async function select(i, open) {
     lbImg.onload = () => {
       if (tok === state.selTok) {
         lbImg.dataset.fullSrc = it.src;
+
         syncLightboxShape();
         fillExif(it, lbImg);
       }
     };
 
-    if (lbImg.complete && lbImg.naturalWidth > 0) {
+    if (
+      lbImg.complete &&
+      lbImg.naturalWidth > 0
+    ) {
       lbImg.dataset.fullSrc = it.src;
     }
 
@@ -315,6 +464,7 @@ export async function select(i, open) {
 }
 
 /* ---------- Media Info Flip ---------- */
+
 export function toggleFlip() {
   const on = flip.classList.toggle("on");
 
@@ -329,6 +479,7 @@ export function toggleFlip() {
 }
 
 /* ---------- Event Listeners ---------- */
+
 $("#fbtn").onclick = (e) => {
   e.stopPropagation();
   toggleFlip();
@@ -340,7 +491,10 @@ $("#scene").onclick = (e) => {
 };
 
 $("#scene").onkeydown = (e) => {
-  if (e.key === "Enter" || e.key === " ") {
+  if (
+    e.key === "Enter" ||
+    e.key === " "
+  ) {
     e.preventDefault();
     toggleFlip();
   }
@@ -361,7 +515,10 @@ lb.onclick = (e) => {
 };
 
 addEventListener("keydown", (e) => {
-  if (state.pmOpen && e.key === "Escape") {
+  if (
+    state.pmOpen &&
+    e.key === "Escape"
+  ) {
     closePm();
     return;
   }
@@ -376,7 +533,9 @@ addEventListener("keydown", (e) => {
 addEventListener(
   "resize",
   () => {
-    if (state.modal) syncLightboxShape();
+    if (state.modal) {
+      syncLightboxShape();
+    }
   },
   { passive: true }
 );
@@ -384,7 +543,9 @@ addEventListener(
 window.visualViewport?.addEventListener(
   "resize",
   () => {
-    if (state.modal) syncLightboxShape();
+    if (state.modal) {
+      syncLightboxShape();
+    }
   },
   { passive: true }
 );

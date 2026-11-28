@@ -5,10 +5,16 @@ on:
     branches:
       - main
     paths:
-      - 'videos/*.mp4'
+      - 'videos/**'
       - '.github/workflows/video-preview.yml'
 
   workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Rebuild every preview and poster, even when source files are unchanged'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -40,69 +46,135 @@ jobs:
 
       - name: Generate previews
         shell: bash
+        env:
+          FORCE_REBUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force_rebuild }}
         run: |
           set -euo pipefail
 
           VIDEO_DIR="$GITHUB_WORKSPACE/videos"
           PREVIEW_DIR="$VIDEO_DIR/preview"
           POSTER_DIR="$VIDEO_DIR/posters"
+          MANIFEST="$VIDEO_DIR/.preview-manifest.json"
+          CHANGED_LIST="$RUNNER_TEMP/changed-videos.nul"
+          MANIFEST_TEMP="$RUNNER_TEMP/preview-manifest.json"
 
           mkdir -p "$PREVIEW_DIR" "$POSTER_DIR"
 
-          echo "Working directory:"
-          pwd
+          # Hash source contents rather than relying on checkout timestamps.
+          # Reject case-insensitive stem collisions before generating output paths.
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
 
-          echo "Video directory:"
-          printf '%s\n' "$VIDEO_DIR"
+          video_dir = Path(os.environ["VIDEO_DIR"])
+          preview_dir = Path(os.environ["PREVIEW_DIR"])
+          poster_dir = Path(os.environ["POSTER_DIR"])
+          manifest_path = Path(os.environ["MANIFEST"])
+          changed_list = Path(os.environ["CHANGED_LIST"])
+          manifest_temp = Path(os.environ["MANIFEST_TEMP"])
+          force_rebuild = os.environ.get("FORCE_REBUILD", "false").lower() == "true"
 
-          mapfile -d '' -t source_files < <(
-            find "$VIDEO_DIR" \
-              -maxdepth 1 \
-              -type f \
-              -iname '*.mp4' \
-              -print0
+          sources = sorted(
+              (path for path in video_dir.iterdir()
+               if path.is_file() and path.suffix.lower() == ".mp4"),
+              key=lambda path: (path.stem.casefold(), path.name.casefold(), path.name),
           )
 
-          declare -A expected_previews=()
-          declare -A expected_posters=()
+          stems = {}
+          for source in sources:
+              key = source.stem.casefold()
+              previous = stems.get(key)
+              if previous is not None:
+                  raise SystemExit(
+                      "::error::Case-insensitive preview filename collision: "
+                      f"{previous.name!r} and {source.name!r} map to the same output stem."
+                  )
+              stems[key] = source
 
-          echo "Found ${#source_files[@]} source video(s)."
-          if [[ ${#source_files[@]} -eq 0 ]]; then
-            echo "No source MP4 files remain; generated assets will be cleaned up."
-          fi
+          try:
+              previous_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+              if not isinstance(previous_manifest, dict):
+                  raise ValueError("manifest root must be an object")
+          except FileNotFoundError:
+              previous_manifest = {}
+          except (json.JSONDecodeError, ValueError) as error:
+              print(f"::warning::Ignoring invalid preview manifest and rebuilding all videos: {error}")
+              previous_manifest = {}
 
-          for file in "${source_files[@]}"; do
-            filename="$(basename "$file")"
+          next_manifest = {}
+          changed = []
+
+          for source in sources:
+              digest = hashlib.sha256(source.read_bytes()).hexdigest()
+              name = source.stem
+              preview = preview_dir / f"{name}.preview.mp4"
+              poster = poster_dir / f"{name}.webp"
+              old_entry = previous_manifest.get(source.name, {})
+              unchanged = (
+                  not force_rebuild
+                  and isinstance(old_entry, dict)
+                  and old_entry.get("sha256") == digest
+                  and preview.is_file() and preview.stat().st_size > 0
+                  and poster.is_file() and poster.stat().st_size > 0
+              )
+
+              if not unchanged:
+                  changed.append(source.name)
+
+              next_manifest[source.name] = {
+                  "sha256": digest,
+                  "preview": f"videos/preview/{name}.preview.mp4",
+                  "poster": f"videos/posters/{name}.webp",
+              }
+
+          changed_list.write_bytes(
+              b"".join(os.fsencode(name) + b"\\0" for name in changed)
+          )
+          manifest_temp.write_text(
+              json.dumps(next_manifest, ensure_ascii=False, indent=2) + "\\n",
+              encoding="utf-8",
+          )
+
+          print(f"Found {len(sources)} source video(s); {len(changed)} require generation.")
+          if force_rebuild:
+              print("Manual force rebuild is enabled.")
+          PY
+        env:
+          VIDEO_DIR: "$VIDEO_DIR"
+          PREVIEW_DIR: "$PREVIEW_DIR"
+          POSTER_DIR: "$POSTER_DIR"
+          MANIFEST: "$MANIFEST"
+          CHANGED_LIST: "$CHANGED_LIST"
+          MANIFEST_TEMP: "$MANIFEST_TEMP"
+
+          mapfile -d '' -t changed_files < "$CHANGED_LIST"
+          echo "Videos to encode: ${#changed_files[@]}"
+
+          for filename in "${changed_files[@]}"; do
+            file="$VIDEO_DIR/$filename"
             name="${filename%.*}"
-
             output="$PREVIEW_DIR/${name}.preview.mp4"
             poster="$POSTER_DIR/${name}.webp"
 
-            expected_previews["${name}.preview.mp4"]=1
-            expected_posters["${name}.webp"]=1
-
             echo "--------------------------------"
-            printf 'Input: %s\n' "$file"
-            printf 'Output: %s\n' "$output"
+            printf 'Input: %s\\n' "$file"
+            printf 'Output: %s\\n' "$output"
 
-            if [[ ! -f "$file" ]]; then
-              echo "::error::Input file not found: $file"
-              exit 1
-            fi
-
-            ffmpeg -hide_banner -loglevel error \
-              -y \
-              -i "$file" \
-              -map 0:v:0 \
-              -vf 'scale=-2:min(480\,ih)' \
-              -an \
-              -sn \
-              -dn \
-              -c:v libx264 \
-              -preset medium \
-              -crf 30 \
-              -pix_fmt yuv420p \
-              -movflags +faststart \
+            ffmpeg -hide_banner -loglevel error \\
+              -y \\
+              -i "$file" \\
+              -map 0:v:0 \\
+              -vf 'scale=-2:min(480\\,ih)' \\
+              -an \\
+              -sn \\
+              -dn \\
+              -c:v libx264 \\
+              -preset medium \\
+              -crf 30 \\
+              -pix_fmt yuv420p \\
+              -movflags +faststart \\
               "$output"
 
             if [[ ! -s "$output" ]]; then
@@ -110,33 +182,21 @@ jobs:
               exit 1
             fi
 
-            ffmpeg -hide_banner -v error \
-              -i "$output" \
-              -f null -
-
-            echo "Created successfully: $output"
+            ffmpeg -hide_banner -v error -i "$output" -f null -
+            echo "Created and validated preview: $output"
 
             # Generate a persistent WebP poster for the gallery card.
-            if ! ffmpeg -hide_banner -loglevel error \
-              -y \
-              -ss 0.5 \
-              -i "$file" \
-              -frames:v 1 \
-              -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
-              -c:v libwebp \
-              -quality 78 \
-              "$poster" || [[ ! -s "$poster" ]]; then
+            if ! ffmpeg -hide_banner -loglevel error \\
+              -y -ss 0.5 -i "$file" \\
+              -frames:v 1 \\
+              -vf 'scale=800:800:force_original_aspect_ratio=decrease' \\
+              -c:v libwebp -quality 78 "$poster" || [[ ! -s "$poster" ]]; then
               rm -f "$poster"
-
               # Very short clips may not contain a frame at 0.5 seconds.
-              ffmpeg -hide_banner -loglevel error \
-                -y \
-                -i "$file" \
-                -frames:v 1 \
-                -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
-                -c:v libwebp \
-                -quality 78 \
-                "$poster"
+              ffmpeg -hide_banner -loglevel error \\
+                -y -i "$file" -frames:v 1 \\
+                -vf 'scale=800:800:force_original_aspect_ratio=decrease' \\
+                -c:v libwebp -quality 78 "$poster"
             fi
 
             if [[ ! -s "$poster" ]]; then
@@ -147,8 +207,18 @@ jobs:
             echo "Created poster successfully: $poster"
           done
 
-          # Remove generated previews and posters whose source MP4 was deleted.
+          # Clean up assets for deleted or renamed source videos.
           shopt -s nullglob
+          declare -A expected_previews=()
+          declare -A expected_posters=()
+
+          for file in "$VIDEO_DIR"/*.mp4 "$VIDEO_DIR"/*.MP4; do
+            [[ -f "$file" ]] || continue
+            filename="${file##*/}"
+            name="${filename%.*}"
+            expected_previews["${name}.preview.mp4"]=1
+            expected_posters["${name}.webp"]=1
+          done
 
           for generated in "$PREVIEW_DIR"/*.preview.mp4; do
             filename="${generated##*/}"
@@ -166,12 +236,11 @@ jobs:
             fi
           done
 
-          echo "Video asset generation and cleanup completed."
+          # Publish the new manifest only after every required encode succeeded.
+          mv "$MANIFEST_TEMP" "$MANIFEST"
 
-          find "$PREVIEW_DIR" "$POSTER_DIR" \
-            -maxdepth 1 \
-            -type f \
-            -print
+          echo "Video asset generation and cleanup completed."
+          find "$PREVIEW_DIR" "$POSTER_DIR" -maxdepth 1 -type f -print
 
       - name: Commit previews
         shell: bash

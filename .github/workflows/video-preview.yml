@@ -109,6 +109,39 @@ jobs:
               -f null -
 
             echo "Created successfully: $output"
+
+            # Generate a persistent WebP poster for the gallery card.
+            poster="$VIDEO_DIR/posters/${name}.webp"
+            mkdir -p "$VIDEO_DIR/posters"
+
+            if ! ffmpeg -hide_banner -loglevel error \
+              -y \
+              -ss 0.5 \
+              -i "$file" \
+              -frames:v 1 \
+              -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
+              -c:v libwebp \
+              -quality 78 \
+              "$poster" || [[ ! -s "$poster" ]]; then
+              rm -f "$poster"
+
+              # Very short clips may not contain a frame at 0.5 seconds.
+              ffmpeg -hide_banner -loglevel error \
+                -y \
+                -i "$file" \
+                -frames:v 1 \
+                -vf 'scale=800:800:force_original_aspect_ratio=decrease' \
+                -c:v libwebp \
+                -quality 78 \
+                "$poster"
+            fi
+
+            if [[ ! -s "$poster" ]]; then
+              echo "::error::Poster generation failed: $poster"
+              exit 1
+            fi
+
+            echo "Created poster successfully: $poster"
           done
 
           echo "Preview generation completed."
@@ -127,7 +160,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add videos/preview/
+          git add videos/preview/ videos/posters/
 
           if git diff --cached --quiet; then
             echo "No preview changes."

@@ -1,4 +1,3 @@
-
 /* Layout behavior and renderers for gallery, interactive work, and playlist views. */
 import {
   $, state, stage, canvas, mobileLayout,
@@ -7,7 +6,8 @@ import {
 } from "./state.js";
 
 import {
-  vidPosterCache,
+  getVideoPoster,
+  cacheVideoPoster,
   captureVideoPoster,
   vidObs
 } from "./media.js";
@@ -16,6 +16,7 @@ import { select } from "./lightbox.js";
 import { discoverFiles } from "./loader.js";
 
 /* ---------- Desktop-Only Mouse Parallax ---------- */
+
 export function par() {
   if (
     state.modal ||
@@ -43,6 +44,7 @@ export function par() {
 }
 
 /* ---------- Scatter Layout ---------- */
+
 const DP = [
   { x: 0.07, w: 0.3, g: -24, d: 0.45 },
   { x: 0.6, w: 0.32, g: 28, d: 0.75 },
@@ -81,8 +83,12 @@ export function layout(force) {
   const W = canvas.clientWidth;
   if (!W) return;
 
-  const widthChanged = Math.abs(W - state.lastLayoutW) > 1;
-  if (widthChanged) state.lastLayoutW = W;
+  const widthChanged =
+    Math.abs(W - state.lastLayoutW) > 1;
+
+  if (widthChanged) {
+    state.lastLayoutW = W;
+  }
 
   const unit = mobileLayout ? W / 900 : 1;
   const P = mobileLayout ? MOBILE_DP : DP;
@@ -97,24 +103,38 @@ export function layout(force) {
 
       const media = el.querySelector("img,video");
 
-      const nw = media?.naturalWidth || media?.videoWidth || 0;
-      const nh = media?.naturalHeight || media?.videoHeight || 0;
+      const nw =
+        media?.naturalWidth ||
+        media?.videoWidth ||
+        0;
+
+      const nh =
+        media?.naturalHeight ||
+        media?.videoHeight ||
+        0;
 
       const ratio = el._ratio || (
         nw && nh ? nw / nh : 0
       );
 
-      const w = Math.round(W * P[i % P.length].w);
+      const w = Math.round(
+        W * P[i % P.length].w
+      );
 
       return ratio > 0 && ratio < 1
-        ? { width: w, height: w / ratio }
+        ? {
+            width: w,
+            height: w / ratio
+          }
         : null;
     })
     .filter(Boolean)
     .sort((a, b) => a.height - b.height);
 
   const balance = portraitSizes.length
-    ? portraitSizes[Math.floor(portraitSizes.length / 2)]
+    ? portraitSizes[
+        Math.floor(portraitSizes.length / 2)
+      ]
     : null;
 
   const balanceTolerance = 0.1;
@@ -126,7 +146,11 @@ export function layout(force) {
 
     if (el._landscape && balance && el._ratio > 0) {
       const targetW = Math.min(
-        Math.sqrt(balance.height * balance.width * el._ratio),
+        Math.sqrt(
+          balance.height *
+          balance.width *
+          el._ratio
+        ),
         W * 0.72
       );
 
@@ -145,7 +169,10 @@ export function layout(force) {
     );
 
     const sizeChanged =
-      force || widthChanged || !el._sized || el._w !== w;
+      force ||
+      widthChanged ||
+      !el._sized ||
+      el._w !== w;
 
     el._d = p.d;
     el._l = l;
@@ -226,11 +253,13 @@ export function layout(force) {
 }
 
 /* Playlist media icon */
+
 const TYPE_ICON = {
   playlist: `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`
 };
 
 /* ---------- Mode 1: Gallery ---------- */
+
 export function addCard(
   it,
   i,
@@ -241,8 +270,16 @@ export function addCard(
 
   el.type = "button";
   el.className = "card in";
-  el.style.setProperty("--d", Math.min(i * 55, 330) + "ms");
-  el.setAttribute("aria-label", "Inspect " + it.caption);
+
+  el.style.setProperty(
+    "--d",
+    Math.min(i * 55, 330) + "ms"
+  );
+
+  el.setAttribute(
+    "aria-label",
+    "Inspect " + it.caption
+  );
 
   el.addEventListener(
     "animationend",
@@ -252,11 +289,10 @@ export function addCard(
 
   // Gallery uses Preview. Original is reserved for Lightbox.
   const previewSrc = it.previewSrc || it.src;
-  const originalSrc = it.originalSrc || it.src;
 
   const initPoster =
     it.poster ||
-    vidPosterCache.get(previewSrc) ||
+    getVideoPoster(previewSrc) ||
     "";
 
   const mediaHtml = it.isVid
@@ -281,11 +317,17 @@ export function addCard(
     el._mediaReady = true;
     el._hLocked = false;
 
-    const w = mediaEl.naturalWidth || mediaEl.videoWidth;
-    const h = mediaEl.naturalHeight || mediaEl.videoHeight;
+    const w =
+      mediaEl.naturalWidth ||
+      mediaEl.videoWidth;
+
+    const h =
+      mediaEl.naturalHeight ||
+      mediaEl.videoHeight;
 
     if (w && h) {
       el._ratio = w / h;
+
       frame.style.aspectRatio = `${w}/${h}`;
       el._landscape = el._ratio > 1.25;
     } else if (it.ratio > 0) {
@@ -295,12 +337,20 @@ export function addCard(
 
     frame.classList.add("loaded");
 
-    if (tok === state.loadTok) scheduleLayout();
+    if (tok === state.loadTok) {
+      scheduleLayout();
+    }
 
     if (it.isVid) {
-      const captured = captureVideoPoster(mediaEl, previewSrc);
+      const captured = captureVideoPoster(
+        mediaEl,
+        previewSrc
+      );
 
-      if (captured && !mediaEl.getAttribute("poster")) {
+      if (
+        captured &&
+        !mediaEl.getAttribute("poster")
+      ) {
         mediaEl.poster = captured;
       }
 
@@ -310,11 +360,16 @@ export function addCard(
 
   if (it.isVid) {
     // Probe optional poster candidates.
-    if (it.thumbCandidates && it.thumbCandidates.length) {
+    if (
+      it.thumbCandidates &&
+      it.thumbCandidates.length
+    ) {
       let pIdx = 0;
 
       const tryVidPoster = () => {
-        if (pIdx >= it.thumbCandidates.length) return;
+        if (pIdx >= it.thumbCandidates.length) {
+          return;
+        }
 
         const url = it.thumbCandidates[pIdx++];
         const probe = new Image();
@@ -325,7 +380,9 @@ export function addCard(
           if (tok !== state.loadTok) return;
 
           it.poster = url;
-          vidPosterCache.set(previewSrc, url);
+
+          cacheVideoPoster(previewSrc, url);
+
           mediaEl.poster = url;
 
           if (
@@ -335,13 +392,18 @@ export function addCard(
           ) {
             el._mediaReady = true;
             el._hLocked = false;
-            el._ratio = probe.naturalWidth / probe.naturalHeight;
+
+            el._ratio =
+              probe.naturalWidth /
+              probe.naturalHeight;
+
             el._landscape = el._ratio > 1.25;
 
             frame.style.aspectRatio =
               `${probe.naturalWidth}/${probe.naturalHeight}`;
 
             frame.classList.add("loaded");
+
             scheduleLayout();
           }
         };
@@ -355,12 +417,8 @@ export function addCard(
 
     mediaEl.onloadeddata = onReady;
 
-    // Retry policy:
-    // 1. Retry without crossorigin.
-    // 2. If Preview still fails, try Original once.
-    // 3. Do not loop between sources.
+    // Preview must not fall back to Original.
     let triedWithoutCors = false;
-    let triedOriginal = false;
 
     mediaEl.onerror = () => {
       if (
@@ -368,29 +426,39 @@ export function addCard(
         !triedWithoutCors
       ) {
         triedWithoutCors = true;
+
+        const retrySrc =
+          mediaEl.currentSrc ||
+          mediaEl.dataset.src ||
+          previewSrc;
+
+        mediaEl.pause();
+
         mediaEl.removeAttribute("crossorigin");
+        mediaEl.removeAttribute("src");
         mediaEl.load();
+
+        mediaEl.src = retrySrc;
+        mediaEl.load();
+
         return;
       }
 
-      const currentSrc = mediaEl.currentSrc || mediaEl.src;
+      // Keep Poster visible and prevent observer retries.
+      mediaEl.dataset.failed = "true";
 
-      if (
-        !triedOriginal &&
-        originalSrc &&
-        currentSrc !== new URL(originalSrc, document.baseURI).href
-      ) {
-        triedOriginal = true;
-        mediaEl.dataset.src = originalSrc;
-        mediaEl.src = originalSrc;
-        mediaEl.load();
-        return;
-      }
+      mediaEl.pause();
+      vidObs.unobserve(mediaEl);
+
+      el.dataset.videoError = "preview";
 
       el._mediaReady = true;
+
       frame.classList.add("loaded");
 
-      if (tok === state.loadTok) scheduleLayout();
+      if (tok === state.loadTok) {
+        scheduleLayout();
+      }
     };
 
     vidObs.observe(mediaEl);
@@ -403,7 +471,8 @@ export function addCard(
 
     let candIdx = 0;
 
-    const saveData = !!navigator.connection?.saveData;
+    const saveData =
+      !!navigator.connection?.saveData;
 
     mediaEl.fetchPriority =
       i < 2 && !saveData ? "high" : "low";
@@ -412,7 +481,9 @@ export function addCard(
       i < 2 && !saveData ? "eager" : "lazy";
 
     mediaEl.onload = () => {
-      it.resolvedThumb = candidates[candIdx] || it.src;
+      it.resolvedThumb =
+        candidates[candIdx] || it.src;
+
       onReady();
     };
 
@@ -443,9 +514,12 @@ export function addCard(
       }
 
       el._mediaReady = true;
+
       frame.classList.add("loaded");
 
-      if (tok === state.loadTok) scheduleLayout();
+      if (tok === state.loadTok) {
+        scheduleLayout();
+      }
     };
 
     mediaEl.src = candidates[0];
@@ -475,14 +549,17 @@ export function updateCount(msg) {
 }
 
 /* ---------- Mode 2 & 3 (Interactive & Playlist) ---------- */
+
 export function mountInteractive(
   proj,
   targetContainer = state.activeViewEl || canvas
 ) {
   $("#count").textContent = "Interactive";
+
   canvas.removeAttribute("data-empty");
 
   const wrap = document.createElement("div");
+
   wrap.className = "ix-wrap";
 
   wrap.innerHTML =
@@ -536,13 +613,18 @@ export function mountPlaylist(
   const fDir = cleanDir(proj.folder || "audio");
 
   let tracks = (proj.tracks || []).map((t) => {
-    if (typeof t === "string") t = { file: t };
+    if (typeof t === "string") {
+      t = { file: t };
+    }
 
-    const file = t.file || String(t.src).split("/").pop();
+    const file =
+      t.file || String(t.src).split("/").pop();
 
     return {
       file,
-      src: t.src || `./${encodePath(fDir)}/${encodePath(file)}`,
+      src:
+        t.src ||
+        `./${encodePath(fDir)}/${encodePath(file)}`,
       title: t.title || capOf(file),
       artist: t.artist || proj.title || "ustzyix",
       cover: t.cover
@@ -558,10 +640,12 @@ export function mountPlaylist(
   let idx = 0;
 
   const aud = new Audio();
+
   aud.preload = "metadata";
   activeAudio = aud;
 
   const wrap = document.createElement("div");
+
   wrap.className = "pl-wrap";
 
   wrap.innerHTML =
@@ -605,10 +689,15 @@ export function mountPlaylist(
 
     aud.src = tr.src;
 
-    wrap.querySelector("#plTitle").textContent = tr.title;
-    wrap.querySelector("#plArtist").textContent = tr.artist;
+    wrap.querySelector("#plTitle").textContent =
+      tr.title;
+
+    wrap.querySelector("#plArtist").textContent =
+      tr.artist;
+
     wrap.querySelector("#plCur").textContent = "0:00";
     wrap.querySelector("#plDur").textContent = "0:00";
+
     wrap.querySelector("#plFill").style.width = "0%";
 
     if (tr.cover) {
@@ -636,7 +725,10 @@ export function mountPlaylist(
     canvas.dataset.emptyMsg =
       "No audio tracks found in this folder yet.";
 
-    canvas.toggleAttribute("data-empty", !tracks.length);
+    canvas.toggleAttribute(
+      "data-empty",
+      !tracks.length
+    );
 
     listEl.innerHTML = "";
 
@@ -644,7 +736,8 @@ export function mountPlaylist(
       const row = document.createElement("button");
 
       row.type = "button";
-      row.className = "trow" + (k === idx ? " on" : "");
+      row.className =
+        "trow" + (k === idx ? " on" : "");
 
       row.innerHTML =
         `<span class="tnum">${pad(k + 1)}</span>` +
@@ -685,10 +778,12 @@ export function mountPlaylist(
   wrap.querySelector("#plBar").onclick = (e) => {
     if (!aud.duration) return;
 
-    const r = e.currentTarget.getBoundingClientRect();
+    const r =
+      e.currentTarget.getBoundingClientRect();
 
     aud.currentTime =
-      ((e.clientX - r.left) / r.width) * aud.duration;
+      ((e.clientX - r.left) / r.width) *
+      aud.duration;
   };
 
   aud.ontimeupdate = () => {
@@ -706,29 +801,38 @@ export function mountPlaylist(
       fmtTime(aud.duration);
   };
 
-  aud.onended = () => loadTrack(idx + 1, true);
+  aud.onended = () => {
+    loadTrack(idx + 1, true);
+  };
 
   renderTracks();
 
   if (proj.discover !== false) {
     scheduleIdle(() =>
-      discoverFiles(fDir, AUD_OK, proj.id, (files) => {
-        const have = new Set(tracks.map((x) => x.file));
-
-        files
-          .filter((f) => !have.has(f))
-          .forEach((f) =>
-            tracks.push({
-              file: f,
-              src: `./${encodePath(fDir)}/${encodePath(f)}`,
-              title: capOf(f),
-              artist: proj.title || "ustzyix",
-              cover: ""
-            })
+      discoverFiles(
+        fDir,
+        AUD_OK,
+        proj.id,
+        (files) => {
+          const have = new Set(
+            tracks.map((x) => x.file)
           );
 
-        renderTracks();
-      })
+          files
+            .filter((f) => !have.has(f))
+            .forEach((f) =>
+              tracks.push({
+                file: f,
+                src: `./${encodePath(fDir)}/${encodePath(f)}`,
+                title: capOf(f),
+                artist: proj.title || "ustzyix",
+                cover: ""
+              })
+            );
+
+          renderTracks();
+        }
+      )
     );
   }
 }

@@ -1,4 +1,3 @@
-
 /* Deferred media loading, video observation/posters, and async image decode cache.
    EXIF parsing is intentionally omitted; data-authored metadata remains supported.
 */

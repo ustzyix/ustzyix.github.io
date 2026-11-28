@@ -1,0 +1,88 @@
+
+name: Generate Video Previews
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'videos/*.mp4'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: video-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate-previews:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Install FFmpeg
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      # 3. Generate preview videos
+      - name: Generate previews
+        shell: bash
+        run: |
+          mkdir -p videos/preview
+
+          while IFS= read -r -d '' file; do
+            filename=$(basename "$file")
+            name="${filename%.*}"
+
+            output="videos/preview/${name}.preview.mp4"
+
+            echo "Processing: $filename"
+
+            ffmpeg -hide_banner -loglevel error \
+              -y \
+              -i "$file" \
+              -map 0:v:0 \
+              -vf "scale=-2:min(480\\,ih)" \
+              -an \
+              -sn \
+              -dn \
+              -c:v libx264 \
+              -preset medium \
+              -crf 30 \
+              -pix_fmt yuv420p \
+              -movflags +faststart \
+              "$output"
+
+            echo "Created: $output"
+
+          done < <(
+            find videos \
+              -maxdepth 1 \
+              -type f \
+              -iname '*.mp4' \
+              -print0
+          )
+
+      # 4. Commit generated previews
+      - name: Commit previews
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add videos/preview/
+
+          if git diff --cached --quiet; then
+            echo "No preview changes."
+            exit 0
+          fi
+
+          git commit -m "Generate video previews"
+          git push

@@ -80,6 +80,7 @@ jobs:
           changed_list = Path(os.environ["CHANGED_LIST"])
           manifest_temp = Path(os.environ["MANIFEST_TEMP"])
           force_rebuild = os.environ.get("FORCE_REBUILD", "false").lower() == "true"
+          pipeline_version = 1  # Increment when preview encoding settings change.
 
           sources = sorted(
               (path for path in video_dir.iterdir()
@@ -126,6 +127,7 @@ jobs:
                   not force_rebuild
                   and isinstance(old_entry, dict)
                   and old_entry.get("sha256") == source_hash
+                  and old_entry.get("pipeline_version") == pipeline_version
                   and preview.is_file() and preview.stat().st_size > 0
                   and poster.is_file() and poster.stat().st_size > 0
               )
@@ -135,6 +137,7 @@ jobs:
 
               next_manifest[source.name] = {
                   "sha256": source_hash,
+                  "pipeline_version": pipeline_version,
                   "preview": f"videos/preview/{name}.preview.mp4",
                   "poster": f"videos/posters/{name}.webp",
               }
